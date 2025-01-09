@@ -1,5 +1,3 @@
-import { Schema } from "mongoose";
-
 import Challenge from "./Challenge";
 import Qr from "./Qr";
 import Stage from "./Stage";

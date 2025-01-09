@@ -1,12 +1,11 @@
 {
   "name": "qhunt-lib",
-  "version": "0.0.0",
-  "main": "index.js",
+  "version": "0.0.0.0",
   "scripts": {
     "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "type": "module",
+  "type": "commonjs",
   "keywords": [],
   "author": "okyaneka",
   "license": "ISC",
