@@ -1,19 +1,18 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "esModuleInterop": true,
     "module": "CommonJS",
-    "outDir": "./dist",
     "paths": {
       "~/*": ["./*"]
     },
-    "rootDir": "./src",
+    "rootDir": ".",
     "skipLibCheck": true,
     "strict": true,
     "target": "ES6",
     "lib": ["ESNext", "DOM"]
   },
 
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "helpers", "models", "services", "validators"],
   "exclude": ["node_modules"]
 }
