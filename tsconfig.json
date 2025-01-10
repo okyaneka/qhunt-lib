@@ -1,25 +1,22 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
+    "baseUrl": "_src",
     "esModuleInterop": true,
     "module": "CommonJS",
-    "outDir": "./dist",
+    "outDir": ".",
     "paths": {
       "~/*": ["./*"]
     },
-    "rootDir": "./",
+    "rootDir": "_src",
     "skipLibCheck": true,
     "strict": true,
     "target": "ES6",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true
   },
 
-  "include": [
-    "helpers/**/*",
-    "models/**/*",
-    "services/**/*",
-    "validators/**/*",
-    "index.ts"
-  ],
+  "include": ["_src/**/*"],
   "exclude": ["node_modules"]
 }

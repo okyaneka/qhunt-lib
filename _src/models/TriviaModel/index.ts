@@ -1,0 +1,56 @@
+import { model, models, Schema } from "mongoose";
+import { IdNameSchema, ToObject } from "../../helpers/schema";
+import {
+  Trivia,
+  TriviaForeign,
+  TriviaForeignOption,
+  TriviaOption,
+} from "./types";
+import { ChallengeFeedbackSchema } from "../ChallengeModel";
+
+const TriviaOptionSchema = new Schema<TriviaOption>(
+  {
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 },
+  },
+  { _id: false, versionKey: false }
+);
+
+export const TriviaForeignOptionSchema = new Schema<TriviaForeignOption>(
+  {
+    text: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+export const TriviaForeignSchema = new Schema<TriviaForeign>(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true },
+  },
+  { _id: false }
+);
+
+const TriviaSchema = new Schema<Trivia>(
+  {
+    challenge: { type: IdNameSchema, default: null },
+    question: { type: String, required: true },
+    feedback: { type: ChallengeFeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null },
+  },
+  { timestamps: true }
+);
+
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+
+export * from "./types";
+
+const TriviaModel = models.Trivia || model("Trivia", TriviaSchema);
+
+export default TriviaModel;
