@@ -6,7 +6,7 @@
     "build": "pnpm build:js && pnpm build:dts",
     "build:js": "tsup _src/index.ts _src/**/* --format esm,cjs --outDir . --no-splitting",
     "build:dts": "tsc --emitDeclarationOnly",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "okyaneka",
@@ -22,8 +22,11 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/crypto-js": "^4.2.2",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.9",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsup": "^8.3.5",
