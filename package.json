@@ -1,9 +1,11 @@
 {
   "name": "qhunt-lib",
-  "version": "0.0.0",
-  "main": "src/index.js",
+  "version": "0.0.1",
   "scripts": {
     "dev": "nodemon",
+    "build": "pnpm build:js && pnpm build:dts",
+    "build:js": "tsup _src/index.ts _src/**/* --format esm,cjs --outDir . --no-splitting",
+    "build:dts": "tsc --emitDeclarationOnly",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -24,6 +26,7 @@
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsup": "^8.3.5",
     "typescript": "^5.7.3"
   }
 }

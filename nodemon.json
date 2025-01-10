@@ -1,7 +1,6 @@
 {
-  "watch": ["src"],
+  "watch": ["_src"],
   "ext": "ts,json",
   "ignore": ["dist", "node_modules"],
-  "exec": "ts-node -r tsconfig-paths/register src/index.ts"
+  "exec": "ts-node -r tsconfig-paths/register _src/index.ts"
 }
-

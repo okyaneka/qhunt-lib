@@ -1,19 +1,22 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
+    "baseUrl": "_src",
     "esModuleInterop": true,
     "module": "CommonJS",
-    "outDir": "./dist",
+    "outDir": ".",
     "paths": {
       "~/*": ["./*"]
     },
-    "rootDir": "./src",
+    "rootDir": "_src",
     "skipLibCheck": true,
     "strict": true,
     "target": "ES6",
-    "lib": ["ESNext", "DOM"]
+    "resolveJsonModule": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true
   },
 
-  "include": ["src/**/*"],
+  "include": ["_src/**/*"],
   "exclude": ["node_modules"]
 }
