@@ -7,6 +7,12 @@ export const PeriodeValidator = schema.generate<Periode>({
   endDate: Joi.date().required().greater(Joi.ref("startDate")),
 });
 
-const validator = {};
+export const DefaultListParamsFields = {
+  page: schema.number({ defaultValue: 1 }),
+  limit: schema.number({ defaultValue: 10 }),
+  search: schema.string({ allow: "", defaultValue: "" }),
+};
+
+const validator = { PeriodeValidator, DefaultListParamsFields };
 
 export default validator;

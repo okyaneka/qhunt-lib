@@ -6,8 +6,7 @@ import {
   StagePayload,
   StageStatus,
 } from "~/models/StageModel";
-import { DefaultListQueryFields } from "..";
-import { PeriodeValidator } from "~/helpers/validator";
+import { DefaultListParamsFields, PeriodeValidator } from "~/helpers/validator";
 
 export const StageSettingsValidator = schema.generate<StagePayload["settings"]>(
   {
@@ -18,7 +17,7 @@ export const StageSettingsValidator = schema.generate<StagePayload["settings"]>(
 );
 
 export const StageListParamsValidator = schema.generate<StageListParams>({
-  ...DefaultListQueryFields,
+  ...DefaultListParamsFields,
   status: schema.string({ allow: null }).valid(...Object.values(StageStatus)),
 });
 

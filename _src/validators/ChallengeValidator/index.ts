@@ -9,7 +9,7 @@ import {
   ChallengeStatus,
   ChallengeType,
 } from "~/models/ChallengeModel";
-import { DefaultListParamsFields } from "~/validators";
+import { DefaultListParamsFields } from "~/helpers/validator";
 
 export const ChallengeListParamsValidator =
   schema.generate<ChallengeListParams>({

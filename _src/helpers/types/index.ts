@@ -13,3 +13,9 @@ export interface Periode {
   startDate: Date;
   endDate: Date;
 }
+
+export interface DefaultListParams {
+  page: number;
+  limit: number;
+  search: string;
+}

@@ -1,10 +1,10 @@
 import schema from "~/helpers/schema";
+import { DefaultListParamsFields } from "~/helpers/validator";
 import {
   UserStageForeign,
   UserStageListParams,
   UserStageStatus,
 } from "~/models/UserStageModel";
-import { DefaultListParamsFields } from "..";
 
 export const UserStageForeignValidator = schema.generate<UserStageForeign>({
   id: schema.string({ required: true }),

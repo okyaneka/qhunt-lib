@@ -1,5 +1,4 @@
-import { DefaultListParams } from "~/validators";
-import { Timestamps } from "~/helpers";
+import { Timestamps, DefaultListParams } from "~/helpers";
 
 export enum UserRole {
   Admin = "admin",
@@ -7,7 +6,7 @@ export enum UserRole {
   Public = "public",
 }
 
-export interface UserListQuery extends DefaultListParams {
+export interface UserListParams extends DefaultListParams {
   role: UserRole | null;
 }
 

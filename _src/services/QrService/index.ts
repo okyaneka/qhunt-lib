@@ -1,7 +1,7 @@
 import CryptoJS from "crypto-js";
 import Qr, {
   QrContentType,
-  QrListQuery,
+  QrListParams,
   QrPayload,
   QrStatus,
   QrUpdatePayload,
@@ -12,7 +12,7 @@ import UserStageService from "../UserStageService";
 import TriviaService from "../TriviaService";
 import UserChallengeService from "../UserChallengeService";
 
-export const list = async (params: QrListQuery) => {
+export const list = async (params: QrListParams) => {
   const skip = (params.page - 1) * params.limit;
   const filter: any = { deletedAt: null };
   if (params.status) filter.status = params.status;
