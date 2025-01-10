@@ -42,7 +42,7 @@ declare const services: {
         } & {
             __v: number;
         }, Omit<import("../models/QrModel").QrPayload, "_id">>[]>;
-        list: (params: import("../models/QrModel").QrListQuery) => Promise<{
+        list: (params: import("../models/QrModel").QrListParams) => Promise<{
             list: (import("../models/QrModel").Qr & {
                 _id: import("mongoose").Types.ObjectId;
             })[];
@@ -147,7 +147,7 @@ declare const services: {
             token: string;
         }>;
         profile: (bearer: string) => Promise<void>;
-        list: (params: import("../models/UserModel").UserListQuery) => Promise<void>;
+        list: (params: import("../models/UserModel").UserListParams) => Promise<void>;
         create: (payload: import("../models/UserModel").UserPayload) => Promise<void>;
         detail: (id: string) => Promise<any>;
         update: (id: string, payload: import("../models/UserModel").UserPayload) => Promise<void>;

@@ -56,6 +56,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // _src/helpers/validator/index.ts
 var validator_exports = {};
 __export(validator_exports, {
+  DefaultListParamsFields: () => DefaultListParamsFields,
   PeriodeValidator: () => PeriodeValidator,
   default: () => validator_default
 });
@@ -122,9 +123,15 @@ var PeriodeValidator = schema_default.generate({
   startDate: import_joi2.default.date().required().greater("now"),
   endDate: import_joi2.default.date().required().greater(import_joi2.default.ref("startDate"))
 });
-var validator = {};
+var DefaultListParamsFields = {
+  page: schema_default.number({ defaultValue: 1 }),
+  limit: schema_default.number({ defaultValue: 10 }),
+  search: schema_default.string({ allow: "", defaultValue: "" })
+};
+var validator = { PeriodeValidator, DefaultListParamsFields };
 var validator_default = validator;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  DefaultListParamsFields,
   PeriodeValidator
 });

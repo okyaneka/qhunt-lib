@@ -143,7 +143,7 @@ declare const _default: {
             } & {
                 __v: number;
             }, Omit<import("./models/QrModel").QrPayload, "_id">>[]>;
-            list: (params: import("./models/QrModel").QrListQuery) => Promise<{
+            list: (params: import("./models/QrModel").QrListParams) => Promise<{
                 list: (import("./models/QrModel").Qr & {
                     _id: mongoose.Types.ObjectId;
                 })[];
@@ -248,7 +248,7 @@ declare const _default: {
                 token: string;
             }>;
             profile: (bearer: string) => Promise<void>;
-            list: (params: import("./models/UserModel").UserListQuery) => Promise<void>;
+            list: (params: import("./models/UserModel").UserListParams) => Promise<void>;
             create: (payload: import("./models/UserModel").UserPayload) => Promise<void>;
             detail: (id: string) => Promise<any>;
             update: (id: string, payload: import("./models/UserModel").UserPayload) => Promise<void>;
@@ -289,7 +289,7 @@ declare const _default: {
             ChallengePayloadValidator: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengePayload>;
         };
         readonly QrValidator: {
-            QrListQueryValidator: import("joi").ObjectSchema<import("./models/QrModel").QrListQuery>;
+            QrListParamsValidator: import("joi").ObjectSchema<import("./models/QrModel").QrListParams>;
             QrGeneratePayloadValidator: import("joi").ObjectSchema<import("./models/QrModel").QrGeneratePayload>;
             QrUpdatePayloadValidator: import("joi").ObjectSchema<import("./models/QrModel").QrUpdatePayload>;
             QrDeleteBulkPayloadValidator: import("joi").ObjectSchema<import("./models/QrModel").QrDeleteBulkPayload>;
@@ -322,7 +322,7 @@ declare const _default: {
         };
         readonly UserValidator: {
             UserPayloadValidator: import("joi").ObjectSchema<import("./models/UserModel").UserPayload>;
-            UserListQueryValidator: import("joi").ObjectSchema<import("./models/UserModel").UserListQuery>;
+            UserListParamsValidator: import("joi").ObjectSchema<import("./models/UserModel").UserListParams>;
         };
     };
     mongoose: typeof mongoose;

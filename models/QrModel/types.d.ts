@@ -1,5 +1,4 @@
-import { DefaultListParams } from "~/validators";
-import { Timestamps } from "~/helpers";
+import { DefaultListParams, Timestamps } from "~/helpers";
 export declare enum QrStatus {
     Draft = "draft",
     Publish = "publish"
@@ -18,7 +17,7 @@ export interface QrLocation {
     longitude: number;
     latitude: number;
 }
-export interface QrListQuery extends DefaultListParams {
+export interface QrListParams extends DefaultListParams {
     code: string;
     status: QrStatus | null;
 }
