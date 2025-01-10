@@ -1,4 +1,8 @@
-import User, { UserListQuery, UserPayload, UserRole } from "~/models/UserModel";
+import User, {
+  UserListParams,
+  UserPayload,
+  UserRole,
+} from "~/models/UserModel";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 import { db } from "~/helpers";
@@ -57,7 +61,7 @@ export const login = async (payload: UserPayload, secret: string) => {
 
 export const profile = async (bearer: string) => {};
 
-export const list = async (params: UserListQuery) => {};
+export const list = async (params: UserListParams) => {};
 
 export const create = async (payload: UserPayload) => {};
 

@@ -787,165 +787,19 @@ var UserPublicService = { sync, verify: verify3 };
 var UserPublicService_default = UserPublicService;
 
 // _src/validators/ChallengeValidator/index.ts
-import Joi6 from "joi";
-
-// _src/validators/index.ts
-import Joi5 from "joi";
-
-// _src/validators/QrValidator/index.ts
-import Joi2 from "joi";
-var QrListQueryValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
-  code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatus))
-}));
-var QrGeneratePayloadValidator = schema_default.generate({
-  amount: schema_default.number({ required: true })
-});
-var QrContentValidator = schema_default.generate({
-  refId: schema_default.string({ required: true }),
-  type: schema_default.string({ required: true }).valid(...Object.values(QrContentType))
-});
-var QrLocationValidator = schema_default.generate({
-  label: schema_default.string({ required: true, allow: "" }),
-  longitude: schema_default.number({ required: true }),
-  latitude: schema_default.number({ required: true })
-});
-var QrUpdatePayloadValidator = schema_default.generate({
-  status: schema_default.string({ required: true }).valid(...Object.values(QrStatus)),
-  content: QrContentValidator.allow(null).default(null),
-  location: QrLocationValidator.allow(null).default(null)
-});
-var QrDeleteBulkPayloadValidator = schema_default.generate({
-  ids: schema_default.array(Joi2.string(), { required: true })
-});
-var QrValidator = {
-  QrListQueryValidator,
-  QrGeneratePayloadValidator,
-  QrUpdatePayloadValidator,
-  QrDeleteBulkPayloadValidator
-};
-var QrValidator_default = QrValidator;
-
-// _src/validators/StageValidator/index.ts
-import Joi4 from "joi";
+import Joi3 from "joi";
 
 // _src/helpers/validator/index.ts
-import Joi3 from "joi";
+import Joi2 from "joi";
 var PeriodeValidator = schema_default.generate({
-  startDate: Joi3.date().required().greater("now"),
-  endDate: Joi3.date().required().greater(Joi3.ref("startDate"))
+  startDate: Joi2.date().required().greater("now"),
+  endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
 });
-
-// _src/validators/StageValidator/index.ts
-var StageSettingsValidator = schema_default.generate(
-  {
-    canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
-    canStartFromChallenges: schema_default.boolean({ defaultValue: false }),
-    periode: PeriodeValidator.allow(null)
-  }
-);
-var StageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListQueryFields), {
-  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
-}));
-var StagePayloadValidator = schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi4.string()).default([]),
-  contents: schema_default.array(Joi4.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(StageStatus)),
-  settings: StageSettingsValidator.required()
-});
-var StageForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi4.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    periode: PeriodeValidator.allow(null)
-  })
-});
-var StageValidator = {
-  StageSettingsValidator,
-  StageListParamsValidator,
-  StagePayloadValidator,
-  StageForeignValidator
-};
-var StageValidator_default = StageValidator;
-
-// _src/validators/UserChallengeValidator/index.ts
-var UserChallengeForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  challengeId: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true })
-});
-var UserChallengeParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
-  userStageId: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatus))
-}));
-var UserChallengeValidator = {
-  UserChallengeForeignValidator,
-  UserChallengeParamsValidator
-};
-var UserChallengeValidator_default = UserChallengeValidator;
-
-// _src/validators/UserPublicValidator/index.ts
-var UserPublicForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  code: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true, allow: "" })
-});
-var UserPublicValidator = { UserPublicForeignValidator };
-var UserPublicValidator_default = UserPublicValidator;
-
-// _src/validators/UserStageValidator/index.ts
-var UserStageForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  stageId: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true })
-});
-var UserStageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
-  status: schema_default.string({ allow: "" }).valid(...Object.values(UserStageStatus))
-}));
-var UserStageValidator = {
-  UserStageForeignValidator,
-  UserStageListParamsValidator
-};
-var UserStageValidator_default = UserStageValidator;
-
-// _src/validators/UserValidator/index.ts
-var UserPayloadValidator = schema_default.generate({
-  email: schema_default.string({ required: true }).email(),
-  password: schema_default.string({ required: true })
-});
-var UserListQueryValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListQueryFields), {
-  role: schema_default.string({ defaultValue: null }).valid(...Object.values(UserRole))
-}));
-var UserValidator = {
-  UserPayloadValidator,
-  UserListQueryValidator
-};
-var UserValidator_default = UserValidator;
-
-// _src/validators/index.ts
-var validators = {
-  ChallengeValidator: ChallengeValidator_default,
-  QrValidator: QrValidator_default,
-  StageValidator: StageValidator_default,
-  TriviaValidator: TriviaValidator_default,
-  UserChallengeValidator: UserChallengeValidator_default,
-  UserPublicValidator: UserPublicValidator_default,
-  UserStageValidator: UserStageValidator_default,
-  UserValidator: UserValidator_default
-};
 var DefaultListParamsFields = {
-  page: Joi5.number().default(1),
-  limit: Joi5.number().default(10),
-  search: Joi5.string().allow("").default("")
-};
-var DefaultListQueryFields = {
   page: schema_default.number({ defaultValue: 1 }),
-  limit: schema_default.number({ defaultValue: 1 }),
-  search: schema_default.string({ defaultValue: "", allow: "" })
+  limit: schema_default.number({ defaultValue: 10 }),
+  search: schema_default.string({ allow: "", defaultValue: "" })
 };
-var validators_default = validators;
 
 // _src/validators/ChallengeValidator/index.ts
 var ChallengeListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
@@ -964,7 +818,7 @@ var ChallengeSettingsSchema2 = schema_default.generate({
 var ChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi6.string(), { defaultValue: [] }),
+  storyline: schema_default.array(Joi3.string(), { defaultValue: [] }),
   settings: schema_default.generate({
     duration: schema_default.number({ allow: 0 }),
     type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
@@ -1075,6 +929,15 @@ var details = (ids, TID) => __async(void 0, null, function* () {
 });
 var UserTriviaService = { setup, details };
 var UserTriviaService_default = UserTriviaService;
+
+// _src/validators/UserPublicValidator/index.ts
+var UserPublicForeignValidator = schema_default.generate({
+  id: schema_default.string({ required: true }),
+  code: schema_default.string({ required: true }),
+  name: schema_default.string({ required: true, allow: "" })
+});
+var UserPublicValidator = { UserPublicForeignValidator };
+var UserPublicValidator_default = UserPublicValidator;
 
 // _src/services/UserChallengeService/index.ts
 var verify5 = (code, challengeId, isDiscover) => __async(void 0, null, function* () {
@@ -1228,6 +1091,41 @@ var UserChallengeService = {
   submit
 };
 var UserChallengeService_default = UserChallengeService;
+
+// _src/validators/StageValidator/index.ts
+import Joi4 from "joi";
+var StageSettingsValidator = schema_default.generate(
+  {
+    canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
+    canStartFromChallenges: schema_default.boolean({ defaultValue: false }),
+    periode: PeriodeValidator.allow(null)
+  }
+);
+var StageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
+}));
+var StagePayloadValidator = schema_default.generate({
+  name: schema_default.string({ required: true }),
+  storyline: schema_default.array(Joi4.string()).default([]),
+  contents: schema_default.array(Joi4.string()).default([]),
+  status: schema_default.string({ required: true }).valid(...Object.values(StageStatus)),
+  settings: StageSettingsValidator.required()
+});
+var StageForeignValidator = schema_default.generate({
+  id: schema_default.string({ required: true }),
+  name: schema_default.string({ required: true }),
+  storyline: schema_default.array(Joi4.string(), { defaultValue: [] }),
+  settings: schema_default.generate({
+    periode: PeriodeValidator.allow(null)
+  })
+});
+var StageValidator = {
+  StageSettingsValidator,
+  StageListParamsValidator,
+  StagePayloadValidator,
+  StageForeignValidator
+};
+var StageValidator_default = StageValidator;
 
 // _src/services/UserStageService/index.ts
 var verify6 = (code, stageId) => __async(void 0, null, function* () {
@@ -1527,6 +1425,98 @@ var services = {
   UserTriviaService: UserTriviaService_default
 };
 var services_default = services;
+
+// _src/validators/QrValidator/index.ts
+import Joi5 from "joi";
+var QrListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+  code: schema_default.string({ allow: "" }),
+  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatus))
+}));
+var QrGeneratePayloadValidator = schema_default.generate({
+  amount: schema_default.number({ required: true })
+});
+var QrContentValidator = schema_default.generate({
+  refId: schema_default.string({ required: true }),
+  type: schema_default.string({ required: true }).valid(...Object.values(QrContentType))
+});
+var QrLocationValidator = schema_default.generate({
+  label: schema_default.string({ required: true, allow: "" }),
+  longitude: schema_default.number({ required: true }),
+  latitude: schema_default.number({ required: true })
+});
+var QrUpdatePayloadValidator = schema_default.generate({
+  status: schema_default.string({ required: true }).valid(...Object.values(QrStatus)),
+  content: QrContentValidator.allow(null).default(null),
+  location: QrLocationValidator.allow(null).default(null)
+});
+var QrDeleteBulkPayloadValidator = schema_default.generate({
+  ids: schema_default.array(Joi5.string(), { required: true })
+});
+var QrValidator = {
+  QrListParamsValidator,
+  QrGeneratePayloadValidator,
+  QrUpdatePayloadValidator,
+  QrDeleteBulkPayloadValidator
+};
+var QrValidator_default = QrValidator;
+
+// _src/validators/UserChallengeValidator/index.ts
+var UserChallengeForeignValidator = schema_default.generate({
+  id: schema_default.string({ required: true }),
+  challengeId: schema_default.string({ required: true }),
+  name: schema_default.string({ required: true })
+});
+var UserChallengeParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+  userStageId: schema_default.string({ allow: "" }),
+  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatus))
+}));
+var UserChallengeValidator = {
+  UserChallengeForeignValidator,
+  UserChallengeParamsValidator
+};
+var UserChallengeValidator_default = UserChallengeValidator;
+
+// _src/validators/UserStageValidator/index.ts
+var UserStageForeignValidator = schema_default.generate({
+  id: schema_default.string({ required: true }),
+  stageId: schema_default.string({ required: true }),
+  name: schema_default.string({ required: true })
+});
+var UserStageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+  status: schema_default.string({ allow: "" }).valid(...Object.values(UserStageStatus))
+}));
+var UserStageValidator = {
+  UserStageForeignValidator,
+  UserStageListParamsValidator
+};
+var UserStageValidator_default = UserStageValidator;
+
+// _src/validators/UserValidator/index.ts
+var UserPayloadValidator = schema_default.generate({
+  email: schema_default.string({ required: true }).email(),
+  password: schema_default.string({ required: true })
+});
+var UserListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+  role: schema_default.string({ defaultValue: null }).valid(...Object.values(UserRole))
+}));
+var UserValidator = {
+  UserPayloadValidator,
+  UserListParamsValidator
+};
+var UserValidator_default = UserValidator;
+
+// _src/validators/index.ts
+var validators = {
+  ChallengeValidator: ChallengeValidator_default,
+  QrValidator: QrValidator_default,
+  StageValidator: StageValidator_default,
+  TriviaValidator: TriviaValidator_default,
+  UserChallengeValidator: UserChallengeValidator_default,
+  UserPublicValidator: UserPublicValidator_default,
+  UserStageValidator: UserStageValidator_default,
+  UserValidator: UserValidator_default
+};
+var validators_default = validators;
 
 // _src/index.ts
 import mongoose2 from "mongoose";

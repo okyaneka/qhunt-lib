@@ -1,6 +1,5 @@
-import { DefaultListParams } from "~/validators";
+import { DefaultListParams, Timestamps } from "~/helpers";
 import { Stage } from "../StageModel";
-import { Timestamps } from "~/helpers";
 export declare enum ChallengeStatus {
     Draft = "draft",
     Publish = "publish"

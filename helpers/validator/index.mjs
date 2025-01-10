@@ -90,9 +90,15 @@ var PeriodeValidator = schema_default.generate({
   startDate: Joi2.date().required().greater("now"),
   endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
 });
-var validator = {};
+var DefaultListParamsFields = {
+  page: schema_default.number({ defaultValue: 1 }),
+  limit: schema_default.number({ defaultValue: 10 }),
+  search: schema_default.string({ allow: "", defaultValue: "" })
+};
+var validator = { PeriodeValidator, DefaultListParamsFields };
 var validator_default = validator;
 export {
+  DefaultListParamsFields,
   PeriodeValidator,
   validator_default as default
 };

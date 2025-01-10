@@ -1,9 +1,9 @@
-import { UserListQuery, UserPayload } from "~/models/UserModel";
+import { UserListParams, UserPayload } from "~/models/UserModel";
 export declare const UserPayloadValidator: import("joi").ObjectSchema<UserPayload>;
-export declare const UserListQueryValidator: import("joi").ObjectSchema<UserListQuery>;
+export declare const UserListParamsValidator: import("joi").ObjectSchema<UserListParams>;
 declare const UserValidator: {
     UserPayloadValidator: import("joi").ObjectSchema<UserPayload>;
-    UserListQueryValidator: import("joi").ObjectSchema<UserListQuery>;
+    UserListParamsValidator: import("joi").ObjectSchema<UserListParams>;
 };
 export default UserValidator;
 //# sourceMappingURL=index.d.ts.map

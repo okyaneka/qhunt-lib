@@ -5,14 +5,14 @@ import {
   QrContentType,
   QrDeleteBulkPayload,
   QrGeneratePayload,
-  QrListQuery,
+  QrListParams,
   QrLocation,
   QrStatus,
   QrUpdatePayload,
 } from "~/models/QrModel";
-import { DefaultListParamsFields } from "~/validators";
+import { DefaultListParamsFields } from "~/helpers/validator";
 
-export const QrListQueryValidator = schema.generate<QrListQuery>({
+export const QrListParamsValidator = schema.generate<QrListParams>({
   ...DefaultListParamsFields,
   code: schema.string({ allow: "" }),
   status: schema.string({ allow: "" }).valid(...Object.values(QrStatus)),
@@ -47,7 +47,7 @@ export const QrDeleteBulkPayloadValidator =
   });
 
 const QrValidator = {
-  QrListQueryValidator,
+  QrListParamsValidator,
   QrGeneratePayloadValidator,
   QrUpdatePayloadValidator,
   QrDeleteBulkPayloadValidator,

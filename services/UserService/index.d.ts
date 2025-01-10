@@ -1,4 +1,4 @@
-import { UserListQuery, UserPayload } from "~/models/UserModel";
+import { UserListParams, UserPayload } from "~/models/UserModel";
 export declare const register: (payload: UserPayload, code?: string) => Promise<any>;
 export declare const login: (payload: UserPayload, secret: string) => Promise<{
     id: any;
@@ -8,7 +8,7 @@ export declare const login: (payload: UserPayload, secret: string) => Promise<{
     token: string;
 }>;
 export declare const profile: (bearer: string) => Promise<void>;
-export declare const list: (params: UserListQuery) => Promise<void>;
+export declare const list: (params: UserListParams) => Promise<void>;
 export declare const create: (payload: UserPayload) => Promise<void>;
 export declare const detail: (id: string) => Promise<any>;
 export declare const update: (id: string, payload: UserPayload) => Promise<void>;
@@ -23,7 +23,7 @@ declare const UserService: {
         token: string;
     }>;
     profile: (bearer: string) => Promise<void>;
-    list: (params: UserListQuery) => Promise<void>;
+    list: (params: UserListParams) => Promise<void>;
     create: (payload: UserPayload) => Promise<void>;
     detail: (id: string) => Promise<any>;
     update: (id: string, payload: UserPayload) => Promise<void>;

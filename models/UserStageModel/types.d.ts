@@ -1,6 +1,5 @@
-import { Timestamps } from "~/helpers";
+import { Timestamps, DefaultListParams } from "~/helpers";
 import { UserPublicForeign } from "../UserPublicModel";
-import { DefaultListParams } from "~/validators";
 import { StageForeign } from "../StageModel";
 export declare enum UserStageStatus {
     OnGoing = "ongoing",

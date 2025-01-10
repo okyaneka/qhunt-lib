@@ -1,10 +1,10 @@
 import schema from "~/helpers/schema";
+import { DefaultListParamsFields } from "~/helpers/validator";
 import {
   UserChallengeForeign,
   UserChallengeParams,
   UserChallengeStatus,
 } from "~/models/UserChallengeModel";
-import { DefaultListParamsFields } from "..";
 
 export const UserChallengeForeignValidator =
   schema.generate<UserChallengeForeign>({

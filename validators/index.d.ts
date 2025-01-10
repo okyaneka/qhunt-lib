@@ -16,7 +16,7 @@ declare const validators: {
         ChallengePayloadValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengePayload>;
     };
     readonly QrValidator: {
-        QrListQueryValidator: Joi.ObjectSchema<import("../models/QrModel").QrListQuery>;
+        QrListParamsValidator: Joi.ObjectSchema<import("../models/QrModel").QrListParams>;
         QrGeneratePayloadValidator: Joi.ObjectSchema<import("../models/QrModel").QrGeneratePayload>;
         QrUpdatePayloadValidator: Joi.ObjectSchema<import("../models/QrModel").QrUpdatePayload>;
         QrDeleteBulkPayloadValidator: Joi.ObjectSchema<import("../models/QrModel").QrDeleteBulkPayload>;
@@ -49,23 +49,8 @@ declare const validators: {
     };
     readonly UserValidator: {
         UserPayloadValidator: Joi.ObjectSchema<import("../models/UserModel").UserPayload>;
-        UserListQueryValidator: Joi.ObjectSchema<import("../models/UserModel").UserListQuery>;
+        UserListParamsValidator: Joi.ObjectSchema<import("../models/UserModel").UserListParams>;
     };
-};
-export interface DefaultListParams {
-    page: number;
-    limit: number;
-    search: string;
-}
-export declare const DefaultListParamsFields: {
-    page: Joi.NumberSchema<number>;
-    limit: Joi.NumberSchema<number>;
-    search: Joi.StringSchema<string>;
-};
-export declare const DefaultListQueryFields: {
-    page: Joi.NumberSchema<number>;
-    limit: Joi.NumberSchema<number>;
-    search: Joi.StringSchema<string>;
 };
 export { ChallengeValidator, QrValidator, StageValidator, TriviaValidator, UserChallengeValidator, UserPublicValidator, UserStageValidator, UserValidator, };
 export default validators;

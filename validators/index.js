@@ -60,8 +60,6 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var validators_exports = {};
 __export(validators_exports, {
   ChallengeValidator: () => ChallengeValidator_default,
-  DefaultListParamsFields: () => DefaultListParamsFields,
-  DefaultListQueryFields: () => DefaultListQueryFields,
   QrValidator: () => QrValidator_default,
   StageValidator: () => StageValidator_default,
   TriviaValidator: () => TriviaValidator_default,
@@ -72,7 +70,9 @@ __export(validators_exports, {
   default: () => validators_default
 });
 module.exports = __toCommonJS(validators_exports);
-var import_joi6 = __toESM(require("joi"));
+
+// _src/validators/ChallengeValidator/index.ts
+var import_joi3 = __toESM(require("joi"));
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
@@ -128,9 +128,6 @@ var schema = {
   IdNameSchema
 };
 var schema_default = schema;
-
-// _src/validators/ChallengeValidator/index.ts
-var import_joi2 = __toESM(require("joi"));
 
 // _src/models/ChallengeModel/index.ts
 var import_mongoose2 = require("mongoose");
@@ -203,6 +200,18 @@ ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 var ChallengeModel = import_mongoose2.models.Challenge || (0, import_mongoose2.model)("Challenge", ChallengeSchema);
 
+// _src/helpers/validator/index.ts
+var import_joi2 = __toESM(require("joi"));
+var PeriodeValidator = schema_default.generate({
+  startDate: import_joi2.default.date().required().greater("now"),
+  endDate: import_joi2.default.date().required().greater(import_joi2.default.ref("startDate"))
+});
+var DefaultListParamsFields = {
+  page: schema_default.number({ defaultValue: 1 }),
+  limit: schema_default.number({ defaultValue: 10 }),
+  search: schema_default.string({ allow: "", defaultValue: "" })
+};
+
 // _src/validators/ChallengeValidator/index.ts
 var ChallengeListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
   stageId: schema_default.string().allow("").default("")
@@ -220,7 +229,7 @@ var ChallengeSettingsSchema2 = schema_default.generate({
 var ChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(import_joi2.default.string(), { defaultValue: [] }),
+  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] }),
   settings: schema_default.generate({
     duration: schema_default.number({ allow: 0 }),
     type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
@@ -243,7 +252,7 @@ var ChallengeValidator = {
 var ChallengeValidator_default = ChallengeValidator;
 
 // _src/validators/QrValidator/index.ts
-var import_joi3 = __toESM(require("joi"));
+var import_joi4 = __toESM(require("joi"));
 
 // _src/models/QrModel/index.ts
 var import_mongoose3 = require("mongoose");
@@ -295,7 +304,7 @@ QrSchema.set("toJSON", ToObject);
 var QrModel = import_mongoose3.models.Qr || (0, import_mongoose3.model)("Qr", QrSchema);
 
 // _src/validators/QrValidator/index.ts
-var QrListQueryValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var QrListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
   code: schema_default.string({ allow: "" }),
   status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatus))
 }));
@@ -317,10 +326,10 @@ var QrUpdatePayloadValidator = schema_default.generate({
   location: QrLocationValidator.allow(null).default(null)
 });
 var QrDeleteBulkPayloadValidator = schema_default.generate({
-  ids: schema_default.array(import_joi3.default.string(), { required: true })
+  ids: schema_default.array(import_joi4.default.string(), { required: true })
 });
 var QrValidator = {
-  QrListQueryValidator,
+  QrListParamsValidator,
   QrGeneratePayloadValidator,
   QrUpdatePayloadValidator,
   QrDeleteBulkPayloadValidator
@@ -381,13 +390,6 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = import_mongoose4.models.Stage || (0, import_mongoose4.model)("Stage", StageSchema);
 
-// _src/helpers/validator/index.ts
-var import_joi4 = __toESM(require("joi"));
-var PeriodeValidator = schema_default.generate({
-  startDate: import_joi4.default.date().required().greater("now"),
-  endDate: import_joi4.default.date().required().greater(import_joi4.default.ref("startDate"))
-});
-
 // _src/validators/StageValidator/index.ts
 var StageSettingsValidator = schema_default.generate(
   {
@@ -396,7 +398,7 @@ var StageSettingsValidator = schema_default.generate(
     periode: PeriodeValidator.allow(null)
   }
 );
-var StageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListQueryFields), {
+var StageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
   status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
 }));
 var StagePayloadValidator = schema_default.generate({
@@ -665,12 +667,12 @@ var UserPayloadValidator = schema_default.generate({
   email: schema_default.string({ required: true }).email(),
   password: schema_default.string({ required: true })
 });
-var UserListQueryValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListQueryFields), {
+var UserListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
   role: schema_default.string({ defaultValue: null }).valid(...Object.values(UserRole))
 }));
 var UserValidator = {
   UserPayloadValidator,
-  UserListQueryValidator
+  UserListParamsValidator
 };
 var UserValidator_default = UserValidator;
 
@@ -685,22 +687,10 @@ var validators = {
   UserStageValidator: UserStageValidator_default,
   UserValidator: UserValidator_default
 };
-var DefaultListParamsFields = {
-  page: import_joi6.default.number().default(1),
-  limit: import_joi6.default.number().default(10),
-  search: import_joi6.default.string().allow("").default("")
-};
-var DefaultListQueryFields = {
-  page: schema_default.number({ defaultValue: 1 }),
-  limit: schema_default.number({ defaultValue: 1 }),
-  search: schema_default.string({ defaultValue: "", allow: "" })
-};
 var validators_default = validators;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ChallengeValidator,
-  DefaultListParamsFields,
-  DefaultListQueryFields,
   QrValidator,
   StageValidator,
   TriviaValidator,
