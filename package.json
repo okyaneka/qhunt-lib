@@ -1,6 +1,6 @@
 {
   "name": "qhunt-lib",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "dev": "nodemon",
     "build": "pnpm build:js && pnpm build:dts",
