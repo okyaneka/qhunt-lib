@@ -121,6 +121,13 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new import_mongoose2.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new import_mongoose2.Schema(
   {
     name: { type: String, default: "" },

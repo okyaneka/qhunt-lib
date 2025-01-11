@@ -1,5 +1,5 @@
 // _src/models/UserChallengeModel/index.ts
-import { model as model5, models as models5, Schema as Schema6 } from "mongoose";
+import { model as model6, models as models6, Schema as Schema7 } from "mongoose";
 
 // _src/helpers/schema/index.ts
 import Joi from "joi";
@@ -106,7 +106,7 @@ ChallengeSchema.set("toObject", ToObject);
 var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 
 // _src/models/UserPublicModel/index.ts
-import { model as model2, models as models2, Schema as Schema3 } from "mongoose";
+import { model as model3, models as models3, Schema as Schema4 } from "mongoose";
 
 // _src/models/UserPublicModel/types.ts
 var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
@@ -116,8 +116,49 @@ var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
   return UserPublicGender2;
 })(UserPublicGender || {});
 
+// _src/models/UserModel/index.ts
+import { model as model2, models as models2, Schema as Schema3 } from "mongoose";
+
+// _src/models/UserModel/types.ts
+var UserRole = /* @__PURE__ */ ((UserRole2) => {
+  UserRole2["Admin"] = "admin";
+  UserRole2["Private"] = "private";
+  UserRole2["Public"] = "public";
+  return UserRole2;
+})(UserRole || {});
+
+// _src/models/UserModel/index.ts
+var ToObject2 = {
+  transform: (doc, ret) => {
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
+  }
+};
+var UserForeignSchema = new Schema3(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var UserSchema = new Schema3(
+  {
+    name: { type: String, default: "" },
+    role: { type: String, enum: Object.values(UserRole) },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+UserSchema.set("toJSON", ToObject2);
+UserSchema.set("toObject", ToObject2);
+var UserModel = models2.User || model2("User", UserSchema);
+
 // _src/models/UserPublicModel/index.ts
-var UserPublicForeignSchema = new Schema3(
+var UserPublicForeignSchema = new Schema4(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -125,9 +166,9 @@ var UserPublicForeignSchema = new Schema3(
   },
   { _id: false }
 );
-var UserPublicSchema = new Schema3(
+var UserPublicSchema = new Schema4(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },
@@ -144,10 +185,10 @@ var UserPublicSchema = new Schema3(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = models2.UserPublic || model2("UserPublic", UserPublicSchema, "usersPublic");
+var UserPublicModel = models3.UserPublic || model3("UserPublic", UserPublicSchema, "usersPublic");
 
 // _src/models/UserStageModel/index.ts
-import { model as model4, models as models4, Schema as Schema5 } from "mongoose";
+import { model as model5, models as models5, Schema as Schema6 } from "mongoose";
 
 // _src/models/UserStageModel/types.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -165,8 +206,8 @@ var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
 })(StageStatus || {});
 
 // _src/models/StageModel/index.ts
-import { model as model3, models as models3, Schema as Schema4 } from "mongoose";
-var StageSettingsSchema = new Schema4(
+import { model as model4, models as models4, Schema as Schema5 } from "mongoose";
+var StageSettingsSchema = new Schema5(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -174,13 +215,13 @@ var StageSettingsSchema = new Schema4(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new Schema4(
+var StageSettingsForeignSchema = new Schema5(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new Schema4(
+var StageForeignSchema = new Schema5(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -189,7 +230,7 @@ var StageForeignSchema = new Schema4(
   },
   { _id: false }
 );
-var StageSchema = new Schema4(
+var StageSchema = new Schema5(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
@@ -206,10 +247,10 @@ var StageSchema = new Schema4(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = models3.Stage || model3("Stage", StageSchema);
+var StageModel = models4.Stage || model4("Stage", StageSchema);
 
 // _src/models/UserStageModel/index.ts
-var UserStageForeignSchema = new Schema5(
+var UserStageForeignSchema = new Schema6(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -217,7 +258,7 @@ var UserStageForeignSchema = new Schema5(
   },
   { _id: false }
 );
-var UserStageSchema = new Schema5(
+var UserStageSchema = new Schema6(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -233,10 +274,10 @@ var UserStageSchema = new Schema5(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-var UserStageModel = models4.UserStage || model4("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = models5.UserStage || model5("UserStage", UserStageSchema, "usersStage");
 
 // _src/models/UserChallengeModel/index.ts
-var UserChallengeForeignSchema = new Schema6(
+var UserChallengeForeignSchema = new Schema7(
   {
     id: { type: String, required: true },
     challengeId: { type: String, required: true },
@@ -244,7 +285,7 @@ var UserChallengeForeignSchema = new Schema6(
   },
   { _id: false }
 );
-var UserChallengeSchema = new Schema6(
+var UserChallengeSchema = new Schema7(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
@@ -262,7 +303,7 @@ var UserChallengeSchema = new Schema6(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-var UserChallengeModel = models5.UserChallenge || model5("UserChallenge", UserChallengeSchema, "usersChallenge");
+var UserChallengeModel = models6.UserChallenge || model6("UserChallenge", UserChallengeSchema, "usersChallenge");
 var UserChallengeModel_default = UserChallengeModel;
 export {
   UserChallengeForeignSchema,

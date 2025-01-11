@@ -23,8 +23,16 @@ declare const models: {
     } & {
         __v: number;
     }, any>;
-    readonly TriviaModel: import("mongoose").Model<any, {}, {}, {}, any, any>;
-    readonly UserModel: import("mongoose").Model<any, {}, {}, {}, any, any>;
+    readonly TriviaModel: import("mongoose").Model<import("./TriviaModel").Trivia, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./TriviaModel").Trivia> & import("./TriviaModel").Trivia & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }, any>;
+    readonly UserModel: import("mongoose").Model<import("./UserModel").User, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserModel").User> & import("./UserModel").User & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }, any>;
     readonly UserChallengeModel: import("mongoose").Model<import("./UserChallengeModel").UserChallenge, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserChallengeModel").UserChallenge> & import("./UserChallengeModel").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     } & {

@@ -33,7 +33,7 @@ __export(UserTriviaModel_exports, {
   default: () => UserTriviaModel_default
 });
 module.exports = __toCommonJS(UserTriviaModel_exports);
-var import_mongoose8 = require("mongoose");
+var import_mongoose9 = require("mongoose");
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
@@ -60,7 +60,7 @@ var PeriodSchema = new import_mongoose.Schema(
 );
 
 // _src/models/UserPublicModel/index.ts
-var import_mongoose2 = require("mongoose");
+var import_mongoose3 = require("mongoose");
 
 // _src/models/UserPublicModel/types.ts
 var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
@@ -70,8 +70,49 @@ var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
   return UserPublicGender2;
 })(UserPublicGender || {});
 
+// _src/models/UserModel/index.ts
+var import_mongoose2 = require("mongoose");
+
+// _src/models/UserModel/types.ts
+var UserRole = /* @__PURE__ */ ((UserRole2) => {
+  UserRole2["Admin"] = "admin";
+  UserRole2["Private"] = "private";
+  UserRole2["Public"] = "public";
+  return UserRole2;
+})(UserRole || {});
+
+// _src/models/UserModel/index.ts
+var ToObject2 = {
+  transform: (doc, ret) => {
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
+  }
+};
+var UserForeignSchema = new import_mongoose2.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var UserSchema = new import_mongoose2.Schema(
+  {
+    name: { type: String, default: "" },
+    role: { type: String, enum: Object.values(UserRole) },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+UserSchema.set("toJSON", ToObject2);
+UserSchema.set("toObject", ToObject2);
+var UserModel = import_mongoose2.models.User || (0, import_mongoose2.model)("User", UserSchema);
+
 // _src/models/UserPublicModel/index.ts
-var UserPublicForeignSchema = new import_mongoose2.Schema(
+var UserPublicForeignSchema = new import_mongoose3.Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -79,9 +120,9 @@ var UserPublicForeignSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var UserPublicSchema = new import_mongoose2.Schema(
+var UserPublicSchema = new import_mongoose3.Schema(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },
@@ -98,10 +139,10 @@ var UserPublicSchema = new import_mongoose2.Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = import_mongoose2.models.UserPublic || (0, import_mongoose2.model)("UserPublic", UserPublicSchema, "usersPublic");
+var UserPublicModel = import_mongoose3.models.UserPublic || (0, import_mongoose3.model)("UserPublic", UserPublicSchema, "usersPublic");
 
 // _src/models/UserChallengeModel/index.ts
-var import_mongoose6 = require("mongoose");
+var import_mongoose7 = require("mongoose");
 
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
@@ -113,7 +154,7 @@ var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
 })(UserChallengeStatus || {});
 
 // _src/models/ChallengeModel/index.ts
-var import_mongoose3 = require("mongoose");
+var import_mongoose4 = require("mongoose");
 
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatus = /* @__PURE__ */ ((ChallengeStatus2) => {
@@ -127,14 +168,14 @@ var ChallengeType = /* @__PURE__ */ ((ChallengeType2) => {
 })(ChallengeType || {});
 
 // _src/models/ChallengeModel/index.ts
-var ChallengeFeedbackSchema = new import_mongoose3.Schema(
+var ChallengeFeedbackSchema = new import_mongoose4.Schema(
   {
     positive: { type: String, default: "" },
     negative: { type: String, default: "" }
   },
   { _id: false, versionKey: false }
 );
-var ChallengeSettingsSchema = new import_mongoose3.Schema(
+var ChallengeSettingsSchema = new import_mongoose4.Schema(
   {
     type: { type: String, enum: Object.values(ChallengeType), required: true },
     duration: { type: Number },
@@ -143,7 +184,7 @@ var ChallengeSettingsSchema = new import_mongoose3.Schema(
   },
   { _id: false, versionKey: false }
 );
-var ChallengeSettingsForeignSchema = new import_mongoose3.Schema(
+var ChallengeSettingsForeignSchema = new import_mongoose4.Schema(
   {
     type: {
       type: String,
@@ -154,7 +195,7 @@ var ChallengeSettingsForeignSchema = new import_mongoose3.Schema(
   },
   { _id: false }
 );
-var ChallengeForeignSchema = new import_mongoose3.Schema(
+var ChallengeForeignSchema = new import_mongoose4.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -163,7 +204,7 @@ var ChallengeForeignSchema = new import_mongoose3.Schema(
   },
   { _id: false }
 );
-var ChallengeSchema = new import_mongoose3.Schema(
+var ChallengeSchema = new import_mongoose4.Schema(
   {
     name: { type: String, required: true },
     stage: { type: IdNameSchema, default: null },
@@ -181,10 +222,10 @@ var ChallengeSchema = new import_mongoose3.Schema(
 );
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
-var ChallengeModel = import_mongoose3.models.Challenge || (0, import_mongoose3.model)("Challenge", ChallengeSchema);
+var ChallengeModel = import_mongoose4.models.Challenge || (0, import_mongoose4.model)("Challenge", ChallengeSchema);
 
 // _src/models/UserStageModel/index.ts
-var import_mongoose5 = require("mongoose");
+var import_mongoose6 = require("mongoose");
 
 // _src/models/UserStageModel/types.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -202,8 +243,8 @@ var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
 })(StageStatus || {});
 
 // _src/models/StageModel/index.ts
-var import_mongoose4 = require("mongoose");
-var StageSettingsSchema = new import_mongoose4.Schema(
+var import_mongoose5 = require("mongoose");
+var StageSettingsSchema = new import_mongoose5.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -211,13 +252,13 @@ var StageSettingsSchema = new import_mongoose4.Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new import_mongoose4.Schema(
+var StageSettingsForeignSchema = new import_mongoose5.Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new import_mongoose4.Schema(
+var StageForeignSchema = new import_mongoose5.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -226,7 +267,7 @@ var StageForeignSchema = new import_mongoose4.Schema(
   },
   { _id: false }
 );
-var StageSchema = new import_mongoose4.Schema(
+var StageSchema = new import_mongoose5.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
@@ -243,10 +284,10 @@ var StageSchema = new import_mongoose4.Schema(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = import_mongoose4.models.Stage || (0, import_mongoose4.model)("Stage", StageSchema);
+var StageModel = import_mongoose5.models.Stage || (0, import_mongoose5.model)("Stage", StageSchema);
 
 // _src/models/UserStageModel/index.ts
-var UserStageForeignSchema = new import_mongoose5.Schema(
+var UserStageForeignSchema = new import_mongoose6.Schema(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -254,7 +295,7 @@ var UserStageForeignSchema = new import_mongoose5.Schema(
   },
   { _id: false }
 );
-var UserStageSchema = new import_mongoose5.Schema(
+var UserStageSchema = new import_mongoose6.Schema(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -270,10 +311,10 @@ var UserStageSchema = new import_mongoose5.Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-var UserStageModel = import_mongoose5.models.UserStage || (0, import_mongoose5.model)("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = import_mongoose6.models.UserStage || (0, import_mongoose6.model)("UserStage", UserStageSchema, "usersStage");
 
 // _src/models/UserChallengeModel/index.ts
-var UserChallengeForeignSchema = new import_mongoose6.Schema(
+var UserChallengeForeignSchema = new import_mongoose7.Schema(
   {
     id: { type: String, required: true },
     challengeId: { type: String, required: true },
@@ -281,7 +322,7 @@ var UserChallengeForeignSchema = new import_mongoose6.Schema(
   },
   { _id: false }
 );
-var UserChallengeSchema = new import_mongoose6.Schema(
+var UserChallengeSchema = new import_mongoose7.Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
@@ -299,11 +340,11 @@ var UserChallengeSchema = new import_mongoose6.Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-var UserChallengeModel = import_mongoose6.models.UserChallenge || (0, import_mongoose6.model)("UserChallenge", UserChallengeSchema, "usersChallenge");
+var UserChallengeModel = import_mongoose7.models.UserChallenge || (0, import_mongoose7.model)("UserChallenge", UserChallengeSchema, "usersChallenge");
 
 // _src/models/TriviaModel/index.ts
-var import_mongoose7 = require("mongoose");
-var TriviaOptionSchema = new import_mongoose7.Schema(
+var import_mongoose8 = require("mongoose");
+var TriviaOptionSchema = new import_mongoose8.Schema(
   {
     text: { type: String, required: true },
     isCorrect: { type: Boolean, default: false },
@@ -311,13 +352,13 @@ var TriviaOptionSchema = new import_mongoose7.Schema(
   },
   { _id: false, versionKey: false }
 );
-var TriviaForeignOptionSchema = new import_mongoose7.Schema(
+var TriviaForeignOptionSchema = new import_mongoose8.Schema(
   {
     text: { type: String, required: true }
   },
   { _id: false }
 );
-var TriviaForeignSchema = new import_mongoose7.Schema(
+var TriviaForeignSchema = new import_mongoose8.Schema(
   {
     id: { type: String, required: true },
     question: { type: String, required: true },
@@ -326,7 +367,7 @@ var TriviaForeignSchema = new import_mongoose7.Schema(
   },
   { _id: false }
 );
-var TriviaSchema = new import_mongoose7.Schema(
+var TriviaSchema = new import_mongoose8.Schema(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
@@ -339,10 +380,10 @@ var TriviaSchema = new import_mongoose7.Schema(
 );
 TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
-var TriviaModel = import_mongoose7.models.Trivia || (0, import_mongoose7.model)("Trivia", TriviaSchema);
+var TriviaModel = import_mongoose8.models.Trivia || (0, import_mongoose8.model)("Trivia", TriviaSchema);
 
 // _src/models/UserTriviaModel/index.ts
-var UserTriviaResultSchema = new import_mongoose8.Schema(
+var UserTriviaResultSchema = new import_mongoose9.Schema(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
@@ -351,7 +392,7 @@ var UserTriviaResultSchema = new import_mongoose8.Schema(
   },
   { _id: false }
 );
-var UserTriviaSchema = new import_mongoose8.Schema(
+var UserTriviaSchema = new import_mongoose9.Schema(
   {
     userPublic: { type: UserPublicForeignSchema, required: true },
     userChallenge: { type: UserChallengeForeignSchema, required: true },
@@ -362,5 +403,5 @@ var UserTriviaSchema = new import_mongoose8.Schema(
 );
 UserTriviaSchema.set("toJSON", ToObject);
 UserTriviaSchema.set("toObject", ToObject);
-var UserTriviaModel = import_mongoose8.models.UserTrivia || (0, import_mongoose8.model)("UserTrivia", UserTriviaSchema, "usersTrivia");
+var UserTriviaModel = import_mongoose9.models.UserTrivia || (0, import_mongoose9.model)("UserTrivia", UserTriviaSchema, "usersTrivia");
 var UserTriviaModel_default = UserTriviaModel;

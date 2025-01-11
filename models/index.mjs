@@ -255,6 +255,13 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new Schema6(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new Schema6(
   {
     name: { type: String, default: "" },
@@ -306,7 +313,7 @@ var UserPublicForeignSchema = new Schema7(
 );
 var UserPublicSchema = new Schema7(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },

@@ -1,4 +1,4 @@
-import { model, models, Schema } from "mongoose";
+import { Model, model, models, Schema } from "mongoose";
 import { IdNameSchema, ToObject } from "../../helpers/schema";
 import {
   Trivia,
@@ -51,6 +51,7 @@ TriviaSchema.set("toJSON", ToObject);
 
 export * from "./types";
 
-const TriviaModel = models.Trivia || model("Trivia", TriviaSchema);
+const TriviaModel =
+  (models.Trivia as Model<Trivia>) || model("Trivia", TriviaSchema);
 
 export default TriviaModel;

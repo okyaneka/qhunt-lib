@@ -1,5 +1,5 @@
-import { model, models, Schema, ToObjectOptions } from "mongoose";
-import { User, UserRole } from "./types";
+import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
+import { User, UserForeign, UserRole } from "./types";
 
 const ToObject: ToObjectOptions = {
   transform: (doc, ret) => {
@@ -7,6 +7,14 @@ const ToObject: ToObjectOptions = {
     return { id: _id, ...rest };
   },
 };
+
+export const UserForeignSchema = new Schema<UserForeign>(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" },
+  },
+  { _id: false }
+);
 
 const UserSchema = new Schema<User>(
   {
@@ -26,6 +34,6 @@ UserSchema.set("toObject", ToObject);
 
 export * from "./types";
 
-const UserModel = models.User || model("User", UserSchema);
+const UserModel = (models.User as Model<User>) || model("User", UserSchema);
 
 export default UserModel;

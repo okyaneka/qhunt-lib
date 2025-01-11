@@ -7,6 +7,7 @@ import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 import { db } from "~/helpers";
 import UserPublic from "~/models/UserPublicModel";
+import UserPublicService from "../UserPublicService";
 
 export const register = async (payload: UserPayload, code?: string) => {
   return await db.transaction(async (session) => {
@@ -46,9 +47,9 @@ export const login = async (payload: UserPayload, secret: string) => {
 
   if (!isPasswordValid) throw new Error("invalid password");
 
-  const userPublic = await UserPublic.findOne({ "user.id": user._id });
-
-  if (!userPublic) throw new Error("invalid user");
+  const userPublic =
+    (await UserPublic.findOne({ "user.id": user._id }).catch(() => null)) ||
+    (await UserPublicService.setup(user.id));
 
   const token = sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60,
@@ -56,7 +57,7 @@ export const login = async (payload: UserPayload, secret: string) => {
 
   const { _id: id, name } = user;
 
-  return { id, name, email, TID: userPublic?.code, token };
+  return { id, name, email, TID: userPublic.code, token };
 };
 
 export const profile = async (bearer: string) => {};
@@ -70,18 +71,11 @@ export const detail = async (id: string) => {
 
   if (!user) throw new Error("user not found");
 
-  const meta = await UserPublic.findOne({ "user.id": user._id }).catch(
-    () => null
-  );
+  const meta = await UserPublicService.verify(user.id);
 
   return {
     ...user.toObject(),
-    meta: meta?.toObject({
-      transform: (doc, ret) => {
-        const { _id, user, __v, ...data } = ret;
-        return { id: _id, ...data };
-      },
-    }),
+    meta,
   };
 };
 
