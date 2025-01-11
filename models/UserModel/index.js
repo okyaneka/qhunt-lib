@@ -20,6 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // _src/models/UserModel/index.ts
 var UserModel_exports = {};
 __export(UserModel_exports, {
+  UserForeignSchema: () => UserForeignSchema,
   UserRole: () => UserRole,
   default: () => UserModel_default
 });
@@ -41,6 +42,13 @@ var ToObject = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new import_mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new import_mongoose.Schema(
   {
     name: { type: String, default: "" },
@@ -59,5 +67,6 @@ var UserModel = import_mongoose.models.User || (0, import_mongoose.model)("User"
 var UserModel_default = UserModel;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  UserForeignSchema,
   UserRole
 });

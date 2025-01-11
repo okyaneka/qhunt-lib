@@ -498,7 +498,7 @@ var QrModel = import_mongoose5.models.Qr || (0, import_mongoose5.model)("Qr", Qr
 var QrModel_default = QrModel;
 
 // _src/models/UserChallengeModel/index.ts
-var import_mongoose8 = require("mongoose");
+var import_mongoose9 = require("mongoose");
 
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
@@ -510,7 +510,7 @@ var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
 })(UserChallengeStatus || {});
 
 // _src/models/UserPublicModel/index.ts
-var import_mongoose6 = require("mongoose");
+var import_mongoose7 = require("mongoose");
 
 // _src/models/UserPublicModel/types.ts
 var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
@@ -520,8 +520,50 @@ var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
   return UserPublicGender2;
 })(UserPublicGender || {});
 
+// _src/models/UserModel/index.ts
+var import_mongoose6 = require("mongoose");
+
+// _src/models/UserModel/types.ts
+var UserRole = /* @__PURE__ */ ((UserRole2) => {
+  UserRole2["Admin"] = "admin";
+  UserRole2["Private"] = "private";
+  UserRole2["Public"] = "public";
+  return UserRole2;
+})(UserRole || {});
+
+// _src/models/UserModel/index.ts
+var ToObject2 = {
+  transform: (doc, ret) => {
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
+  }
+};
+var UserForeignSchema = new import_mongoose6.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var UserSchema = new import_mongoose6.Schema(
+  {
+    name: { type: String, default: "" },
+    role: { type: String, enum: Object.values(UserRole) },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+UserSchema.set("toJSON", ToObject2);
+UserSchema.set("toObject", ToObject2);
+var UserModel = import_mongoose6.models.User || (0, import_mongoose6.model)("User", UserSchema);
+var UserModel_default = UserModel;
+
 // _src/models/UserPublicModel/index.ts
-var UserPublicForeignSchema = new import_mongoose6.Schema(
+var UserPublicForeignSchema = new import_mongoose7.Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -529,9 +571,9 @@ var UserPublicForeignSchema = new import_mongoose6.Schema(
   },
   { _id: false }
 );
-var UserPublicSchema = new import_mongoose6.Schema(
+var UserPublicSchema = new import_mongoose7.Schema(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },
@@ -548,11 +590,11 @@ var UserPublicSchema = new import_mongoose6.Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = import_mongoose6.models.UserPublic || (0, import_mongoose6.model)("UserPublic", UserPublicSchema, "usersPublic");
+var UserPublicModel = import_mongoose7.models.UserPublic || (0, import_mongoose7.model)("UserPublic", UserPublicSchema, "usersPublic");
 var UserPublicModel_default = UserPublicModel;
 
 // _src/models/UserStageModel/index.ts
-var import_mongoose7 = require("mongoose");
+var import_mongoose8 = require("mongoose");
 
 // _src/models/UserStageModel/types.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -563,7 +605,7 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
 })(UserStageStatus || {});
 
 // _src/models/UserStageModel/index.ts
-var UserStageForeignSchema = new import_mongoose7.Schema(
+var UserStageForeignSchema = new import_mongoose8.Schema(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -571,7 +613,7 @@ var UserStageForeignSchema = new import_mongoose7.Schema(
   },
   { _id: false }
 );
-var UserStageSchema = new import_mongoose7.Schema(
+var UserStageSchema = new import_mongoose8.Schema(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -587,11 +629,11 @@ var UserStageSchema = new import_mongoose7.Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-var UserStageModel = import_mongoose7.models.UserStage || (0, import_mongoose7.model)("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = import_mongoose8.models.UserStage || (0, import_mongoose8.model)("UserStage", UserStageSchema, "usersStage");
 var UserStageModel_default = UserStageModel;
 
 // _src/models/UserChallengeModel/index.ts
-var UserChallengeForeignSchema = new import_mongoose8.Schema(
+var UserChallengeForeignSchema = new import_mongoose9.Schema(
   {
     id: { type: String, required: true },
     challengeId: { type: String, required: true },
@@ -599,7 +641,7 @@ var UserChallengeForeignSchema = new import_mongoose8.Schema(
   },
   { _id: false }
 );
-var UserChallengeSchema = new import_mongoose8.Schema(
+var UserChallengeSchema = new import_mongoose9.Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
@@ -617,31 +659,15 @@ var UserChallengeSchema = new import_mongoose8.Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-var UserChallengeModel = import_mongoose8.models.UserChallenge || (0, import_mongoose8.model)("UserChallenge", UserChallengeSchema, "usersChallenge");
+var UserChallengeModel = import_mongoose9.models.UserChallenge || (0, import_mongoose9.model)("UserChallenge", UserChallengeSchema, "usersChallenge");
 var UserChallengeModel_default = UserChallengeModel;
 
 // _src/services/UserPublicService/index.ts
 var import_crypto_js = require("crypto-js");
-var verify3 = async (code) => {
-  const user = await UserPublicModel_default.findOne({ code, deletedAt: null });
-  if (!user) throw new Error("code invalid");
-  user.lastAccessedAt = /* @__PURE__ */ new Date();
-  await user.save();
-  return user.toObject();
-};
-var setup = async () => {
-  const timestamp = Date.now();
-  const salt = import_crypto_js.lib.WordArray.random(4).toString(import_crypto_js.enc.Hex);
-  const code = (0, import_crypto_js.SHA256)(`${timestamp}${salt}`).toString(import_crypto_js.enc.Hex);
-  const user = await UserPublicModel_default.create({ code });
-  return user.toObject();
-};
-var UserPublicService = { verify: verify3, setup };
-var UserPublicService_default = UserPublicService;
 
 // _src/models/TriviaModel/index.ts
-var import_mongoose9 = require("mongoose");
-var TriviaOptionSchema = new import_mongoose9.Schema(
+var import_mongoose10 = require("mongoose");
+var TriviaOptionSchema = new import_mongoose10.Schema(
   {
     text: { type: String, required: true },
     isCorrect: { type: Boolean, default: false },
@@ -649,13 +675,13 @@ var TriviaOptionSchema = new import_mongoose9.Schema(
   },
   { _id: false, versionKey: false }
 );
-var TriviaForeignOptionSchema = new import_mongoose9.Schema(
+var TriviaForeignOptionSchema = new import_mongoose10.Schema(
   {
     text: { type: String, required: true }
   },
   { _id: false }
 );
-var TriviaForeignSchema = new import_mongoose9.Schema(
+var TriviaForeignSchema = new import_mongoose10.Schema(
   {
     id: { type: String, required: true },
     question: { type: String, required: true },
@@ -664,7 +690,7 @@ var TriviaForeignSchema = new import_mongoose9.Schema(
   },
   { _id: false }
 );
-var TriviaSchema = new import_mongoose9.Schema(
+var TriviaSchema = new import_mongoose10.Schema(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
@@ -677,12 +703,12 @@ var TriviaSchema = new import_mongoose9.Schema(
 );
 TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
-var TriviaModel = import_mongoose9.models.Trivia || (0, import_mongoose9.model)("Trivia", TriviaSchema);
+var TriviaModel = import_mongoose10.models.Trivia || (0, import_mongoose10.model)("Trivia", TriviaSchema);
 var TriviaModel_default = TriviaModel;
 
 // _src/models/UserTriviaModel/index.ts
-var import_mongoose10 = require("mongoose");
-var UserTriviaResultSchema = new import_mongoose10.Schema(
+var import_mongoose11 = require("mongoose");
+var UserTriviaResultSchema = new import_mongoose11.Schema(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
@@ -691,7 +717,7 @@ var UserTriviaResultSchema = new import_mongoose10.Schema(
   },
   { _id: false }
 );
-var UserTriviaSchema = new import_mongoose10.Schema(
+var UserTriviaSchema = new import_mongoose11.Schema(
   {
     userPublic: { type: UserPublicForeignSchema, required: true },
     userChallenge: { type: UserChallengeForeignSchema, required: true },
@@ -702,8 +728,40 @@ var UserTriviaSchema = new import_mongoose10.Schema(
 );
 UserTriviaSchema.set("toJSON", ToObject);
 UserTriviaSchema.set("toObject", ToObject);
-var UserTriviaModel = import_mongoose10.models.UserTrivia || (0, import_mongoose10.model)("UserTrivia", UserTriviaSchema, "usersTrivia");
+var UserTriviaModel = import_mongoose11.models.UserTrivia || (0, import_mongoose11.model)("UserTrivia", UserTriviaSchema, "usersTrivia");
 var UserTriviaModel_default = UserTriviaModel;
+
+// _src/services/UserPublicService/index.ts
+var verify3 = async (value) => {
+  const userPublic = await UserPublicModel_default.findOneAndUpdate(
+    {
+      $or: [{ "user.id": value }, { code: value }],
+      deletedAt: null
+    },
+    { lastAccessedAt: /* @__PURE__ */ new Date() }
+  );
+  if (!userPublic) throw new Error("invalid user");
+  return userPublic.toObject();
+};
+var setup = async (userId) => {
+  const timestamp = Date.now();
+  const salt = import_crypto_js.lib.WordArray.random(4).toString(import_crypto_js.enc.Hex);
+  const code = (0, import_crypto_js.SHA256)(`${timestamp}${salt}`).toString(import_crypto_js.enc.Hex);
+  const payload = { code };
+  if (userId) {
+    const userPublic = await UserPublicModel_default.findOne({
+      "user.id": userId,
+      deletedAt: null
+    });
+    if (userPublic) return userPublic.toObject();
+    const user2 = await UserModel_default.findOne({ _id: userId, deletedAt: null });
+    if (user2) payload.user = { id: user2.id, name: user2.name };
+  }
+  const user = await UserPublicModel_default.create(payload);
+  return user.toObject();
+};
+var UserPublicService = { verify: verify3, setup };
+var UserPublicService_default = UserPublicService;
 
 // _src/validators/ChallengeValidator/index.ts
 var import_joi3 = __toESM(require("joi"));
@@ -1084,7 +1142,7 @@ var detail4 = async (id, TID) => {
     deletedAt: null,
     "userPublic.code": TID
   });
-  if (!item) throw new Error("stage not found");
+  if (!item) throw new Error("user stage not found");
   return item.toObject({
     transform: (doc, ret) => {
       const { _id, __v, userPublic, ...rest } = ret;
@@ -1226,41 +1284,6 @@ var QrService = {
 };
 var QrService_default = QrService;
 
-// _src/models/UserModel/index.ts
-var import_mongoose11 = require("mongoose");
-
-// _src/models/UserModel/types.ts
-var UserRole = /* @__PURE__ */ ((UserRole2) => {
-  UserRole2["Admin"] = "admin";
-  UserRole2["Private"] = "private";
-  UserRole2["Public"] = "public";
-  return UserRole2;
-})(UserRole || {});
-
-// _src/models/UserModel/index.ts
-var ToObject2 = {
-  transform: (doc, ret) => {
-    const { _id, __v, password, ...rest } = ret;
-    return { id: _id, ...rest };
-  }
-};
-var UserSchema = new import_mongoose11.Schema(
-  {
-    name: { type: String, default: "" },
-    role: { type: String, enum: Object.values(UserRole) },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-UserSchema.set("toJSON", ToObject2);
-UserSchema.set("toObject", ToObject2);
-var UserModel = import_mongoose11.models.User || (0, import_mongoose11.model)("User", UserSchema);
-var UserModel_default = UserModel;
-
 // _src/services/UserService/index.ts
 var import_bcryptjs = require("bcryptjs");
 var import_jsonwebtoken = require("jsonwebtoken");
@@ -1294,13 +1317,12 @@ var login = async (payload, secret) => {
   if (!user) throw new Error("user not found");
   const isPasswordValid = await (0, import_bcryptjs.compare)(payload.password, user.password);
   if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await UserPublicModel_default.findOne({ "user.id": user._id });
-  if (!userPublic) throw new Error("invalid user");
+  const userPublic = await UserPublicModel_default.findOne({ "user.id": user._id }).catch(() => null) || await UserPublicService_default.setup(user.id);
   const token = (0, import_jsonwebtoken.sign)({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
   });
   const { _id: id, name } = user;
-  return { id, name, email, TID: userPublic?.code, token };
+  return { id, name, email, TID: userPublic.code, token };
 };
 var profile = async (bearer) => {
 };
@@ -1312,17 +1334,10 @@ var detail7 = async (id) => {
   const user = await UserModel_default.findOne({ _id: id, deletedAt: null }).catch(() => {
   });
   if (!user) throw new Error("user not found");
-  const meta = await UserPublicModel_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  );
+  const meta = await UserPublicService_default.verify(user.id);
   return {
     ...user.toObject(),
-    meta: meta?.toObject({
-      transform: (doc, ret) => {
-        const { _id, user: user2, __v, ...data } = ret;
-        return { id: _id, ...data };
-      }
-    })
+    meta
   };
 };
 var update4 = async (id, payload) => {

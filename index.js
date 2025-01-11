@@ -395,6 +395,13 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new import_mongoose7.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new import_mongoose7.Schema(
   {
     name: { type: String, default: "" },
@@ -446,7 +453,7 @@ var UserPublicForeignSchema = new import_mongoose8.Schema(
 );
 var UserPublicSchema = new import_mongoose8.Schema(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },
@@ -763,18 +770,32 @@ var import_crypto_js2 = __toESM(require("crypto-js"));
 
 // _src/services/UserPublicService/index.ts
 var import_crypto_js = require("crypto-js");
-var verify3 = async (code) => {
-  const user = await UserPublicModel_default.findOne({ code, deletedAt: null });
-  if (!user) throw new Error("code invalid");
-  user.lastAccessedAt = /* @__PURE__ */ new Date();
-  await user.save();
-  return user.toObject();
+var verify3 = async (value) => {
+  const userPublic = await UserPublicModel_default.findOneAndUpdate(
+    {
+      $or: [{ "user.id": value }, { code: value }],
+      deletedAt: null
+    },
+    { lastAccessedAt: /* @__PURE__ */ new Date() }
+  );
+  if (!userPublic) throw new Error("invalid user");
+  return userPublic.toObject();
 };
-var setup = async () => {
+var setup = async (userId) => {
   const timestamp = Date.now();
   const salt = import_crypto_js.lib.WordArray.random(4).toString(import_crypto_js.enc.Hex);
   const code = (0, import_crypto_js.SHA256)(`${timestamp}${salt}`).toString(import_crypto_js.enc.Hex);
-  const user = await UserPublicModel_default.create({ code });
+  const payload = { code };
+  if (userId) {
+    const userPublic = await UserPublicModel_default.findOne({
+      "user.id": userId,
+      deletedAt: null
+    });
+    if (userPublic) return userPublic.toObject();
+    const user2 = await UserModel_default.findOne({ _id: userId, deletedAt: null });
+    if (user2) payload.user = { id: user2.id, name: user2.name };
+  }
+  const user = await UserPublicModel_default.create(payload);
   return user.toObject();
 };
 var UserPublicService = { verify: verify3, setup };
@@ -1184,7 +1205,7 @@ var detail4 = async (id, TID) => {
     deletedAt: null,
     "userPublic.code": TID
   });
-  if (!item) throw new Error("stage not found");
+  if (!item) throw new Error("user stage not found");
   return item.toObject({
     transform: (doc, ret) => {
       const { _id, __v, userPublic, ...rest } = ret;
@@ -1359,13 +1380,12 @@ var login = async (payload, secret) => {
   if (!user) throw new Error("user not found");
   const isPasswordValid = await (0, import_bcryptjs.compare)(payload.password, user.password);
   if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await UserPublicModel_default.findOne({ "user.id": user._id });
-  if (!userPublic) throw new Error("invalid user");
+  const userPublic = await UserPublicModel_default.findOne({ "user.id": user._id }).catch(() => null) || await UserPublicService_default.setup(user.id);
   const token = (0, import_jsonwebtoken.sign)({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
   });
   const { _id: id, name } = user;
-  return { id, name, email, TID: userPublic?.code, token };
+  return { id, name, email, TID: userPublic.code, token };
 };
 var profile = async (bearer) => {
 };
@@ -1377,17 +1397,10 @@ var detail7 = async (id) => {
   const user = await UserModel_default.findOne({ _id: id, deletedAt: null }).catch(() => {
   });
   if (!user) throw new Error("user not found");
-  const meta = await UserPublicModel_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  );
+  const meta = await UserPublicService_default.verify(user.id);
   return {
     ...user.toObject(),
-    meta: meta?.toObject({
-      transform: (doc, ret) => {
-        const { _id, user: user2, __v, ...data } = ret;
-        return { id: _id, ...data };
-      }
-    })
+    meta
   };
 };
 var update4 = async (id, payload) => {

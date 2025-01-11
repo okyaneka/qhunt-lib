@@ -83,6 +83,13 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new Schema2(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new Schema2(
   {
     name: { type: String, default: "" },

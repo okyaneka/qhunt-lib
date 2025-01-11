@@ -300,6 +300,13 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new import_mongoose6.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new import_mongoose6.Schema(
   {
     name: { type: String, default: "" },
@@ -351,7 +358,7 @@ var UserPublicForeignSchema = new import_mongoose7.Schema(
 );
 var UserPublicSchema = new import_mongoose7.Schema(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },

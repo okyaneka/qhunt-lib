@@ -93,7 +93,9 @@ declare const services: {
     };
     readonly TriviaService: {
         sync: (challenge: import("../models/ChallengeModel").Challenge, items: import("../models/TriviaModel").TriviaPayload[]) => Promise<string[]>;
-        content: (challenge: import("../models/ChallengeModel").Challenge) => Promise<any[]>;
+        content: (challenge: import("../models/ChallengeModel").Challenge) => Promise<(import("../models/TriviaModel").Trivia & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
         detail: (id: string) => Promise<void>;
         verify: (id: string) => Promise<void>;
     };
@@ -130,18 +132,22 @@ declare const services: {
         submit: (id: string, payload: any, TID: string) => Promise<void>;
     };
     readonly UserPublicService: {
-        verify: (code: string) => Promise<import("../models/UserPublicModel").UserPublic & {
+        verify: (value: string) => Promise<import("../models/UserPublicModel").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        setup: () => Promise<import("../models/UserPublicModel").UserPublic & {
+        setup: (userId?: string) => Promise<import("../models/UserPublicModel").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
         }>;
     };
     readonly UserService: {
-        register: (payload: import("../models/UserModel").UserPayload, code?: string) => Promise<any>;
+        register: (payload: import("../models/UserModel").UserPayload, code?: string) => Promise<import("mongoose").Document<unknown, {}, import("../models/UserModel").User> & import("../models/UserModel").User & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        }>;
         login: (payload: import("../models/UserModel").UserPayload, secret: string) => Promise<{
-            id: any;
-            name: any;
+            id: import("mongoose").Types.ObjectId;
+            name: string;
             email: string;
             TID: string;
             token: string;
@@ -149,7 +155,20 @@ declare const services: {
         profile: (bearer: string) => Promise<void>;
         list: (params: import("../models/UserModel").UserListParams) => Promise<void>;
         create: (payload: import("../models/UserModel").UserPayload) => Promise<void>;
-        detail: (id: string) => Promise<any>;
+        detail: (id: string) => Promise<{
+            meta: import("../models/UserPublicModel").UserPublic & {
+                _id: import("mongoose").Types.ObjectId;
+            };
+            id: string;
+            name: string;
+            email: string;
+            password: string;
+            role: import("../models/UserModel").UserRole;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            _id: import("mongoose").Types.ObjectId;
+        }>;
         update: (id: string, payload: import("../models/UserModel").UserPayload) => Promise<void>;
         delete: (id: string) => Promise<void>;
     };

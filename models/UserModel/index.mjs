@@ -16,6 +16,13 @@ var ToObject = {
     return { id: _id, ...rest };
   }
 };
+var UserForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" }
+  },
+  { _id: false }
+);
 var UserSchema = new Schema(
   {
     name: { type: String, default: "" },
@@ -33,6 +40,7 @@ UserSchema.set("toObject", ToObject);
 var UserModel = models.User || model("User", UserSchema);
 var UserModel_default = UserModel;
 export {
+  UserForeignSchema,
   UserRole,
   UserModel_default as default
 };
