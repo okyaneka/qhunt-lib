@@ -13,7 +13,8 @@ export const setup = async () => {
   const timestamp = Date.now();
   const salt = lib.WordArray.random(4).toString(enc.Hex);
   const code: string = SHA256(`${timestamp}${salt}`).toString(enc.Hex);
-  return await UserPublic.create({ code });
+  const user = await UserPublic.create({ code });
+  return user.toObject();
 };
 
 const UserPublicService = { verify, setup };

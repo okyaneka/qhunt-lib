@@ -733,7 +733,8 @@ var setup = async () => {
   const timestamp = Date.now();
   const salt = lib.WordArray.random(4).toString(enc.Hex);
   const code = SHA256(`${timestamp}${salt}`).toString(enc.Hex);
-  return await UserPublicModel_default.create({ code });
+  const user = await UserPublicModel_default.create({ code });
+  return user.toObject();
 };
 var UserPublicService = { verify: verify3, setup };
 var UserPublicService_default = UserPublicService;
