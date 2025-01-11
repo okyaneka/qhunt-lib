@@ -1,39 +1,10 @@
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -55,26 +26,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // _src/services/UserStageService/index.ts
 var UserStageService_exports = {};
@@ -82,26 +33,26 @@ __export(UserStageService_exports, {
   default: () => UserStageService_default,
   detail: () => detail4,
   list: () => list5,
-  setup: () => setup3,
+  setup: () => setup4,
   verify: () => verify6
 });
 module.exports = __toCommonJS(UserStageService_exports);
 
 // _src/helpers/db/index.ts
 var import_mongoose = require("mongoose");
-var transaction = (operation) => __async(void 0, null, function* () {
-  const session = yield (0, import_mongoose.startSession)();
+var transaction = async (operation) => {
+  const session = await (0, import_mongoose.startSession)();
   session.startTransaction();
-  return yield operation(session).then((res) => __async(void 0, null, function* () {
-    yield session.commitTransaction();
+  return await operation(session).then(async (res) => {
+    await session.commitTransaction();
     return res;
-  })).catch((err) => __async(void 0, null, function* () {
-    yield session.abortTransaction();
+  }).catch(async (err) => {
+    await session.abortTransaction();
     throw err;
-  })).finally(() => {
+  }).finally(() => {
     session.endSession();
   });
-});
+};
 var db = { transaction };
 var db_default = db;
 
@@ -124,9 +75,9 @@ var import_joi = __toESM(require("joi"));
 var import_mongoose2 = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
-  if (option == null ? void 0 : option.required) v = v.required();
-  if ((option == null ? void 0 : option.allow) !== void 0) v = v.allow(option.allow);
-  if ((option == null ? void 0 : option.defaultValue) !== void 0) v = v.default(option.defaultValue);
+  if (option?.required) v = v.required();
+  if (option?.allow !== void 0) v = v.allow(option.allow);
+  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
   return v;
 };
 var string = (option) => createValidator(import_joi.default.string().trim(), option);
@@ -137,14 +88,14 @@ var array = (item, options) => {
     import_joi.default.array().items(item),
     options
   );
-  if (options == null ? void 0 : options.required) v = v.min(1);
+  if (options?.required) v = v.min(1);
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
 var ToObject = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, deletedAt, __v } = _a, rest = __objRest(_a, ["_id", "deletedAt", "__v"]);
-    return __spreadValues({ id: _id.toString() }, rest);
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
   }
 };
 var IdNameSchema = new import_mongoose2.Schema(
@@ -285,27 +236,27 @@ var StageModel = import_mongoose4.models.Stage || (0, import_mongoose4.model)("S
 var StageModel_default = StageModel;
 
 // _src/services/StageService/index.ts
-var isUsed = (ids, id) => __async(void 0, null, function* () {
+var isUsed = async (ids, id) => {
   const filter = {
     _id: { $in: ids },
     deletedAt: null,
     stage: { $ne: null }
   };
   if (id) filter["stage.id"] = { $ne: id };
-  const used = (yield ChallengeModel_default.find(filter)).map((item) => item.id);
+  const used = (await ChallengeModel_default.find(filter)).map((item) => item.id);
   if (used.length)
     throw new Error(
       `challenge${used.length > 1 ? "s" : ""} ${used.join(", ")} ${used.length > 1 ? "are" : "is"} used`
     );
-});
-var list = (params) => __async(void 0, null, function* () {
+};
+var list = async (params) => {
   const skip = (params.page - 1) * params.limit;
   const filter = {
     deletedAt: null,
     name: { $regex: params.search, $options: "i" }
   };
-  const items = yield StageModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
-  const totalItems = yield StageModel_default.countDocuments(filter);
+  const items = await StageModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const totalItems = await StageModel_default.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / params.limit);
   return {
     list: items.map((item) => item.toObject()),
@@ -313,72 +264,74 @@ var list = (params) => __async(void 0, null, function* () {
     totalItems,
     totalPages
   };
-});
-var create = (payload) => __async(void 0, null, function* () {
-  yield isUsed(payload.contents);
-  const contents = yield ChallengeModel_default.find({ _id: { $in: payload.contents } });
-  const stage = yield StageModel_default.create(__spreadProps(__spreadValues({}, payload), {
+};
+var create = async (payload) => {
+  await isUsed(payload.contents);
+  const contents = await ChallengeModel_default.find({ _id: { $in: payload.contents } });
+  const stage = await StageModel_default.create({
+    ...payload,
     contents: contents.map((item) => item.id)
-  }));
-  const sync2 = contents.map((item) => {
+  });
+  const sync = contents.map((item) => {
     item.stage = { id: stage.id, name: stage.name };
     return item.save();
   });
-  yield Promise.all(sync2);
+  await Promise.all(sync);
   return stage.toObject();
-});
-var detail = (id) => __async(void 0, null, function* () {
-  const item = yield StageModel_default.findOne({ _id: id, deletedAt: null });
+};
+var detail = async (id) => {
+  const item = await StageModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("stage not found");
   return item.toObject();
-});
-var update = (id, payload) => __async(void 0, null, function* () {
-  return yield db_default.transaction((session) => __async(void 0, null, function* () {
-    yield isUsed(payload.contents, id);
-    const stage = yield StageModel_default.findOne({ _id: id, deletedAt: null });
+};
+var update = async (id, payload) => {
+  return await db_default.transaction(async (session) => {
+    await isUsed(payload.contents, id);
+    const stage = await StageModel_default.findOne({ _id: id, deletedAt: null });
     if (!stage) throw new Error("stage not found");
-    const contents = (yield ChallengeModel_default.find({ _id: { $in: payload.contents }, deletedAt: null })).map((item) => item.id);
-    yield ChallengeModel_default.updateMany(
+    const contents = (await ChallengeModel_default.find({ _id: { $in: payload.contents }, deletedAt: null })).map((item) => item.id);
+    await ChallengeModel_default.updateMany(
       { "stage.id": stage.id },
       { $set: { stage: null } },
       { session }
     );
-    yield ChallengeModel_default.updateMany(
+    await ChallengeModel_default.updateMany(
       { _id: { $in: contents } },
       { $set: { stage: { id: stage.id, name: stage.name } } },
       { session }
     );
-    Object.assign(stage, __spreadProps(__spreadValues({}, payload), { contents }));
-    yield stage.save({ session });
+    Object.assign(stage, { ...payload, contents });
+    await stage.save({ session });
     return stage.toObject();
-  }));
-});
-var _delete = (id) => __async(void 0, null, function* () {
-  const item = yield StageModel_default.findOneAndUpdate(
+  });
+};
+var _delete = async (id) => {
+  const item = await StageModel_default.findOneAndUpdate(
     { _id: id, deletedAt: null },
     { $set: { deletedAt: Date.now() } }
   );
   if (!item) throw new Error("stage not found");
   return item;
-});
-var verify = (id) => __async(void 0, null, function* () {
-  const item = yield StageModel_default.findOne({ _id: id, deletedAt: null });
+};
+var verify = async (id) => {
+  const item = await StageModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("stage not found");
   if (item.status !== "publish" /* Publish */)
     throw new Error("stage not published yet");
   return item.toObject();
-});
+};
 var StageService = { list, create, detail, update, delete: _delete, verify };
 var StageService_default = StageService;
 
 // _src/helpers/service/index.ts
-var list2 = (_0, _1, _2, ..._3) => __async(void 0, [_0, _1, _2, ..._3], function* (model8, page, limit, filters = {}) {
+var list2 = async (model8, page, limit, filters = {}) => {
   const skip = (page - 1) * limit;
-  const filter = __spreadProps(__spreadValues({}, filters), {
+  const filter = {
+    ...filters,
     deletedAt: null
-  });
-  const items = yield model8.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
-  const totalItems = yield model8.countDocuments(filter);
+  };
+  const items = await model8.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const totalItems = await model8.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);
   return {
     list: items.map((item) => item.toObject ? item.toObject() : item),
@@ -386,18 +339,18 @@ var list2 = (_0, _1, _2, ..._3) => __async(void 0, [_0, _1, _2, ..._3], function
     totalItems,
     totalPages
   };
-});
+};
 var service = { list: list2 };
 var service_default = service;
 
 // _src/services/ChallengeService/index.ts
-var list3 = (params) => __async(void 0, null, function* () {
+var list3 = async (params) => {
   const skip = (params.page - 1) * params.limit;
   const filter = { deletedAt: null };
   if (params.stageId == "null") filter.stage = null;
   else if (params.stageId) filter["stage.id"] = params.stageId;
-  const list6 = yield ChallengeModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
-  const totalItems = yield ChallengeModel_default.countDocuments(filter);
+  const list6 = await ChallengeModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const totalItems = await ChallengeModel_default.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / params.limit);
   return {
     list: list6.map((item) => item.toObject()),
@@ -405,77 +358,76 @@ var list3 = (params) => __async(void 0, null, function* () {
     totalItems,
     totalPages
   };
-});
-var create2 = (payload) => __async(void 0, null, function* () {
-  const _a = payload, { stageId } = _a, value = __objRest(_a, ["stageId"]);
-  const stage = yield StageService_default.detail(stageId).catch(() => null);
+};
+var create2 = async (payload) => {
+  const { stageId, ...value } = payload;
+  const stage = await StageService_default.detail(stageId).catch(() => null);
   value.stage = stage ? { id: stage.id, name: stage.name } : null;
-  const item = yield ChallengeModel_default.create(value);
+  const item = await ChallengeModel_default.create(value);
   if (stage) {
     const contents = stage.contents || [];
     contents.push(item.id);
-    yield StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } });
+    await StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } });
   }
   return item.toObject();
-});
-var detail2 = (id) => __async(void 0, null, function* () {
-  const item = yield ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+};
+var detail2 = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
-});
-var update2 = (id, payload) => __async(void 0, null, function* () {
-  return yield db_default.transaction((session) => __async(void 0, null, function* () {
-    var _b;
-    const _a = payload, { stageId } = _a, value = __objRest(_a, ["stageId"]);
-    const item = yield ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+};
+var update2 = async (id, payload) => {
+  return await db_default.transaction(async (session) => {
+    const { stageId, ...value } = payload;
+    const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
     if (!item) throw new Error("challenge not found");
-    const newStage = yield StageService_default.detail(stageId).catch(() => null);
-    const oldStage = ((_b = item == null ? void 0 : item.stage) == null ? void 0 : _b.id) && item.stage.id != stageId ? yield StageService_default.detail(item.stage.id).catch(() => null) : null;
-    const newContent = (newStage == null ? void 0 : newStage.contents) || [];
-    const oldContent = (oldStage == null ? void 0 : oldStage.contents) || [];
+    const newStage = await StageService_default.detail(stageId).catch(() => null);
+    const oldStage = item?.stage?.id && item.stage.id != stageId ? await StageService_default.detail(item.stage.id).catch(() => null) : null;
+    const newContent = newStage?.contents || [];
+    const oldContent = oldStage?.contents || [];
     value.stage = newStage ? { id: newStage.id, name: newStage.name } : null;
     if (!newContent.includes(id)) newContent.push(id);
     if (oldContent.includes(id)) oldContent.splice(oldContent.indexOf(id), 1);
-    yield StageModel_default.findOneAndUpdate(
-      { _id: newStage == null ? void 0 : newStage.id },
+    await StageModel_default.findOneAndUpdate(
+      { _id: newStage?.id },
       { $set: { contents: newContent } },
       { session }
     );
-    yield StageModel_default.findOneAndUpdate(
-      { _id: oldStage == null ? void 0 : oldStage.id },
+    await StageModel_default.findOneAndUpdate(
+      { _id: oldStage?.id },
       { $set: { contents: oldContent } },
       { session }
     );
     Object.assign(item, value);
-    yield item.save({ session });
+    await item.save({ session });
     return item.toObject();
-  }));
-});
-var updateContent = (id, contents) => __async(void 0, null, function* () {
-  const item = yield ChallengeModel_default.findOneAndUpdate(
+  });
+};
+var updateContent = async (id, contents) => {
+  const item = await ChallengeModel_default.findOneAndUpdate(
     { _id: id, deletedAt: null },
     { $set: { contents } },
     { new: true }
   );
   if (!item) throw new Error("challenge not found");
   return item.toObject();
-});
-var _delete2 = (id) => __async(void 0, null, function* () {
-  const item = yield ChallengeModel_default.findOneAndUpdate(
+};
+var _delete2 = async (id) => {
+  const item = await ChallengeModel_default.findOneAndUpdate(
     { _id: id, deletedAt: null },
     { $set: { deletedAt: Date.now() } },
     { new: true }
   );
   if (!item) throw new Error("challenge not found");
   return item.toObject();
-});
-var verify2 = (id) => __async(void 0, null, function* () {
-  const item = yield ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+};
+var verify2 = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   if (item.status !== "publish" /* Publish */)
     throw new Error("challenge not published yet");
   return item.toObject();
-});
+};
 var ChallengeService = {
   list: list3,
   create: create2,
@@ -611,17 +563,21 @@ var UserChallengeModel = import_mongoose7.models.UserChallenge || (0, import_mon
 var UserChallengeModel_default = UserChallengeModel;
 
 // _src/services/UserPublicService/index.ts
-var sync = (TID) => __async(void 0, null, function* () {
-  const exists = yield UserPublicModel_default.findOne({ code: TID, deletedAt: null });
-  if (exists) return exists.toObject();
-  return (yield UserPublicModel_default.create({ code: TID, deletedAt: null })).toObject();
-});
-var verify3 = (code) => __async(void 0, null, function* () {
-  const user = yield UserPublicModel_default.findOne({ code, deletedAt: null });
+var import_crypto_js = require("crypto-js");
+var verify3 = async (code) => {
+  const user = await UserPublicModel_default.findOne({ code, deletedAt: null });
   if (!user) throw new Error("code invalid");
+  user.lastAccessedAt = /* @__PURE__ */ new Date();
+  await user.save();
   return user.toObject();
-});
-var UserPublicService = { sync, verify: verify3 };
+};
+var setup = async () => {
+  const timestamp = Date.now();
+  const salt = import_crypto_js.lib.WordArray.random(4).toString(import_crypto_js.enc.Hex);
+  const code = (0, import_crypto_js.SHA256)(`${timestamp}${salt}`).toString(import_crypto_js.enc.Hex);
+  return await UserPublicModel_default.create({ code });
+};
+var UserPublicService = { verify: verify3, setup };
 var UserPublicService_default = UserPublicService;
 
 // _src/models/TriviaModel/index.ts
@@ -706,9 +662,10 @@ var DefaultListParamsFields = {
 };
 
 // _src/validators/ChallengeValidator/index.ts
-var ChallengeListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var ChallengeListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   stageId: schema_default.string().allow("").default("")
-}));
+});
 var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
@@ -773,49 +730,49 @@ var TriviaForeignValidator = schema_default.generate({
 });
 
 // _src/services/UserTriviaService/index.ts
-var verify4 = (triviaId, TID) => __async(void 0, null, function* () {
-  const item = yield UserTriviaModel_default.findOne({
+var verify4 = async (triviaId, TID) => {
+  const item = await UserTriviaModel_default.findOne({
     "userPublic.code": TID,
     "trivia.id": triviaId,
     deletedAt: null
   });
   if (!item) throw new Error("user challenge is undiscovered");
   return item;
-});
-var setup = (userPublic, userChallenge, content) => __async(void 0, null, function* () {
-  const trivias = yield TriviaModel_default.find({ _id: { $in: content } });
-  const payload = trivias.map((item) => item.toObject()).map((item) => __async(void 0, null, function* () {
-    const trivia = yield TriviaForeignValidator.validateAsync(item, {
+};
+var setup2 = async (userPublic, userChallenge, content) => {
+  const trivias = await TriviaModel_default.find({ _id: { $in: content } });
+  const payload = trivias.map((item) => item.toObject()).map(async (item) => {
+    const trivia = await TriviaForeignValidator.validateAsync(item, {
       stripUnknown: true
     });
-    const userTrivia = yield verify4(trivia.id, userPublic.code).catch(
+    const userTrivia = await verify4(trivia.id, userPublic.code).catch(
       () => null
     );
     if (userTrivia) return userTrivia;
-    return yield UserTriviaModel_default.create({
+    return await UserTriviaModel_default.create({
       userPublic,
       userChallenge,
       trivia
     });
-  }));
-  const items = yield Promise.all(payload);
+  });
+  const items = await Promise.all(payload);
   return items.map((item) => item.toObject().id);
-});
-var details = (ids, TID) => __async(void 0, null, function* () {
-  const data = yield UserTriviaModel_default.find({
+};
+var details = async (ids, TID) => {
+  const data = await UserTriviaModel_default.find({
     _id: { $in: ids },
     "userPublic.code": TID
   });
   return data.map(
     (item) => item.toObject({
       transform: (doc, ret) => {
-        const _a = ret, { _id, __v, userPublic } = _a, rest = __objRest(_a, ["_id", "__v", "userPublic"]);
-        return __spreadValues({ id: _id }, rest);
+        const { _id, __v, userPublic, ...rest } = ret;
+        return { id: _id, ...rest };
       }
     })
   );
-});
-var UserTriviaService = { setup, details };
+};
+var UserTriviaService = { setup: setup2, details };
 var UserTriviaService_default = UserTriviaService;
 
 // _src/validators/UserPublicValidator/index.ts
@@ -826,8 +783,8 @@ var UserPublicForeignValidator = schema_default.generate({
 });
 
 // _src/services/UserChallengeService/index.ts
-var verify5 = (code, challengeId, isDiscover) => __async(void 0, null, function* () {
-  const item = yield UserChallengeModel_default.findOne({
+var verify5 = async (code, challengeId, isDiscover) => {
+  const item = await UserChallengeModel_default.findOne({
     "userPublic.code": code,
     "challenge.id": challengeId,
     deletedAt: null
@@ -835,12 +792,12 @@ var verify5 = (code, challengeId, isDiscover) => __async(void 0, null, function*
   if (!item) throw new Error("user challenge is undiscovered");
   if (isDiscover) {
     item.status = "ongoing" /* OnGoing */;
-    yield item.save();
+    await item.save();
   }
   return item.toObject();
-});
-var discover = (id) => __async(void 0, null, function* () {
-  const item = yield UserChallengeModel_default.findOneAndUpdate(
+};
+var discover = async (id) => {
+  const item = await UserChallengeModel_default.findOneAndUpdate(
     { _id: id, deletedAt: null },
     {
       $set: { status: "ongoing" /* OnGoing */ }
@@ -849,28 +806,27 @@ var discover = (id) => __async(void 0, null, function* () {
   );
   if (!item) throw new Error("user challenge is undiscovered");
   return item.toObject();
-});
-var setup2 = (code, challengeId, isDiscover) => __async(void 0, null, function* () {
-  var _a;
-  const exist = yield verify5(code, challengeId).catch(() => null);
-  if (exist) return yield discover(exist.id);
-  const userPublicData = yield UserPublicService_default.verify(code);
-  const challengeData = yield ChallengeService_default.detail(challengeId);
-  const stageId = (_a = challengeData.stage) == null ? void 0 : _a.id;
-  const userStageData = stageId ? yield UserStageService_default.verify(code, stageId).catch(() => null) : null;
+};
+var setup3 = async (code, challengeId, isDiscover) => {
+  const exist = await verify5(code, challengeId).catch(() => null);
+  if (exist) return await discover(exist.id);
+  const userPublicData = await UserPublicService_default.verify(code);
+  const challengeData = await ChallengeService_default.detail(challengeId);
+  const stageId = challengeData.stage?.id;
+  const userStageData = stageId ? await UserStageService_default.verify(code, stageId).catch(() => null) : null;
   if (stageId && !userStageData) {
-    const stageData = yield StageService_default.detail(stageId);
+    const stageData = await StageService_default.detail(stageId);
     if (!stageData.settings.canStartFromChallenges)
       throw new Error("user stage not discovered yet");
-    yield UserStageService_default.setup(code, stageId);
-    return yield verify5(code, challengeId, isDiscover);
+    await UserStageService_default.setup(code, stageId);
+    return await verify5(code, challengeId, isDiscover);
   }
   const userStage = userStageData ? {
     id: userStageData.id,
     stageId: userStageData.stage.id,
     name: userStageData.stage.name
   } : null;
-  const userPublic = yield UserPublicForeignValidator.validateAsync(
+  const userPublic = await UserPublicForeignValidator.validateAsync(
     userPublicData,
     {
       abortEarly: false,
@@ -878,7 +834,7 @@ var setup2 = (code, challengeId, isDiscover) => __async(void 0, null, function* 
       convert: true
     }
   );
-  const challenge = yield ChallengeForeignValidator.validateAsync(
+  const challenge = await ChallengeForeignValidator.validateAsync(
     challengeData,
     {
       abortEarly: false,
@@ -886,7 +842,7 @@ var setup2 = (code, challengeId, isDiscover) => __async(void 0, null, function* 
       convert: true
     }
   );
-  const userChallengeData = yield UserChallengeModel_default.create({
+  const userChallengeData = await UserChallengeModel_default.create({
     userStage,
     challenge,
     userPublic,
@@ -899,40 +855,38 @@ var setup2 = (code, challengeId, isDiscover) => __async(void 0, null, function* 
   };
   switch (challenge.settings.type) {
     case "trivia" /* Trivia */:
-      const triviaContent = yield UserTriviaService_default.setup(
+      const triviaContent = await UserTriviaService_default.setup(
         userPublic,
         userChallenge,
         challengeData.contents
       );
       userChallengeData.contents = triviaContent;
-      yield userChallengeData.save();
+      await userChallengeData.save();
       break;
     default:
       break;
   }
   return userChallengeData.toObject();
-});
-var list4 = (params, TID) => __async(void 0, null, function* () {
+};
+var list4 = async (params, TID) => {
   const { search, status, userStageId } = params;
   const filters = { "userPublic.code": TID };
   if (search) filters["challenge.name"] = { $regex: search, $options: "i" };
   if (status) filters.status = status;
   if (userStageId) filters["userStage.id"] = userStageId;
-  const _a = yield service_default.list(
+  const { list: list6, ...rest } = await service_default.list(
     UserChallengeModel_default,
     params.page,
     params.limit,
     filters
-  ), { list: list6 } = _a, rest = __objRest(_a, ["list"]);
-  return __spreadValues({
-    list: list6.map((_b) => {
-      var _c = _b, { userPublic } = _c, item = __objRest(_c, ["userPublic"]);
-      return item;
-    })
-  }, rest);
-});
-var detail3 = (id, TID) => __async(void 0, null, function* () {
-  const data = yield UserChallengeModel_default.findOne({
+  );
+  return {
+    list: list6.map(({ userPublic, ...item }) => item),
+    ...rest
+  };
+};
+var detail3 = async (id, TID) => {
+  const data = await UserChallengeModel_default.findOne({
     _id: id,
     deletedAt: null,
     "userPublic.code": TID
@@ -940,13 +894,13 @@ var detail3 = (id, TID) => __async(void 0, null, function* () {
   if (!data) throw new Error("user challenge not found");
   return data.toObject({
     transform: (doc, ret) => {
-      const _a = ret, { _id, __v, userPublic } = _a, rest = __objRest(_a, ["_id", "__v", "userPublic"]);
-      return __spreadValues({ id: _id }, rest);
+      const { _id, __v, userPublic, ...rest } = ret;
+      return { id: _id, ...rest };
     }
   });
-});
-var detailContent = (id, TID) => __async(void 0, null, function* () {
-  const data = yield UserChallengeModel_default.findOne({
+};
+var detailContent = async (id, TID) => {
+  const data = await UserChallengeModel_default.findOne({
     _id: id,
     deletedAt: null,
     "userPublic.code": TID
@@ -964,13 +918,13 @@ var detailContent = (id, TID) => __async(void 0, null, function* () {
   const services = {
     ["trivia" /* Trivia */]: UserTriviaService_default
   };
-  return yield services[challengeType].details(contents, TID);
-});
-var submit = (id, payload, TID) => __async(void 0, null, function* () {
-});
+  return await services[challengeType].details(contents, TID);
+};
+var submit = async (id, payload, TID) => {
+};
 var UserChallengeService = {
   verify: verify5,
-  setup: setup2,
+  setup: setup3,
   list: list4,
   detail: detail3,
   detailContent,
@@ -987,9 +941,10 @@ var StageSettingsValidator = schema_default.generate(
     periode: PeriodeValidator.allow(null)
   }
 );
-var StageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var StageListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
-}));
+});
 var StagePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(import_joi4.default.string()).default([]),
@@ -1007,39 +962,39 @@ var StageForeignValidator = schema_default.generate({
 });
 
 // _src/services/UserStageService/index.ts
-var verify6 = (code, stageId) => __async(void 0, null, function* () {
-  const item = yield UserStageModel_default.findOne({
+var verify6 = async (code, stageId) => {
+  const item = await UserStageModel_default.findOne({
     "userPublic.code": code,
     "stage.id": stageId,
     deletedAt: null
   });
   if (!item) throw new Error("user stage not found");
   return item.toObject();
-});
-var setup3 = (code, stageId) => __async(void 0, null, function* () {
-  const exist = yield verify6(code, stageId).catch(() => null);
+};
+var setup4 = async (code, stageId) => {
+  const exist = await verify6(code, stageId).catch(() => null);
   if (exist) return exist;
-  const userPublicData = yield UserPublicService_default.verify(code);
-  const stageData = yield StageService_default.detail(stageId);
-  const userPublic = yield UserPublicForeignValidator.validateAsync(
+  const userPublicData = await UserPublicService_default.verify(code);
+  const stageData = await StageService_default.detail(stageId);
+  const userPublic = await UserPublicForeignValidator.validateAsync(
     userPublicData,
     { convert: true, abortEarly: false, stripUnknown: true }
   );
-  const stage = yield StageForeignValidator.validateAsync(stageData, {
+  const stage = await StageForeignValidator.validateAsync(stageData, {
     convert: true,
     abortEarly: false,
     stripUnknown: true
   });
-  const userStageData = yield UserStageModel_default.create({ userPublic, stage });
+  const userStageData = await UserStageModel_default.create({ userPublic, stage });
   const contents = stageData.contents.map(
     (challengeId) => UserChallengeService_default.setup(code, challengeId)
   );
-  const contentsData = yield Promise.all(contents);
+  const contentsData = await Promise.all(contents);
   userStageData.contents = contentsData.map((item) => item.id);
-  yield userStageData.save();
+  await userStageData.save();
   return userStageData.toObject();
-});
-var list5 = (params, TID) => __async(void 0, null, function* () {
+};
+var list5 = async (params, TID) => {
   const skip = (params.page - 1) * params.limit;
   const filter = {
     deletedAt: null,
@@ -1047,15 +1002,15 @@ var list5 = (params, TID) => __async(void 0, null, function* () {
     "userPublic.code": TID
   };
   if (params.status) filter.status = params.status;
-  const items = yield UserStageModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
-  const totalItems = yield UserStageModel_default.countDocuments(filter);
+  const items = await UserStageModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const totalItems = await UserStageModel_default.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / params.limit);
   return {
     list: items.map(
       (item) => item.toObject({
         transform: (doc, ret) => {
-          const _a = ret, { _id, __v, userPublic } = _a, rest = __objRest(_a, ["_id", "__v", "userPublic"]);
-          return __spreadValues({ id: _id }, rest);
+          const { _id, __v, userPublic, ...rest } = ret;
+          return { id: _id, ...rest };
         }
       })
     ),
@@ -1063,9 +1018,9 @@ var list5 = (params, TID) => __async(void 0, null, function* () {
     totalItems,
     totalPages
   };
-});
-var detail4 = (id, TID) => __async(void 0, null, function* () {
-  const item = yield UserStageModel_default.findOne({
+};
+var detail4 = async (id, TID) => {
+  const item = await UserStageModel_default.findOne({
     _id: id,
     deletedAt: null,
     "userPublic.code": TID
@@ -1073,12 +1028,12 @@ var detail4 = (id, TID) => __async(void 0, null, function* () {
   if (!item) throw new Error("stage not found");
   return item.toObject({
     transform: (doc, ret) => {
-      const _a = ret, { _id, __v, userPublic } = _a, rest = __objRest(_a, ["_id", "__v", "userPublic"]);
-      return __spreadValues({ id: _id }, rest);
+      const { _id, __v, userPublic, ...rest } = ret;
+      return { id: _id, ...rest };
     }
   });
-});
-var UserStageService = { verify: verify6, setup: setup3, list: list5, detail: detail4 };
+};
+var UserStageService = { verify: verify6, setup: setup4, list: list5, detail: detail4 };
 var UserStageService_default = UserStageService;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

@@ -1,32 +1,3 @@
-var __defProp = Object.defineProperty;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
-
 // _src/models/ChallengeModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
 
@@ -46,8 +17,8 @@ import Joi from "joi";
 import { Schema } from "mongoose";
 var ToObject = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, deletedAt, __v } = _a, rest = __objRest(_a, ["_id", "deletedAt", "__v"]);
-    return __spreadValues({ id: _id.toString() }, rest);
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
   }
 };
 var IdNameSchema = new Schema(
@@ -280,8 +251,8 @@ var UserRole = /* @__PURE__ */ ((UserRole2) => {
 // _src/models/UserModel/index.ts
 var ToObject2 = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, __v, password } = _a, rest = __objRest(_a, ["_id", "__v", "password"]);
-    return __spreadValues({ id: _id }, rest);
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
   }
 };
 var UserSchema = new Schema6(

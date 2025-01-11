@@ -1,35 +1,3 @@
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
-
 // _src/validators/ChallengeValidator/index.ts
 import Joi3 from "joi";
 
@@ -38,9 +6,9 @@ import Joi from "joi";
 import { Schema } from "mongoose";
 var createValidator = (base, option) => {
   let v = base;
-  if (option == null ? void 0 : option.required) v = v.required();
-  if ((option == null ? void 0 : option.allow) !== void 0) v = v.allow(option.allow);
-  if ((option == null ? void 0 : option.defaultValue) !== void 0) v = v.default(option.defaultValue);
+  if (option?.required) v = v.required();
+  if (option?.allow !== void 0) v = v.allow(option.allow);
+  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
   return v;
 };
 var string = (option) => createValidator(Joi.string().trim(), option);
@@ -51,14 +19,14 @@ var array = (item, options) => {
     Joi.array().items(item),
     options
   );
-  if (options == null ? void 0 : options.required) v = v.min(1);
+  if (options?.required) v = v.min(1);
   return v;
 };
 var generate = (fields) => Joi.object(fields);
 var ToObject = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, deletedAt, __v } = _a, rest = __objRest(_a, ["_id", "deletedAt", "__v"]);
-    return __spreadValues({ id: _id.toString() }, rest);
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
   }
 };
 var IdNameSchema = new Schema(
@@ -172,9 +140,10 @@ var DefaultListParamsFields = {
 };
 
 // _src/validators/ChallengeValidator/index.ts
-var ChallengeListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var ChallengeListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   stageId: schema_default.string().allow("").default("")
-}));
+});
 var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
@@ -263,10 +232,11 @@ QrSchema.set("toJSON", ToObject);
 var QrModel = models2.Qr || model2("Qr", QrSchema);
 
 // _src/validators/QrValidator/index.ts
-var QrListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var QrListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   code: schema_default.string({ allow: "" }),
   status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatus))
-}));
+});
 var QrGeneratePayloadValidator = schema_default.generate({
   amount: schema_default.number({ required: true })
 });
@@ -357,9 +327,10 @@ var StageSettingsValidator = schema_default.generate(
     periode: PeriodeValidator.allow(null)
   }
 );
-var StageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var StageListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
-}));
+});
 var StagePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(Joi5.string()).default([]),
@@ -553,10 +524,11 @@ var UserChallengeForeignValidator = schema_default.generate({
   challengeId: schema_default.string({ required: true }),
   name: schema_default.string({ required: true })
 });
-var UserChallengeParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var UserChallengeParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   userStageId: schema_default.string({ allow: "" }),
   status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatus))
-}));
+});
 var UserChallengeValidator = {
   UserChallengeForeignValidator,
   UserChallengeParamsValidator
@@ -578,9 +550,10 @@ var UserStageForeignValidator = schema_default.generate({
   stageId: schema_default.string({ required: true }),
   name: schema_default.string({ required: true })
 });
-var UserStageListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var UserStageListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   status: schema_default.string({ allow: "" }).valid(...Object.values(UserStageStatus))
-}));
+});
 var UserStageValidator = {
   UserStageForeignValidator,
   UserStageListParamsValidator
@@ -601,8 +574,8 @@ var UserRole = /* @__PURE__ */ ((UserRole2) => {
 // _src/models/UserModel/index.ts
 var ToObject2 = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, __v, password } = _a, rest = __objRest(_a, ["_id", "__v", "password"]);
-    return __spreadValues({ id: _id }, rest);
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
   }
 };
 var UserSchema = new Schema8(
@@ -626,9 +599,10 @@ var UserPayloadValidator = schema_default.generate({
   email: schema_default.string({ required: true }).email(),
   password: schema_default.string({ required: true })
 });
-var UserListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var UserListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   role: schema_default.string({ defaultValue: null }).valid(...Object.values(UserRole))
-}));
+});
 var UserValidator = {
   UserPayloadValidator,
   UserListParamsValidator

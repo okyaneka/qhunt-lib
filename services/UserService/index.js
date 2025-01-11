@@ -1,39 +1,10 @@
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -55,26 +26,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // _src/services/UserService/index.ts
 var UserService_exports = {};
@@ -105,8 +56,8 @@ var UserRole = /* @__PURE__ */ ((UserRole2) => {
 // _src/models/UserModel/index.ts
 var ToObject = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, __v, password } = _a, rest = __objRest(_a, ["_id", "__v", "password"]);
-    return __spreadValues({ id: _id }, rest);
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
   }
 };
 var UserSchema = new import_mongoose.Schema(
@@ -132,19 +83,19 @@ var import_jsonwebtoken = require("jsonwebtoken");
 
 // _src/helpers/db/index.ts
 var import_mongoose2 = require("mongoose");
-var transaction = (operation) => __async(void 0, null, function* () {
-  const session = yield (0, import_mongoose2.startSession)();
+var transaction = async (operation) => {
+  const session = await (0, import_mongoose2.startSession)();
   session.startTransaction();
-  return yield operation(session).then((res) => __async(void 0, null, function* () {
-    yield session.commitTransaction();
+  return await operation(session).then(async (res) => {
+    await session.commitTransaction();
     return res;
-  })).catch((err) => __async(void 0, null, function* () {
-    yield session.abortTransaction();
+  }).catch(async (err) => {
+    await session.abortTransaction();
     throw err;
-  })).finally(() => {
+  }).finally(() => {
     session.endSession();
   });
-});
+};
 var db = { transaction };
 var db_default = db;
 
@@ -153,8 +104,8 @@ var import_joi = __toESM(require("joi"));
 var import_mongoose3 = require("mongoose");
 var ToObject2 = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, deletedAt, __v } = _a, rest = __objRest(_a, ["_id", "deletedAt", "__v"]);
-    return __spreadValues({ id: _id.toString() }, rest);
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
   }
 };
 var IdNameSchema = new import_mongoose3.Schema(
@@ -215,13 +166,13 @@ var UserPublicModel = import_mongoose4.models.UserPublic || (0, import_mongoose4
 var UserPublicModel_default = UserPublicModel;
 
 // _src/services/UserService/index.ts
-var register = (payload, code) => __async(void 0, null, function* () {
-  return yield db_default.transaction((session) => __async(void 0, null, function* () {
+var register = async (payload, code) => {
+  return await db_default.transaction(async (session) => {
     const email = payload.email;
-    const userExists = yield UserModel_default.findOne({ email }).session(session);
+    const userExists = await UserModel_default.findOne({ email }).session(session);
     if (userExists) throw new Error("email taken");
-    const password = yield (0, import_bcryptjs.hash)(payload.password, 10);
-    const [user] = yield UserModel_default.create(
+    const password = await (0, import_bcryptjs.hash)(payload.password, 10);
+    const [user] = await UserModel_default.create(
       [
         {
           email,
@@ -231,54 +182,55 @@ var register = (payload, code) => __async(void 0, null, function* () {
       ],
       { session }
     );
-    yield UserPublicModel_default.findOneAndUpdate(
+    await UserPublicModel_default.findOneAndUpdate(
       { code },
       { $set: { user: { id: user._id, name: user.name } } },
       { new: true, session }
     );
     return user;
-  }));
-});
-var login = (payload, secret) => __async(void 0, null, function* () {
+  });
+};
+var login = async (payload, secret) => {
   const email = payload.email;
-  const user = yield UserModel_default.findOne({ email });
+  const user = await UserModel_default.findOne({ email });
   if (!user) throw new Error("user not found");
-  const isPasswordValid = yield (0, import_bcryptjs.compare)(payload.password, user.password);
+  const isPasswordValid = await (0, import_bcryptjs.compare)(payload.password, user.password);
   if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = yield UserPublicModel_default.findOne({ "user.id": user._id });
+  const userPublic = await UserPublicModel_default.findOne({ "user.id": user._id });
   if (!userPublic) throw new Error("invalid user");
   const token = (0, import_jsonwebtoken.sign)({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
   });
   const { _id: id, name } = user;
-  return { id, name, email, TID: userPublic == null ? void 0 : userPublic.code, token };
-});
-var profile = (bearer) => __async(void 0, null, function* () {
-});
-var list = (params) => __async(void 0, null, function* () {
-});
-var create = (payload) => __async(void 0, null, function* () {
-});
-var detail = (id) => __async(void 0, null, function* () {
-  const user = yield UserModel_default.findOne({ _id: id, deletedAt: null }).catch(() => {
+  return { id, name, email, TID: userPublic?.code, token };
+};
+var profile = async (bearer) => {
+};
+var list = async (params) => {
+};
+var create = async (payload) => {
+};
+var detail = async (id) => {
+  const user = await UserModel_default.findOne({ _id: id, deletedAt: null }).catch(() => {
   });
   if (!user) throw new Error("user not found");
-  const meta = yield UserPublicModel_default.findOne({ "user.id": user._id }).catch(
+  const meta = await UserPublicModel_default.findOne({ "user.id": user._id }).catch(
     () => null
   );
-  return __spreadProps(__spreadValues({}, user.toObject()), {
-    meta: meta == null ? void 0 : meta.toObject({
+  return {
+    ...user.toObject(),
+    meta: meta?.toObject({
       transform: (doc, ret) => {
-        const _a = ret, { _id, user: user2, __v } = _a, data = __objRest(_a, ["_id", "user", "__v"]);
-        return __spreadValues({ id: _id }, data);
+        const { _id, user: user2, __v, ...data } = ret;
+        return { id: _id, ...data };
       }
     })
-  });
-});
-var update = (id, payload) => __async(void 0, null, function* () {
-});
-var _delete = (id) => __async(void 0, null, function* () {
-});
+  };
+};
+var update = async (id, payload) => {
+};
+var _delete = async (id) => {
+};
 var UserService = {
   register,
   login,

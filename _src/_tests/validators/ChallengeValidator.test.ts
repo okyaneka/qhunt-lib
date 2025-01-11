@@ -1,4 +1,4 @@
-import { ChallengeListParamsValidator } from "../../_src/validators/ChallengeValidator";
+import { ChallengeListParamsValidator } from "~/validators/ChallengeValidator";
 
 describe("ChallengeListParamsValidator", () => {
   it("should be defined", () => {
