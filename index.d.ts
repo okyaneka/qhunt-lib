@@ -231,11 +231,13 @@ declare const _default: {
             submit: (id: string, payload: any, TID: string) => Promise<void>;
         };
         readonly UserPublicService: {
-            sync: (TID: string) => Promise<import("./models/UserPublicModel").UserPublic & {
-                _id: mongoose.Types.ObjectId;
-            }>;
             verify: (code: string) => Promise<import("./models/UserPublicModel").UserPublic & {
                 _id: mongoose.Types.ObjectId;
+            }>;
+            setup: () => Promise<mongoose.Document<unknown, {}, import("./models/UserPublicModel").UserPublic> & import("./models/UserPublicModel").UserPublic & {
+                _id: mongoose.Types.ObjectId;
+            } & {
+                __v: number;
             }>;
         };
         readonly UserService: {

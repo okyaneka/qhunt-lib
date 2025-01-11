@@ -1,39 +1,10 @@
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -55,26 +26,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // _src/services/UserTriviaService/index.ts
 var UserTriviaService_exports = {};
@@ -94,9 +45,9 @@ var import_joi = __toESM(require("joi"));
 var import_mongoose = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
-  if (option == null ? void 0 : option.required) v = v.required();
-  if ((option == null ? void 0 : option.allow) !== void 0) v = v.allow(option.allow);
-  if ((option == null ? void 0 : option.defaultValue) !== void 0) v = v.default(option.defaultValue);
+  if (option?.required) v = v.required();
+  if (option?.allow !== void 0) v = v.allow(option.allow);
+  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
   return v;
 };
 var string = (option) => createValidator(import_joi.default.string().trim(), option);
@@ -107,14 +58,14 @@ var array = (item, options) => {
     import_joi.default.array().items(item),
     options
   );
-  if (options == null ? void 0 : options.required) v = v.min(1);
+  if (options?.required) v = v.min(1);
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
 var ToObject = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, deletedAt, __v } = _a, rest = __objRest(_a, ["_id", "deletedAt", "__v"]);
-    return __spreadValues({ id: _id.toString() }, rest);
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
   }
 };
 var IdNameSchema = new import_mongoose.Schema(
@@ -469,9 +420,10 @@ var DefaultListParamsFields = {
 };
 
 // _src/validators/ChallengeValidator/index.ts
-var ChallengeListParamsValidator = schema_default.generate(__spreadProps(__spreadValues({}, DefaultListParamsFields), {
+var ChallengeListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
   stageId: schema_default.string().allow("").default("")
-}));
+});
 var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
@@ -536,48 +488,48 @@ var TriviaForeignValidator = schema_default.generate({
 });
 
 // _src/services/UserTriviaService/index.ts
-var verify = (triviaId, TID) => __async(void 0, null, function* () {
-  const item = yield UserTriviaModel_default.findOne({
+var verify = async (triviaId, TID) => {
+  const item = await UserTriviaModel_default.findOne({
     "userPublic.code": TID,
     "trivia.id": triviaId,
     deletedAt: null
   });
   if (!item) throw new Error("user challenge is undiscovered");
   return item;
-});
-var setup = (userPublic, userChallenge, content) => __async(void 0, null, function* () {
-  const trivias = yield TriviaModel_default.find({ _id: { $in: content } });
-  const payload = trivias.map((item) => item.toObject()).map((item) => __async(void 0, null, function* () {
-    const trivia = yield TriviaForeignValidator.validateAsync(item, {
+};
+var setup = async (userPublic, userChallenge, content) => {
+  const trivias = await TriviaModel_default.find({ _id: { $in: content } });
+  const payload = trivias.map((item) => item.toObject()).map(async (item) => {
+    const trivia = await TriviaForeignValidator.validateAsync(item, {
       stripUnknown: true
     });
-    const userTrivia = yield verify(trivia.id, userPublic.code).catch(
+    const userTrivia = await verify(trivia.id, userPublic.code).catch(
       () => null
     );
     if (userTrivia) return userTrivia;
-    return yield UserTriviaModel_default.create({
+    return await UserTriviaModel_default.create({
       userPublic,
       userChallenge,
       trivia
     });
-  }));
-  const items = yield Promise.all(payload);
+  });
+  const items = await Promise.all(payload);
   return items.map((item) => item.toObject().id);
-});
-var details = (ids, TID) => __async(void 0, null, function* () {
-  const data = yield UserTriviaModel_default.find({
+};
+var details = async (ids, TID) => {
+  const data = await UserTriviaModel_default.find({
     _id: { $in: ids },
     "userPublic.code": TID
   });
   return data.map(
     (item) => item.toObject({
       transform: (doc, ret) => {
-        const _a = ret, { _id, __v, userPublic } = _a, rest = __objRest(_a, ["_id", "__v", "userPublic"]);
-        return __spreadValues({ id: _id }, rest);
+        const { _id, __v, userPublic, ...rest } = ret;
+        return { id: _id, ...rest };
       }
     })
   );
-});
+};
 var UserTriviaService = { setup, details };
 var UserTriviaService_default = UserTriviaService;
 // Annotate the CommonJS export names for ESM import in node:

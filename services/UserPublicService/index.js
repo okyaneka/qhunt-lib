@@ -3,34 +3,8 @@ var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -52,35 +26,16 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // _src/services/UserPublicService/index.ts
 var UserPublicService_exports = {};
 __export(UserPublicService_exports, {
   default: () => UserPublicService_default,
-  sync: () => sync,
+  setup: () => setup,
   verify: () => verify
 });
 module.exports = __toCommonJS(UserPublicService_exports);
+var import_crypto_js = require("crypto-js");
 
 // _src/models/UserPublicModel/index.ts
 var import_mongoose2 = require("mongoose");
@@ -98,8 +53,8 @@ var import_joi = __toESM(require("joi"));
 var import_mongoose = require("mongoose");
 var ToObject = {
   transform: (doc, ret) => {
-    const _a = ret, { _id, deletedAt, __v } = _a, rest = __objRest(_a, ["_id", "deletedAt", "__v"]);
-    return __spreadValues({ id: _id.toString() }, rest);
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
   }
 };
 var IdNameSchema = new import_mongoose.Schema(
@@ -149,20 +104,23 @@ var UserPublicModel = import_mongoose2.models.UserPublic || (0, import_mongoose2
 var UserPublicModel_default = UserPublicModel;
 
 // _src/services/UserPublicService/index.ts
-var sync = (TID) => __async(void 0, null, function* () {
-  const exists = yield UserPublicModel_default.findOne({ code: TID, deletedAt: null });
-  if (exists) return exists.toObject();
-  return (yield UserPublicModel_default.create({ code: TID, deletedAt: null })).toObject();
-});
-var verify = (code) => __async(void 0, null, function* () {
-  const user = yield UserPublicModel_default.findOne({ code, deletedAt: null });
+var verify = async (code) => {
+  const user = await UserPublicModel_default.findOne({ code, deletedAt: null });
   if (!user) throw new Error("code invalid");
+  user.lastAccessedAt = /* @__PURE__ */ new Date();
+  await user.save();
   return user.toObject();
-});
-var UserPublicService = { sync, verify };
+};
+var setup = async () => {
+  const timestamp = Date.now();
+  const salt = import_crypto_js.lib.WordArray.random(4).toString(import_crypto_js.enc.Hex);
+  const code = (0, import_crypto_js.SHA256)(`${timestamp}${salt}`).toString(import_crypto_js.enc.Hex);
+  return await UserPublicModel_default.create({ code });
+};
+var UserPublicService = { verify, setup };
 var UserPublicService_default = UserPublicService;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  sync,
+  setup,
   verify
 });

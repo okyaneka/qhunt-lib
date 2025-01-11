@@ -130,11 +130,13 @@ declare const services: {
         submit: (id: string, payload: any, TID: string) => Promise<void>;
     };
     readonly UserPublicService: {
-        sync: (TID: string) => Promise<import("../models/UserPublicModel").UserPublic & {
-            _id: import("mongoose").Types.ObjectId;
-        }>;
         verify: (code: string) => Promise<import("../models/UserPublicModel").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
+        }>;
+        setup: () => Promise<import("mongoose").Document<unknown, {}, import("../models/UserPublicModel").UserPublic> & import("../models/UserPublicModel").UserPublic & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
         }>;
     };
     readonly UserService: {
