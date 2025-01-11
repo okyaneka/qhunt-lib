@@ -1,4 +1,4 @@
-import { TriviaForeign, TriviaOption, TriviaPayload } from "~/models/TriviaModel";
+import { TriviaForeign, TriviaOption, TriviaPayload } from "../../models/TriviaModel";
 export declare const TriviaOptionValidator: import("joi").ObjectSchema<TriviaOption>;
 export declare const TriviaOptionsValidator: import("joi").ArraySchema<TriviaOption>;
 export declare const TriviaPayloadValidator: import("joi").ObjectSchema<TriviaPayload>;

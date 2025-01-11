@@ -1,11 +1,11 @@
-import { UserChallengeParams, UserChallengeStatus } from "~/models/UserChallengeModel";
-export declare const verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+import { UserChallengeParams, UserChallengeStatus } from "../../models/UserChallengeModel";
+export declare const verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const discover: (id: string) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+export declare const discover: (id: string) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const setup: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+export declare const setup: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
 export declare const list: (params: UserChallengeParams, TID: string) => Promise<{
@@ -14,7 +14,7 @@ export declare const list: (params: UserChallengeParams, TID: string) => Promise
     totalPages: number;
     list: {
         id: string;
-        challenge: import("~/models/ChallengeModel").ChallengeForeign;
+        challenge: import("../../models/ChallengeModel").ChallengeForeign;
         userStage: import("../../models/UserStageModel").UserStageForeign | null;
         status: UserChallengeStatus;
         score: number | null;
@@ -25,7 +25,7 @@ export declare const list: (params: UserChallengeParams, TID: string) => Promise
         _id: import("mongoose").Types.ObjectId;
     }[];
 }>;
-export declare const detail: (id: string, TID: string) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+export declare const detail: (id: string, TID: string) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
 export declare const detailContent: (id: string, TID: string) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
@@ -33,10 +33,10 @@ export declare const detailContent: (id: string, TID: string) => Promise<(import
 })[]>;
 export declare const submit: (id: string, payload: any, TID: string) => Promise<void>;
 declare const UserChallengeService: {
-    verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+    verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    setup: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+    setup: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
     list: (params: UserChallengeParams, TID: string) => Promise<{
@@ -45,7 +45,7 @@ declare const UserChallengeService: {
         totalPages: number;
         list: {
             id: string;
-            challenge: import("~/models/ChallengeModel").ChallengeForeign;
+            challenge: import("../../models/ChallengeModel").ChallengeForeign;
             userStage: import("../../models/UserStageModel").UserStageForeign | null;
             status: UserChallengeStatus;
             score: number | null;
@@ -56,7 +56,7 @@ declare const UserChallengeService: {
             _id: import("mongoose").Types.ObjectId;
         }[];
     }>;
-    detail: (id: string, TID: string) => Promise<import("~/models/UserChallengeModel").UserChallenge & {
+    detail: (id: string, TID: string) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
     detailContent: (id: string, TID: string) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {

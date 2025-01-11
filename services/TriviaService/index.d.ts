@@ -1,5 +1,5 @@
-import { Challenge } from "~/models/ChallengeModel";
-import { TriviaPayload } from "~/models/TriviaModel";
+import { Challenge } from "../../models/ChallengeModel";
+import { TriviaPayload } from "../../models/TriviaModel";
 export declare const sync: (challenge: Challenge, items: TriviaPayload[]) => Promise<string[]>;
 export declare const content: (challenge: Challenge) => Promise<any[]>;
 export declare const detail: (id: string) => Promise<void>;

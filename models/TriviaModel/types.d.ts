@@ -1,5 +1,5 @@
-import { IdName, Timestamps } from "~/helpers";
-import { ChallengeFeedback } from "~/models/ChallengeModel";
+import { IdName, Timestamps } from "../../helpers";
+import { ChallengeFeedback } from "../../models/ChallengeModel";
 export interface TriviaOption {
     text: string;
     isCorrect: boolean;

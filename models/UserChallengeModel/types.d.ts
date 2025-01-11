@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams } from "~/helpers";
+import { Timestamps, DefaultListParams } from "../../helpers";
 import { ChallengeForeign } from "../ChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 import { UserStageForeign } from "../UserStageModel";
