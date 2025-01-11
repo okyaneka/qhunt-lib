@@ -1,4 +1,4 @@
-import { UserStageForeign, UserStageListParams } from "~/models/UserStageModel";
+import { UserStageForeign, UserStageListParams } from "../../models/UserStageModel";
 export declare const UserStageForeignValidator: import("joi").ObjectSchema<UserStageForeign>;
 export declare const UserStageListParamsValidator: import("joi").ObjectSchema<UserStageListParams>;
 declare const UserStageValidator: {

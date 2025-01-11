@@ -1,4 +1,4 @@
-import { UserChallengeForeign, UserChallengeParams } from "~/models/UserChallengeModel";
+import { UserChallengeForeign, UserChallengeParams } from "../../models/UserChallengeModel";
 export declare const UserChallengeForeignValidator: import("joi").ObjectSchema<UserChallengeForeign>;
 export declare const UserChallengeParamsValidator: import("joi").ObjectSchema<UserChallengeParams>;
 declare const UserChallengeValidator: {

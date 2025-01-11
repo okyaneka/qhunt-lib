@@ -1,4 +1,4 @@
-import { IdName, Timestamps } from "~/helpers";
+import { IdName, Timestamps } from "../../helpers";
 export declare enum UserPublicGender {
     Male = "male",
     Female = "female",

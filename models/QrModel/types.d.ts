@@ -1,4 +1,4 @@
-import { DefaultListParams, Timestamps } from "~/helpers";
+import { DefaultListParams, Timestamps } from "../../helpers";
 export declare enum QrStatus {
     Draft = "draft",
     Publish = "publish"

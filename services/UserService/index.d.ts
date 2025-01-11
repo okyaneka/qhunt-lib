@@ -1,4 +1,4 @@
-import { UserListParams, UserPayload } from "~/models/UserModel";
+import { UserListParams, UserPayload } from "../../models/UserModel";
 export declare const register: (payload: UserPayload, code?: string) => Promise<any>;
 export declare const login: (payload: UserPayload, secret: string) => Promise<{
     id: any;

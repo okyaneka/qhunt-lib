@@ -1,4 +1,4 @@
-import { DefaultListParams, Timestamps } from "~/helpers";
+import { DefaultListParams, Timestamps } from "../../helpers";
 import { Stage } from "../StageModel";
 export declare enum ChallengeStatus {
     Draft = "draft",

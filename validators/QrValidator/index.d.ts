@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { QrDeleteBulkPayload, QrGeneratePayload, QrListParams, QrUpdatePayload } from "~/models/QrModel";
+import { QrDeleteBulkPayload, QrGeneratePayload, QrListParams, QrUpdatePayload } from "../../models/QrModel";
 export declare const QrListParamsValidator: Joi.ObjectSchema<QrListParams>;
 export declare const QrGeneratePayloadValidator: Joi.ObjectSchema<QrGeneratePayload>;
 export declare const QrUpdatePayloadValidator: Joi.ObjectSchema<QrUpdatePayload>;

@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { ChallengeFeedback, ChallengeForeign, ChallengeListParams, ChallengePayload, ChallengeSettings } from "~/models/ChallengeModel";
+import { ChallengeFeedback, ChallengeForeign, ChallengeListParams, ChallengePayload, ChallengeSettings } from "../../models/ChallengeModel";
 export declare const ChallengeListParamsValidator: Joi.ObjectSchema<ChallengeListParams>;
 export declare const ChallengeFeedbackValidator: Joi.ObjectSchema<ChallengeFeedback>;
 export declare const ChallengeSettingsSchema: Joi.ObjectSchema<ChallengeSettings>;

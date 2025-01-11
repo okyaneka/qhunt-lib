@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams } from "~/helpers";
+import { Timestamps, DefaultListParams } from "../../helpers";
 import { UserPublicForeign } from "../UserPublicModel";
 import { StageForeign } from "../StageModel";
 export declare enum UserStageStatus {
