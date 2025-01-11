@@ -1,4 +1,4 @@
-import { model, models, Schema, ToObjectOptions } from "mongoose";
+import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
 import { User, UserRole } from "./types";
 
 const ToObject: ToObjectOptions = {
@@ -26,6 +26,6 @@ UserSchema.set("toObject", ToObject);
 
 export * from "./types";
 
-const UserModel = models.User || model("User", UserSchema);
+const UserModel = (models.User as Model<User>) || model("User", UserSchema);
 
 export default UserModel;
