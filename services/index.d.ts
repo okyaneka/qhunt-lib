@@ -133,10 +133,8 @@ declare const services: {
         verify: (code: string) => Promise<import("../models/UserPublicModel").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        setup: () => Promise<import("mongoose").Document<unknown, {}, import("../models/UserPublicModel").UserPublic> & import("../models/UserPublicModel").UserPublic & {
+        setup: () => Promise<import("../models/UserPublicModel").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
-        } & {
-            __v: number;
         }>;
     };
     readonly UserService: {

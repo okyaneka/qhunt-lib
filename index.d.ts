@@ -234,10 +234,8 @@ declare const _default: {
             verify: (code: string) => Promise<import("./models/UserPublicModel").UserPublic & {
                 _id: mongoose.Types.ObjectId;
             }>;
-            setup: () => Promise<mongoose.Document<unknown, {}, import("./models/UserPublicModel").UserPublic> & import("./models/UserPublicModel").UserPublic & {
+            setup: () => Promise<import("./models/UserPublicModel").UserPublic & {
                 _id: mongoose.Types.ObjectId;
-            } & {
-                __v: number;
             }>;
         };
         readonly UserService: {

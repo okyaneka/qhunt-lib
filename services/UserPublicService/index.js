@@ -115,7 +115,8 @@ var setup = async () => {
   const timestamp = Date.now();
   const salt = import_crypto_js.lib.WordArray.random(4).toString(import_crypto_js.enc.Hex);
   const code = (0, import_crypto_js.SHA256)(`${timestamp}${salt}`).toString(import_crypto_js.enc.Hex);
-  return await UserPublicModel_default.create({ code });
+  const user = await UserPublicModel_default.create({ code });
+  return user.toObject();
 };
 var UserPublicService = { verify, setup };
 var UserPublicService_default = UserPublicService;
