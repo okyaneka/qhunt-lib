@@ -85,7 +85,7 @@ export const detail = async (id: string, TID: string) => {
     deletedAt: null,
     "userPublic.code": TID,
   });
-  if (!item) throw new Error("stage not found");
+  if (!item) throw new Error("user stage not found");
   return item.toObject({
     transform: (doc, ret) => {
       const { _id, __v, userPublic, ...rest } = ret;
