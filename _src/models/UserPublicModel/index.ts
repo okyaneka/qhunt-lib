@@ -1,6 +1,7 @@
 import { Model, model, models, Schema } from "mongoose";
 import { UserPublic, UserPublicForeign, UserPublicGender } from "./types";
-import { IdNameSchema, ToObject } from "../../helpers/schema";
+import { ToObject } from "../../helpers/schema";
+import { UserForeignSchema } from "../UserModel";
 
 export const UserPublicForeignSchema = new Schema<UserPublicForeign>(
   {
@@ -13,7 +14,7 @@ export const UserPublicForeignSchema = new Schema<UserPublicForeign>(
 
 const UserPublicSchema = new Schema<UserPublic>(
   {
-    user: { type: IdNameSchema, default: null },
+    user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
     name: { type: String, default: "" },
     dob: { type: Date, default: null },
