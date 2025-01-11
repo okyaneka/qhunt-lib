@@ -3,7 +3,7 @@
   "version": "0.0.5",
   "scripts": {
     "dev": "nodemon",
-    "build": "pnpm build:js && pnpm build:dts",
+    "build": "pnpm build:dts && pnpm build:js",
     "build:js": "tsup",
     "build:dts": "tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
     "test": "jest"
