@@ -1,17 +1,21 @@
+import { enc, lib, SHA256 } from "crypto-js";
 import UserPublic from "~/models/UserPublicModel";
-
-export const sync = async (TID: string) => {
-  const exists = await UserPublic.findOne({ code: TID, deletedAt: null });
-  if (exists) return exists.toObject();
-  return (await UserPublic.create({ code: TID, deletedAt: null })).toObject();
-};
 
 export const verify = async (code: string) => {
   const user = await UserPublic.findOne({ code, deletedAt: null });
   if (!user) throw new Error("code invalid");
+  user.lastAccessedAt = new Date();
+  await user.save();
   return user.toObject();
 };
 
-const UserPublicService = { sync, verify };
+export const setup = async () => {
+  const timestamp = Date.now();
+  const salt = lib.WordArray.random(4).toString(enc.Hex);
+  const code: string = SHA256(`${timestamp}${salt}`).toString(enc.Hex);
+  return await UserPublic.create({ code });
+};
+
+const UserPublicService = { verify, setup };
 
 export default UserPublicService;
