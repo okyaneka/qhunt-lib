@@ -3,7 +3,7 @@ import schema from "../schema";
 import { Periode } from "../types";
 
 export const PeriodeValidator = schema.generate<Periode>({
-  startDate: Joi.date().required().greater("now"),
+  startDate: Joi.date().required(),
   endDate: Joi.date().required().greater(Joi.ref("startDate")),
 });
 
