@@ -311,7 +311,7 @@ declare const _default: {
         readonly ChallengeValidator: {
             ChallengeListParamsValidator: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengeListParams>;
             ChallengeFeedbackValidator: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengeFeedback>;
-            ChallengeSettingsSchema: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengeSettings>;
+            ChallengeSettingsValidator: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengeSettings>;
             ChallengeForeignValidator: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengeForeign>;
             ChallengePayloadValidator: import("joi").ObjectSchema<import("./models/ChallengeModel").ChallengePayload>;
         };

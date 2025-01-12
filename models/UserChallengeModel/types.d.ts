@@ -2,8 +2,18 @@ import { Timestamps, DefaultListParams } from "../../helpers";
 import { ChallengeForeign } from "../ChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 import { UserStageForeign } from "../UserStageModel";
+/**
+ * Status description
+ *
+ * Undiscovered  : when challenge not discovered yet
+ * Discovered    : when challenge discovered
+ * Ongoing       : when user start doing the challenge
+ * Completed     : when user complete the challenge
+ * Failed        : when user fail the challenge
+ */
 export declare enum UserChallengeStatus {
     Undiscovered = "undiscovered",
+    Discovered = "discovered",
     OnGoing = "ongoing",
     Completed = "completed",
     Failed = "failed"
