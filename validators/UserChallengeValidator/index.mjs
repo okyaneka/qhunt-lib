@@ -56,7 +56,7 @@ var schema_default = schema;
 // _src/helpers/validator/index.ts
 import Joi2 from "joi";
 var PeriodeValidator = schema_default.generate({
-  startDate: Joi2.date().required().greater("now"),
+  startDate: Joi2.date().required(),
   endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
 });
 var DefaultListParamsFields = {
@@ -71,6 +71,7 @@ import { model as model6, models as models6, Schema as Schema7 } from "mongoose"
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
   UserChallengeStatus2["Undiscovered"] = "undiscovered";
+  UserChallengeStatus2["Discovered"] = "discovered";
   UserChallengeStatus2["OnGoing"] = "ongoing";
   UserChallengeStatus2["Completed"] = "completed";
   UserChallengeStatus2["Failed"] = "failed";

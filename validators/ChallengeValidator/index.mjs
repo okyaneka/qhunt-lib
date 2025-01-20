@@ -130,7 +130,7 @@ var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 // _src/helpers/validator/index.ts
 import Joi2 from "joi";
 var PeriodeValidator = schema_default.generate({
-  startDate: Joi2.date().required().greater("now"),
+  startDate: Joi2.date().required(),
   endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
 });
 var DefaultListParamsFields = {
@@ -148,7 +148,7 @@ var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
-var ChallengeSettingsSchema2 = schema_default.generate({
+var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
   duration: schema_default.number({ defaultValue: 0 }),
   type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType)),
@@ -168,12 +168,12 @@ var ChallengePayloadValidator = schema_default.generate({
   storyline: schema_default.array(schema_default.string()).default([]),
   stageId: schema_default.string({ required: true }),
   status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsSchema2.required()
+  settings: ChallengeSettingsValidator.required()
 });
 var ChallengeValidator = {
   ChallengeListParamsValidator,
   ChallengeFeedbackValidator,
-  ChallengeSettingsSchema: ChallengeSettingsSchema2,
+  ChallengeSettingsValidator,
   ChallengeForeignValidator,
   ChallengePayloadValidator
 };
@@ -183,6 +183,6 @@ export {
   ChallengeForeignValidator,
   ChallengeListParamsValidator,
   ChallengePayloadValidator,
-  ChallengeSettingsSchema2 as ChallengeSettingsSchema,
+  ChallengeSettingsValidator,
   ChallengeValidator_default as default
 };

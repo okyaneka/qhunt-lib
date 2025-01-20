@@ -11,7 +11,7 @@ declare const validators: {
     readonly ChallengeValidator: {
         ChallengeListParamsValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeListParams>;
         ChallengeFeedbackValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeFeedback>;
-        ChallengeSettingsSchema: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeSettings>;
+        ChallengeSettingsValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeSettings>;
         ChallengeForeignValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeForeign>;
         ChallengePayloadValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengePayload>;
     };

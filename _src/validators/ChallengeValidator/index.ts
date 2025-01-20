@@ -24,7 +24,7 @@ export const ChallengeFeedbackValidator = schema
   })
   .default({ positive: "", negative: "" });
 
-export const ChallengeSettingsSchema = schema.generate<ChallengeSettings>({
+export const ChallengeSettingsValidator = schema.generate<ChallengeSettings>({
   clue: schema.string({ defaultValue: "" }),
   duration: schema.number({ defaultValue: 0 }),
   type: schema
@@ -52,13 +52,13 @@ export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
   status: schema
     .string({ required: true })
     .valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsSchema.required(),
+  settings: ChallengeSettingsValidator.required(),
 });
 
 const ChallengeValidator = {
   ChallengeListParamsValidator,
   ChallengeFeedbackValidator,
-  ChallengeSettingsSchema,
+  ChallengeSettingsValidator,
   ChallengeForeignValidator,
   ChallengePayloadValidator,
 };

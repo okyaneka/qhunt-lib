@@ -503,6 +503,7 @@ var import_mongoose9 = require("mongoose");
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
   UserChallengeStatus2["Undiscovered"] = "undiscovered";
+  UserChallengeStatus2["Discovered"] = "discovered";
   UserChallengeStatus2["OnGoing"] = "ongoing";
   UserChallengeStatus2["Completed"] = "completed";
   UserChallengeStatus2["Failed"] = "failed";
@@ -769,7 +770,7 @@ var import_joi3 = __toESM(require("joi"));
 // _src/helpers/validator/index.ts
 var import_joi2 = __toESM(require("joi"));
 var PeriodeValidator = schema_default.generate({
-  startDate: import_joi2.default.date().required().greater("now"),
+  startDate: import_joi2.default.date().required(),
   endDate: import_joi2.default.date().required().greater(import_joi2.default.ref("startDate"))
 });
 var DefaultListParamsFields = {
@@ -787,7 +788,7 @@ var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
-var ChallengeSettingsSchema2 = schema_default.generate({
+var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
   duration: schema_default.number({ defaultValue: 0 }),
   type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType)),
@@ -807,7 +808,7 @@ var ChallengePayloadValidator = schema_default.generate({
   storyline: schema_default.array(schema_default.string()).default([]),
   stageId: schema_default.string({ required: true }),
   status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsSchema2.required()
+  settings: ChallengeSettingsValidator.required()
 });
 
 // _src/validators/TriviaValidator/index.ts
