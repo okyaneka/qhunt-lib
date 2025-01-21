@@ -12,6 +12,7 @@ export const verify = async (code: string, stageId: string) => {
     deletedAt: null,
   });
   if (!item) throw new Error("user stage not found");
+
   return item.toObject();
 };
 
@@ -21,9 +22,7 @@ export const setup = async (code: string, stageId: string) => {
   if (exist) return exist;
 
   const userPublicData = await UserPublicService.verify(code);
-  const stageData = await StageService.detail(stageId);
-
-  // FIXME: nanti akan ada validasi di sini. lihat juga di setup challenge dan beberapa anak2 nya
+  const stageData = await StageService.verify(stageId);
 
   const userPublic = await UserPublicForeignValidator.validateAsync(
     userPublicData,
@@ -41,7 +40,10 @@ export const setup = async (code: string, stageId: string) => {
   const contents = stageData.contents.map((challengeId) =>
     UserChallengeService.setup(code, challengeId)
   );
-  const contentsData = await Promise.all(contents);
+  const contentsData = await Promise.all(contents).catch(async (err: Error) => {
+    await userStageData.deleteOne();
+    throw err;
+  });
   userStageData.contents = contentsData.map((item) => item.id);
   await userStageData.save();
 
