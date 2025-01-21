@@ -6,6 +6,7 @@ import {
   ChallengeListParams,
   ChallengePayload,
   ChallengeSettings,
+  ChallengeSettingsForeign,
   ChallengeStatus,
   ChallengeType,
 } from "~/models/ChallengeModel";
@@ -36,14 +37,17 @@ export const ChallengeSettingsValidator = schema.generate<ChallengeSettings>({
 export const ChallengeForeignValidator = schema.generate<ChallengeForeign>({
   id: schema.string({ required: true }),
   name: schema.string({ required: true }),
+  order: schema.number({ defaultValue: null }),
   storyline: schema.array(Joi.string(), { defaultValue: [] }),
-  settings: schema.generate<ChallengeForeign["settings"]>({
+});
+
+export const ChallengeSettingsForeignValidator =
+  schema.generate<ChallengeSettingsForeign>({
     duration: schema.number({ allow: 0 }),
     type: schema
       .string({ required: true })
       .valid(...Object.values(ChallengeType)),
-  }),
-});
+  });
 
 export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
   name: schema.string({ required: true }),
@@ -56,11 +60,12 @@ export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
 });
 
 const ChallengeValidator = {
-  ChallengeListParamsValidator,
   ChallengeFeedbackValidator,
-  ChallengeSettingsValidator,
   ChallengeForeignValidator,
+  ChallengeListParamsValidator,
   ChallengePayloadValidator,
+  ChallengeSettingsForeignValidator,
+  ChallengeSettingsValidator,
 };
 
 export default ChallengeValidator;

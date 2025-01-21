@@ -38,7 +38,11 @@ export const create = async (payload: ChallengePayload) => {
   if (stage) {
     const contents = stage.contents || [];
     contents.push(item.id);
-    await Stage.findOneAndUpdate({ _id: stageId }, { $set: { contents } });
+    item.order = contents.length;
+    await Promise.all([
+      Stage.findOneAndUpdate({ _id: stageId }, { $set: { contents } }),
+      item.save(),
+    ]);
   }
 
   return item.toObject();
