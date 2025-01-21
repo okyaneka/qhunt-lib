@@ -1,5 +1,5 @@
 import { Timestamps, DefaultListParams } from "~/helpers";
-import { ChallengeForeign, ChallengeType } from "../ChallengeModel";
+import { ChallengeForeign, ChallengeSettingsForeign } from "../ChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 import { UserStageForeign } from "../UserStageModel";
 
@@ -33,13 +33,21 @@ export interface UserChallengeForeign {
   name: string;
 }
 
+export interface UserChallengeResult {
+  baseScore: number;
+  remainingTime: number;
+  bonus: number;
+  totalScore: number;
+}
+
 export interface UserChallenge extends Timestamps {
   id: string;
   challenge: ChallengeForeign;
+  settings: ChallengeSettingsForeign;
   userStage: UserStageForeign | null;
   userPublic: UserPublicForeign;
   status: UserChallengeStatus;
-  score: number | null;
+  result: UserChallengeResult | null;
   contents: string[];
 }
 
