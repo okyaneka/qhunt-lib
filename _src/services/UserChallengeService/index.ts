@@ -28,7 +28,7 @@ export const verify = async (
   });
   if (!item) throw new Error("user challenge is undiscovered");
   if (isDiscover) {
-    item.status = UserChallengeStatus.OnGoing;
+    item.status = UserChallengeStatus.Discovered;
     await item.save();
   }
   return item.toObject();
@@ -38,7 +38,7 @@ export const discover = async (id: string) => {
   const item = await UserChallenge.findOneAndUpdate(
     { _id: id, deletedAt: null },
     {
-      $set: { status: UserChallengeStatus.OnGoing },
+      $set: { status: UserChallengeStatus.Discovered },
     },
     { new: true }
   );
@@ -112,7 +112,7 @@ export const setup = async (
     userPublic,
     settings,
     status: isDiscover
-      ? UserChallengeStatus.OnGoing
+      ? UserChallengeStatus.Discovered
       : UserChallengeStatus.Undiscovered,
   });
 
@@ -122,21 +122,18 @@ export const setup = async (
     name: userChallengeData.challenge.name,
   };
 
-  switch (settings.type) {
-    case ChallengeType.Trivia:
-      const triviaContent = await UserTriviaService.setup(
-        userPublic,
-        userChallenge,
-        challengeData.contents
-      );
+  const services = {
+    [ChallengeType.Trivia]: UserTriviaService,
+  } as const;
 
-      userChallengeData.contents = triviaContent;
-      await userChallengeData.save();
-      break;
+  const contents = await services[settings.type].setup(
+    userPublic,
+    userChallenge,
+    challengeData.contents
+  );
 
-    default:
-      break;
-  }
+  userChallengeData.contents = contents;
+  await userChallengeData.save();
 
   return userChallengeData.toObject();
 };
@@ -178,7 +175,11 @@ export const detail = async (id: string, TID: string) => {
   });
 };
 
-export const detailContent = async (id: string, TID: string) => {
+export const detailContent = async (
+  id: string,
+  TID: string,
+  hasResult?: boolean
+) => {
   const data = await UserChallenge.findOne({
     _id: id,
     deletedAt: null,
@@ -199,7 +200,7 @@ export const detailContent = async (id: string, TID: string) => {
     [ChallengeType.Trivia]: UserTriviaService,
   } as const;
 
-  return await services[challengeType].details(contents, TID);
+  return await services[challengeType].details(contents, TID, hasResult);
 };
 
 export const submit = async (id: string, payload: any, TID: string) => {};
@@ -211,6 +212,6 @@ const UserChallengeService = {
   detail,
   detailContent,
   submit,
-};
+} as const;
 
 export default UserChallengeService;
