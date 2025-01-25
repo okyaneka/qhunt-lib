@@ -34,6 +34,7 @@ __export(ChallengeValidator_exports, {
   ChallengeForeignValidator: () => ChallengeForeignValidator,
   ChallengeListParamsValidator: () => ChallengeListParamsValidator,
   ChallengePayloadValidator: () => ChallengePayloadValidator,
+  ChallengeSettingsForeignValidator: () => ChallengeSettingsForeignValidator,
   ChallengeSettingsValidator: () => ChallengeSettingsValidator,
   default: () => ChallengeValidator_default
 });
@@ -142,7 +143,7 @@ var ChallengeForeignSchema = new import_mongoose2.Schema(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -156,6 +157,7 @@ var ChallengeSchema = new import_mongoose2.Schema(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -196,11 +198,12 @@ var ChallengeSettingsValidator = schema_default.generate({
 var ChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    duration: schema_default.number({ allow: 0 }),
-    type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
-  })
+  order: schema_default.number({ defaultValue: null }),
+  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] })
+});
+var ChallengeSettingsForeignValidator = schema_default.generate({
+  duration: schema_default.number({ allow: 0 }),
+  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
 });
 var ChallengePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
@@ -210,11 +213,12 @@ var ChallengePayloadValidator = schema_default.generate({
   settings: ChallengeSettingsValidator.required()
 });
 var ChallengeValidator = {
-  ChallengeListParamsValidator,
   ChallengeFeedbackValidator,
-  ChallengeSettingsValidator,
   ChallengeForeignValidator,
-  ChallengePayloadValidator
+  ChallengeListParamsValidator,
+  ChallengePayloadValidator,
+  ChallengeSettingsForeignValidator,
+  ChallengeSettingsValidator
 };
 var ChallengeValidator_default = ChallengeValidator;
 // Annotate the CommonJS export names for ESM import in node:
@@ -223,5 +227,6 @@ var ChallengeValidator_default = ChallengeValidator;
   ChallengeForeignValidator,
   ChallengeListParamsValidator,
   ChallengePayloadValidator,
+  ChallengeSettingsForeignValidator,
   ChallengeSettingsValidator
 });

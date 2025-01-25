@@ -1,12 +1,12 @@
 import { Model } from "mongoose";
-export declare const list: <T>(model: Model<T>, page: number, limit: number, filters?: Record<string, any>) => Promise<{
+export declare const list: <T>(model: Model<T>, page: number, limit: number, filters?: Record<string, any>, sort?: any) => Promise<{
     list: import("mongoose").Require_id<T>[];
     page: number;
     totalItems: number;
     totalPages: number;
 }>;
 declare const service: {
-    list: <T>(model: Model<T>, page: number, limit: number, filters?: Record<string, any>) => Promise<{
+    list: <T>(model: Model<T>, page: number, limit: number, filters?: Record<string, any>, sort?: any) => Promise<{
         list: import("mongoose").Require_id<T>[];
         page: number;
         totalItems: number;

@@ -2,7 +2,6 @@
   "compilerOptions": {
     "baseUrl": "_src",
     "esModuleInterop": true,
-    "module": "CommonJS",
     "outDir": ".",
     "paths": {
       "~/*": ["./*"]
@@ -10,8 +9,9 @@
     "rootDir": "_src",
     "skipLibCheck": true,
     "strict": true,
+    "module": "ESNext",
     "target": "ESNext",
-    "resolveJsonModule": true,
+    "moduleResolution": "node",
     "declaration": true,
     "emitDeclarationOnly": true,
     "declarationMap": true

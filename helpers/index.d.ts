@@ -58,7 +58,7 @@ declare const helpers: {
         }>;
     };
     readonly service: {
-        list: <T>(model: import("mongoose").Model<T>, page: number, limit: number, filters?: Record<string, any>) => Promise<{
+        list: <T>(model: import("mongoose").Model<T>, page: number, limit: number, filters?: Record<string, any>, sort?: any) => Promise<{
             list: import("mongoose").Require_id<T>[];
             page: number;
             totalItems: number;

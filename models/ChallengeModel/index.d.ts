@@ -18,9 +18,7 @@ export declare const ChallengeSettingsForeignSchema: Schema<ChallengeSettingsFor
 } & {
     __v: number;
 }>;
-export declare const ChallengeForeignSchema: Schema<ChallengeForeign, Model<ChallengeForeign, any, any, any, import("mongoose").Document<unknown, any, ChallengeForeign> & Pick<Challenge, "id" | "name" | "storyline"> & {
-    settings: ChallengeSettingsForeign;
-} & {
+export declare const ChallengeForeignSchema: Schema<ChallengeForeign, Model<ChallengeForeign, any, any, any, import("mongoose").Document<unknown, any, ChallengeForeign> & ChallengeForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

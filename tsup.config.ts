@@ -10,5 +10,6 @@ export default defineConfig({
   format: ["esm", "cjs"],
   outDir: ".",
   splitting: false,
+  target: "esnext",
   external: ["_src/_tests/**/*"],
 });

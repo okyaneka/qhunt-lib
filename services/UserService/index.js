@@ -222,7 +222,7 @@ var ChallengeForeignSchema = new import_mongoose5.Schema(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -236,6 +236,7 @@ var ChallengeSchema = new import_mongoose5.Schema(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -446,10 +447,24 @@ var UserChallengeForeignSchema = new import_mongoose10.Schema(
   },
   { _id: false }
 );
+var UserChallengeResultSchema = new import_mongoose10.Schema(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserChallengeSchema = new import_mongoose10.Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -457,7 +472,7 @@ var UserChallengeSchema = new import_mongoose10.Schema(
       default: "undiscovered" /* Undiscovered */
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -468,12 +483,19 @@ var UserChallengeModel = import_mongoose10.models.UserChallenge || (0, import_mo
 
 // _src/models/UserTriviaModel/index.ts
 var import_mongoose11 = require("mongoose");
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
 var UserTriviaResultSchema = new import_mongoose11.Schema(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
-    score: { type: Number, required: true }
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
   },
   { _id: false }
 );
@@ -486,8 +508,8 @@ var UserTriviaSchema = new import_mongoose11.Schema(
   },
   { timestamps: true }
 );
-UserTriviaSchema.set("toJSON", ToObject2);
-UserTriviaSchema.set("toObject", ToObject2);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = import_mongoose11.models.UserTrivia || (0, import_mongoose11.model)("UserTrivia", UserTriviaSchema, "usersTrivia");
 
 // _src/services/UserPublicService/index.ts
