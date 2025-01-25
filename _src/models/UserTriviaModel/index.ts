@@ -1,16 +1,23 @@
-import { Model, model, models, Schema } from "mongoose";
+import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
 import { UserTrivia, UserTriviaResult } from "./types";
-import { ToObject } from "../../helpers/schema";
 import { UserPublicForeignSchema } from "../UserPublicModel";
 import { UserChallengeForeignSchema } from "../UserChallengeModel";
 import { TriviaForeignSchema } from "../TriviaModel";
+
+const ToObject: ToObjectOptions = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  },
+};
 
 const UserTriviaResultSchema = new Schema<UserTriviaResult>(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
-    score: { type: Number, required: true },
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
   },
   { _id: false }
 );
