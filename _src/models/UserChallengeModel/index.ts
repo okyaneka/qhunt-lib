@@ -26,8 +26,12 @@ export const UserChallengeResultSchema = new Schema<UserChallengeResult>(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    remainingTime: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
     totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true },
   },
   { _id: false }
 );
@@ -44,7 +48,7 @@ const UserChallengeSchema = new Schema<UserChallenge>(
       default: UserChallengeStatus.Undiscovered,
     },
     contents: { type: [String], default: [] },
-    result: { type: UserChallengeResultSchema, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

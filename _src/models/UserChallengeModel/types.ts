@@ -3,13 +3,6 @@ import { ChallengeForeign, ChallengeSettingsForeign } from "../ChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 import { UserStageForeign } from "../UserStageModel";
 
-// export enum UserChallengeState {
-//   Storyline = "storyline",
-//   Content = "content",
-//   Progress = "progress",
-//   Result = "result",
-// }
-
 /**
  * Status description
  *
@@ -34,8 +27,12 @@ export interface UserChallengeForeign {
 }
 
 export interface UserChallengeResult {
+  startAt: Date;
+  endAt: Date | null;
+  timeUsed: number;
   baseScore: number;
-  remainingTime: number;
+  correctCount: number;
+  correctBonus: number;
   bonus: number;
   totalScore: number;
 }
@@ -47,7 +44,7 @@ export interface UserChallenge extends Timestamps {
   userStage: UserStageForeign | null;
   userPublic: UserPublicForeign;
   status: UserChallengeStatus;
-  result: UserChallengeResult | null;
+  results: UserChallengeResult | null;
   contents: string[];
 }
 
