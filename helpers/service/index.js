@@ -24,13 +24,13 @@ __export(service_exports, {
   list: () => list
 });
 module.exports = __toCommonJS(service_exports);
-var list = async (model, page, limit, filters = {}) => {
+var list = async (model, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;
   const filter = {
     ...filters,
     deletedAt: null
   };
-  const items = await model.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const items = await model.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
   const totalItems = await model.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);
   return {

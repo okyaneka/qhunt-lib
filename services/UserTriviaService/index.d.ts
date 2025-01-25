@@ -6,12 +6,12 @@ export declare const verify: (triviaId: string, TID: string) => Promise<import("
     __v: number;
 }>;
 export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, content: string[]) => Promise<string[]>;
-export declare const details: (ids: string[], TID: string) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
+export declare const details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
 declare const UserTriviaService: {
     readonly setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, content: string[]) => Promise<string[]>;
-    readonly details: (ids: string[], TID: string) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
+    readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
 };

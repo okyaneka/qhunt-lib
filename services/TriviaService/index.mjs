@@ -72,7 +72,7 @@ var ChallengeForeignSchema = new Schema2(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -86,6 +86,7 @@ var ChallengeSchema = new Schema2(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -319,7 +320,11 @@ var create2 = async (payload) => {
   if (stage) {
     const contents = stage.contents || [];
     contents.push(item.id);
-    await StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } });
+    item.order = contents.length;
+    await Promise.all([
+      StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } }),
+      item.save()
+    ]);
   }
   return item.toObject();
 };
@@ -327,6 +332,14 @@ var detail2 = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
+};
+var detailContent = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  const services = {
+    ["trivia" /* Trivia */]: TriviaService_default
+  };
+  return await services[item.settings.type].content(item);
 };
 var update2 = async (id, payload) => {
   return await db_default.transaction(async (session) => {
@@ -384,6 +397,7 @@ var ChallengeService = {
   list: list2,
   create: create2,
   detail: detail2,
+  detailContent,
   update: update2,
   updateContent,
   delete: _delete2,

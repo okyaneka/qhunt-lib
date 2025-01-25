@@ -1,5 +1,5 @@
 import { Timestamps, DefaultListParams } from "../../helpers";
-import { ChallengeForeign } from "../ChallengeModel";
+import { ChallengeForeign, ChallengeSettingsForeign } from "../ChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 import { UserStageForeign } from "../UserStageModel";
 /**
@@ -23,13 +23,24 @@ export interface UserChallengeForeign {
     challengeId: string;
     name: string;
 }
+export interface UserChallengeResult {
+    startAt: Date;
+    endAt: Date | null;
+    timeUsed: number;
+    baseScore: number;
+    correctCount: number;
+    correctBonus: number;
+    bonus: number;
+    totalScore: number;
+}
 export interface UserChallenge extends Timestamps {
     id: string;
     challenge: ChallengeForeign;
+    settings: ChallengeSettingsForeign;
     userStage: UserStageForeign | null;
     userPublic: UserPublicForeign;
     status: UserChallengeStatus;
-    score: number | null;
+    results: UserChallengeResult | null;
     contents: string[];
 }
 export interface UserChallengeParams extends DefaultListParams {

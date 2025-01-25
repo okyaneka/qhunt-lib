@@ -1,6 +1,17 @@
 // _src/models/UserTriviaModel/index.ts
 import { model as model8, models as models8, Schema as Schema9 } from "mongoose";
 
+// _src/models/UserPublicModel/index.ts
+import { model as model2, models as models2, Schema as Schema3 } from "mongoose";
+
+// _src/models/UserPublicModel/types.ts
+var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
+  UserPublicGender2["Male"] = "male";
+  UserPublicGender2["Female"] = "female";
+  UserPublicGender2["Panda"] = "panda";
+  return UserPublicGender2;
+})(UserPublicGender || {});
+
 // _src/helpers/schema/index.ts
 import Joi from "joi";
 import { Schema } from "mongoose";
@@ -24,17 +35,6 @@ var PeriodSchema = new Schema(
   },
   { _id: false }
 );
-
-// _src/models/UserPublicModel/index.ts
-import { model as model2, models as models2, Schema as Schema3 } from "mongoose";
-
-// _src/models/UserPublicModel/types.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
 
 // _src/models/UserModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
@@ -167,7 +167,7 @@ var ChallengeForeignSchema = new Schema4(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -181,6 +181,7 @@ var ChallengeSchema = new Schema4(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -289,10 +290,24 @@ var UserChallengeForeignSchema = new Schema7(
   },
   { _id: false }
 );
+var UserChallengeResultSchema = new Schema7(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserChallengeSchema = new Schema7(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -300,7 +315,7 @@ var UserChallengeSchema = new Schema7(
       default: "undiscovered" /* Undiscovered */
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -350,12 +365,19 @@ TriviaSchema.set("toJSON", ToObject);
 var TriviaModel = models7.Trivia || model7("Trivia", TriviaSchema);
 
 // _src/models/UserTriviaModel/index.ts
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
 var UserTriviaResultSchema = new Schema9(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
-    score: { type: Number, required: true }
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
   },
   { _id: false }
 );
@@ -368,8 +390,8 @@ var UserTriviaSchema = new Schema9(
   },
   { timestamps: true }
 );
-UserTriviaSchema.set("toJSON", ToObject);
-UserTriviaSchema.set("toObject", ToObject);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models8.UserTrivia || model8("UserTrivia", UserTriviaSchema, "usersTrivia");
 var UserTriviaModel_default = UserTriviaModel;
 export {

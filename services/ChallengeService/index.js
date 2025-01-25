@@ -33,11 +33,12 @@ __export(ChallengeService_exports, {
   _delete: () => _delete2,
   create: () => create2,
   default: () => ChallengeService_default,
-  detail: () => detail2,
+  detail: () => detail3,
+  detailContent: () => detailContent,
   list: () => list2,
   update: () => update2,
   updateContent: () => updateContent,
-  verify: () => verify2
+  verify: () => verify3
 });
 module.exports = __toCommonJS(ChallengeService_exports);
 
@@ -130,7 +131,7 @@ var ChallengeForeignSchema = new import_mongoose3.Schema(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -144,6 +145,7 @@ var ChallengeSchema = new import_mongoose3.Schema(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -244,11 +246,11 @@ var create = async (payload) => {
     ...payload,
     contents: contents.map((item) => item.id)
   });
-  const sync = contents.map((item) => {
+  const sync2 = contents.map((item) => {
     item.stage = { id: stage.id, name: stage.name };
     return item.save();
   });
-  await Promise.all(sync);
+  await Promise.all(sync2);
   return stage.toObject();
 };
 var detail = async (id) => {
@@ -295,6 +297,79 @@ var verify = async (id) => {
 var StageService = { list, create, detail, update, delete: _delete, verify };
 var StageService_default = StageService;
 
+// _src/models/TriviaModel/index.ts
+var import_mongoose5 = require("mongoose");
+var TriviaOptionSchema = new import_mongoose5.Schema(
+  {
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 }
+  },
+  { _id: false, versionKey: false }
+);
+var TriviaForeignOptionSchema = new import_mongoose5.Schema(
+  {
+    text: { type: String, required: true }
+  },
+  { _id: false }
+);
+var TriviaForeignSchema = new import_mongoose5.Schema(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true }
+  },
+  { _id: false }
+);
+var TriviaSchema = new import_mongoose5.Schema(
+  {
+    challenge: { type: IdNameSchema, default: null },
+    question: { type: String, required: true },
+    feedback: { type: ChallengeFeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+var TriviaModel = import_mongoose5.models.Trivia || (0, import_mongoose5.model)("Trivia", TriviaSchema);
+var TriviaModel_default = TriviaModel;
+
+// _src/services/TriviaService/index.ts
+var sync = async (challenge, items) => {
+  const idName = { id: challenge.id, name: challenge.name };
+  const create3 = items.filter((item) => !item.id).map((item) => ({ ...item, challenge: idName }));
+  const update3 = items.filter((item) => item.id);
+  await TriviaModel_default.updateMany(
+    { "challenge.id": challenge.id },
+    { $set: { challenge: null } }
+  );
+  const actCreate = TriviaModel_default.insertMany(create3);
+  const actUpdate = update3.map(
+    (item) => TriviaModel_default.findOneAndUpdate({ _id: item.id }, { $set: item }, { new: true })
+  );
+  const [resCreate, ...resUpdate] = await Promise.all([
+    actCreate,
+    ...actUpdate
+  ]);
+  const content2 = resUpdate.map((item) => item?._id.toString()).concat(...resCreate.map((item) => item._id.toString())).filter((v) => v != void 0);
+  await ChallengeService_default.updateContent(challenge.id, content2);
+  return content2;
+};
+var content = async (challenge) => {
+  const items = await TriviaModel_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+var detail2 = async (id) => {
+};
+var verify2 = async (id) => {
+};
+var TriviaService = { sync, content, detail: detail2, verify: verify2 };
+var TriviaService_default = TriviaService;
+
 // _src/services/ChallengeService/index.ts
 var list2 = async (params) => {
   const skip = (params.page - 1) * params.limit;
@@ -319,14 +394,26 @@ var create2 = async (payload) => {
   if (stage) {
     const contents = stage.contents || [];
     contents.push(item.id);
-    await StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } });
+    item.order = contents.length;
+    await Promise.all([
+      StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } }),
+      item.save()
+    ]);
   }
   return item.toObject();
 };
-var detail2 = async (id) => {
+var detail3 = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
+};
+var detailContent = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  const services = {
+    ["trivia" /* Trivia */]: TriviaService_default
+  };
+  return await services[item.settings.type].content(item);
 };
 var update2 = async (id, payload) => {
   return await db_default.transaction(async (session) => {
@@ -373,7 +460,7 @@ var _delete2 = async (id) => {
   if (!item) throw new Error("challenge not found");
   return item.toObject();
 };
-var verify2 = async (id) => {
+var verify3 = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   if (item.status !== "publish" /* Publish */)
@@ -383,11 +470,12 @@ var verify2 = async (id) => {
 var ChallengeService = {
   list: list2,
   create: create2,
-  detail: detail2,
+  detail: detail3,
+  detailContent,
   update: update2,
   updateContent,
   delete: _delete2,
-  verify: verify2
+  verify: verify3
 };
 var ChallengeService_default = ChallengeService;
 // Annotate the CommonJS export names for ESM import in node:
@@ -395,6 +483,7 @@ var ChallengeService_default = ChallengeService;
   _delete,
   create,
   detail,
+  detailContent,
   list,
   update,
   updateContent,

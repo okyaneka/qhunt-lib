@@ -125,7 +125,7 @@ var ChallengeForeignSchema = new Schema2(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -139,6 +139,7 @@ var ChallengeSchema = new Schema2(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -329,10 +330,24 @@ var UserChallengeForeignSchema = new Schema7(
   },
   { _id: false }
 );
+var UserChallengeResultSchema = new Schema7(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserChallengeSchema = new Schema7(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -340,7 +355,7 @@ var UserChallengeSchema = new Schema7(
       default: "undiscovered" /* Undiscovered */
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
