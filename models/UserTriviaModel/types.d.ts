@@ -12,8 +12,10 @@ export interface UserTriviaContent {
     options: Pick<TriviaOption, "text">[];
 }
 export interface UserTriviaResult {
-    answer: string;
-    score: number;
+    answer: string | undefined;
+    baseScore: number;
+    bonus: number;
+    totalScore: number;
     isCorrect: boolean;
     feedback: string;
 }

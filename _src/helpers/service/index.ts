@@ -4,7 +4,8 @@ export const list = async <T>(
   model: Model<T>,
   page: number,
   limit: number,
-  filters: Record<string, any> = {}
+  filters: Record<string, any> = {},
+  sort?: any
 ) => {
   const skip = (page - 1) * limit;
   const filter = {
@@ -16,7 +17,7 @@ export const list = async <T>(
     .find(filter)
     .skip(skip)
     .limit(limit)
-    .sort({ createdAt: -1 });
+    .sort(sort ?? { createdAt: -1 });
 
   const totalItems = await model.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);

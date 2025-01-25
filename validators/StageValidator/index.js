@@ -148,7 +148,7 @@ var StageModel = import_mongoose2.models.Stage || (0, import_mongoose2.model)("S
 // _src/helpers/validator/index.ts
 var import_joi2 = __toESM(require("joi"));
 var PeriodeValidator = schema_default.generate({
-  startDate: import_joi2.default.date().required().greater("now"),
+  startDate: import_joi2.default.date().required(),
   endDate: import_joi2.default.date().required().greater(import_joi2.default.ref("startDate"))
 });
 var DefaultListParamsFields = {

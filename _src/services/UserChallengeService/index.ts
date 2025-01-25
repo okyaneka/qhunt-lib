@@ -7,7 +7,10 @@ import UserChallenge, {
 import UserPublicService from "../UserPublicService";
 import UserStageService from "../UserStageService";
 import UserTriviaService from "../UserTriviaService";
-import { ChallengeForeignValidator } from "~/validators/ChallengeValidator";
+import {
+  ChallengeForeignValidator,
+  ChallengeSettingsForeignValidator,
+} from "~/validators/ChallengeValidator";
 import { ChallengeType } from "~/models/ChallengeModel";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
 import StageService from "../StageService";
@@ -25,7 +28,7 @@ export const verify = async (
   });
   if (!item) throw new Error("user challenge is undiscovered");
   if (isDiscover) {
-    item.status = UserChallengeStatus.OnGoing;
+    item.status = UserChallengeStatus.Discovered;
     await item.save();
   }
   return item.toObject();
@@ -35,7 +38,7 @@ export const discover = async (id: string) => {
   const item = await UserChallenge.findOneAndUpdate(
     { _id: id, deletedAt: null },
     {
-      $set: { status: UserChallengeStatus.OnGoing },
+      $set: { status: UserChallengeStatus.Discovered },
     },
     { new: true }
   );
@@ -52,7 +55,7 @@ export const setup = async (
   if (exist) return await discover(exist.id);
 
   const userPublicData = await UserPublicService.verify(code);
-  const challengeData = await ChallengeService.detail(challengeId);
+  const challengeData = await ChallengeService.verify(challengeId);
 
   const stageId = challengeData.stage?.id;
   const userStageData = stageId
@@ -94,12 +97,22 @@ export const setup = async (
     }
   );
 
+  const settings = await ChallengeSettingsForeignValidator.validateAsync(
+    challengeData.settings,
+    {
+      abortEarly: false,
+      stripUnknown: true,
+      convert: true,
+    }
+  );
+
   const userChallengeData = await UserChallenge.create({
     userStage,
     challenge,
     userPublic,
+    settings,
     status: isDiscover
-      ? UserChallengeStatus.OnGoing
+      ? UserChallengeStatus.Discovered
       : UserChallengeStatus.Undiscovered,
   });
 
@@ -109,21 +122,18 @@ export const setup = async (
     name: userChallengeData.challenge.name,
   };
 
-  switch (challenge.settings.type) {
-    case ChallengeType.Trivia:
-      const triviaContent = await UserTriviaService.setup(
-        userPublic,
-        userChallenge,
-        challengeData.contents
-      );
+  const services = {
+    [ChallengeType.Trivia]: UserTriviaService,
+  } as const;
 
-      userChallengeData.contents = triviaContent;
-      await userChallengeData.save();
-      break;
+  const contents = await services[settings.type].setup(
+    userPublic,
+    userChallenge,
+    challengeData.contents
+  );
 
-    default:
-      break;
-  }
+  userChallengeData.contents = contents;
+  await userChallengeData.save();
 
   return userChallengeData.toObject();
 };
@@ -140,7 +150,8 @@ export const list = async (params: UserChallengeParams, TID: string) => {
     UserChallenge,
     params.page,
     params.limit,
-    filters
+    filters,
+    "challenge.order"
   );
 
   return {
@@ -164,7 +175,11 @@ export const detail = async (id: string, TID: string) => {
   });
 };
 
-export const detailContent = async (id: string, TID: string) => {
+export const detailContent = async (
+  id: string,
+  TID: string,
+  hasResult?: boolean
+) => {
   const data = await UserChallenge.findOne({
     _id: id,
     deletedAt: null,
@@ -174,9 +189,7 @@ export const detailContent = async (id: string, TID: string) => {
   if (!data) throw new Error("user challenge not found");
   const {
     status,
-    challenge: {
-      settings: { type: challengeType },
-    },
+    settings: { type: challengeType },
     contents,
   } = data;
 
@@ -187,7 +200,7 @@ export const detailContent = async (id: string, TID: string) => {
     [ChallengeType.Trivia]: UserTriviaService,
   } as const;
 
-  return await services[challengeType].details(contents, TID);
+  return await services[challengeType].details(contents, TID, hasResult);
 };
 
 export const submit = async (id: string, payload: any, TID: string) => {};
@@ -199,6 +212,6 @@ const UserChallengeService = {
   detail,
   detailContent,
   submit,
-};
+} as const;
 
 export default UserChallengeService;

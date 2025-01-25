@@ -178,7 +178,7 @@ var ChallengeForeignSchema = new Schema4(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -192,6 +192,7 @@ var ChallengeSchema = new Schema4(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -348,6 +349,7 @@ import { model as model8, models as models8, Schema as Schema9 } from "mongoose"
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
   UserChallengeStatus2["Undiscovered"] = "undiscovered";
+  UserChallengeStatus2["Discovered"] = "discovered";
   UserChallengeStatus2["OnGoing"] = "ongoing";
   UserChallengeStatus2["Completed"] = "completed";
   UserChallengeStatus2["Failed"] = "failed";
@@ -401,10 +403,24 @@ var UserChallengeForeignSchema = new Schema9(
   },
   { _id: false }
 );
+var UserChallengeResultSchema = new Schema9(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserChallengeSchema = new Schema9(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -412,7 +428,7 @@ var UserChallengeSchema = new Schema9(
       default: "undiscovered" /* Undiscovered */
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -423,12 +439,19 @@ var UserChallengeModel = models8.UserChallenge || model8("UserChallenge", UserCh
 
 // _src/models/UserTriviaModel/index.ts
 import { model as model9, models as models9, Schema as Schema10 } from "mongoose";
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
 var UserTriviaResultSchema = new Schema10(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
-    score: { type: Number, required: true }
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
   },
   { _id: false }
 );
@@ -441,8 +464,8 @@ var UserTriviaSchema = new Schema10(
   },
   { timestamps: true }
 );
-UserTriviaSchema.set("toJSON", ToObject2);
-UserTriviaSchema.set("toObject", ToObject2);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models9.UserTrivia || model9("UserTrivia", UserTriviaSchema, "usersTrivia");
 
 // _src/services/UserPublicService/index.ts

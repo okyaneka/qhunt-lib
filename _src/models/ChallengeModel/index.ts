@@ -46,7 +46,7 @@ export const ChallengeForeignSchema = new Schema<ChallengeForeign>(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true },
+    order: { type: Number, default: null },
   },
   { _id: false }
 );
@@ -61,6 +61,7 @@ const ChallengeSchema = new Schema<Challenge>(
       enum: Object.values(ChallengeStatus),
       default: ChallengeStatus.Draft,
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null },

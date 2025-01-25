@@ -3,9 +3,13 @@ import { ToObject } from "../../helpers/schema";
 import {
   UserChallenge,
   UserChallengeForeign,
+  UserChallengeResult,
   UserChallengeStatus,
 } from "./types";
-import { ChallengeForeignSchema } from "../ChallengeModel";
+import {
+  ChallengeForeignSchema,
+  ChallengeSettingsForeignSchema,
+} from "../ChallengeModel";
 import { UserPublicForeignSchema } from "../UserPublicModel";
 import { UserStageForeignSchema } from "../UserStageModel";
 
@@ -18,10 +22,25 @@ export const UserChallengeForeignSchema = new Schema<UserChallengeForeign>(
   { _id: false }
 );
 
+export const UserChallengeResultSchema = new Schema<UserChallengeResult>(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 const UserChallengeSchema = new Schema<UserChallenge>(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -29,7 +48,7 @@ const UserChallengeSchema = new Schema<UserChallenge>(
       default: UserChallengeStatus.Undiscovered,
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

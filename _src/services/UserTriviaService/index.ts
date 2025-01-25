@@ -44,20 +44,22 @@ export const setup = async (
   return items.map((item) => item.toObject().id);
 };
 
-export const details = async (ids: string[], TID: string) => {
+export const details = async (
+  ids: string[],
+  TID: string,
+  hasResult?: boolean
+) => {
+  const filter: any = {};
+  if (hasResult !== undefined)
+    filter.results = hasResult ? { $ne: null } : null;
+
   const data = await UserTrivia.find({
+    ...filter,
     _id: { $in: ids },
     "userPublic.code": TID,
   });
 
-  return data.map((item) =>
-    item.toObject({
-      transform: (doc, ret) => {
-        const { _id, __v, userPublic, ...rest } = ret;
-        return { id: _id, ...rest };
-      },
-    })
-  );
+  return data.map((item) => item.toObject());
 };
 
 const UserTriviaService = { setup, details } as const;

@@ -9,11 +9,12 @@ import UserStageValidator from "./UserStageValidator";
 import UserValidator from "./UserValidator";
 declare const validators: {
     readonly ChallengeValidator: {
-        ChallengeListParamsValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeListParams>;
         ChallengeFeedbackValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeFeedback>;
-        ChallengeSettingsSchema: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeSettings>;
         ChallengeForeignValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeForeign>;
+        ChallengeListParamsValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeListParams>;
         ChallengePayloadValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengePayload>;
+        ChallengeSettingsForeignValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeSettingsForeign>;
+        ChallengeSettingsValidator: Joi.ObjectSchema<import("../models/ChallengeModel").ChallengeSettings>;
     };
     readonly QrValidator: {
         QrListParamsValidator: Joi.ObjectSchema<import("../models/QrModel").QrListParams>;

@@ -3,9 +3,11 @@ import Challenge, {
   ChallengeListParams,
   ChallengePayload,
   ChallengeStatus,
+  ChallengeType,
 } from "~/models/ChallengeModel";
 import StageService from "../StageService";
 import Stage from "~/models/StageModel";
+import TriviaService from "../TriviaService";
 
 export const list = async (params: ChallengeListParams) => {
   const skip = (params.page - 1) * params.limit;
@@ -38,7 +40,11 @@ export const create = async (payload: ChallengePayload) => {
   if (stage) {
     const contents = stage.contents || [];
     contents.push(item.id);
-    await Stage.findOneAndUpdate({ _id: stageId }, { $set: { contents } });
+    item.order = contents.length;
+    await Promise.all([
+      Stage.findOneAndUpdate({ _id: stageId }, { $set: { contents } }),
+      item.save(),
+    ]);
   }
 
   return item.toObject();
@@ -48,6 +54,17 @@ export const detail = async (id: string) => {
   const item = await Challenge.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
+};
+
+export const detailContent = async (id: string) => {
+  const item = await Challenge.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+
+  const services = {
+    [ChallengeType.Trivia]: TriviaService,
+  };
+
+  return await services[item.settings.type].content(item);
 };
 
 export const update = async (id: string, payload: ChallengePayload) => {
@@ -124,10 +141,11 @@ const ChallengeService = {
   list,
   create,
   detail,
+  detailContent,
   update,
   updateContent,
   delete: _delete,
   verify,
-};
+} as const;
 
 export default ChallengeService;

@@ -13,6 +13,9 @@ export declare const create: (payload: ChallengePayload) => Promise<import("../.
 export declare const detail: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
+export declare const detailContent: (id: string) => Promise<(import("../../models/TriviaModel").Trivia & {
+    _id: import("mongoose").Types.ObjectId;
+})[]>;
 export declare const update: (id: string, payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
@@ -26,7 +29,7 @@ export declare const verify: (id: string) => Promise<import("../../models/Challe
     _id: import("mongoose").Types.ObjectId;
 }>;
 declare const ChallengeService: {
-    list: (params: ChallengeListParams) => Promise<{
+    readonly list: (params: ChallengeListParams) => Promise<{
         list: (import("../../models/ChallengeModel").Challenge & {
             _id: import("mongoose").Types.ObjectId;
         })[];
@@ -34,22 +37,25 @@ declare const ChallengeService: {
         totalItems: number;
         totalPages: number;
     }>;
-    create: (payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
+    readonly create: (payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    detail: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
+    readonly detail: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    update: (id: string, payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
+    readonly detailContent: (id: string) => Promise<(import("../../models/TriviaModel").Trivia & {
+        _id: import("mongoose").Types.ObjectId;
+    })[]>;
+    readonly update: (id: string, payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    updateContent: (id: string, contents: string[]) => Promise<import("../../models/ChallengeModel").Challenge & {
+    readonly updateContent: (id: string, contents: string[]) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    delete: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
+    readonly delete: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    verify: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
+    readonly verify: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
 };

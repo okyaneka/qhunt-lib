@@ -108,7 +108,7 @@ var QrModel = models.Qr || model("Qr", QrSchema);
 // _src/helpers/validator/index.ts
 import Joi2 from "joi";
 var PeriodeValidator = schema_default.generate({
-  startDate: Joi2.date().required().greater("now"),
+  startDate: Joi2.date().required(),
   endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
 });
 var DefaultListParamsFields = {

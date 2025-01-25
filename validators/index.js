@@ -147,7 +147,7 @@ var ChallengeForeignSchema = new import_mongoose2.Schema(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -161,6 +161,7 @@ var ChallengeSchema = new import_mongoose2.Schema(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -174,7 +175,7 @@ var ChallengeModel = import_mongoose2.models.Challenge || (0, import_mongoose2.m
 // _src/helpers/validator/index.ts
 var import_joi2 = __toESM(require("joi"));
 var PeriodeValidator = schema_default.generate({
-  startDate: import_joi2.default.date().required().greater("now"),
+  startDate: import_joi2.default.date().required(),
   endDate: import_joi2.default.date().required().greater(import_joi2.default.ref("startDate"))
 });
 var DefaultListParamsFields = {
@@ -192,7 +193,7 @@ var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
-var ChallengeSettingsSchema2 = schema_default.generate({
+var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
   duration: schema_default.number({ defaultValue: 0 }),
   type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType)),
@@ -201,25 +202,27 @@ var ChallengeSettingsSchema2 = schema_default.generate({
 var ChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    duration: schema_default.number({ allow: 0 }),
-    type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
-  })
+  order: schema_default.number({ defaultValue: null }),
+  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] })
+});
+var ChallengeSettingsForeignValidator = schema_default.generate({
+  duration: schema_default.number({ allow: 0 }),
+  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
 });
 var ChallengePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(schema_default.string()).default([]),
   stageId: schema_default.string({ required: true }),
   status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsSchema2.required()
+  settings: ChallengeSettingsValidator.required()
 });
 var ChallengeValidator = {
-  ChallengeListParamsValidator,
   ChallengeFeedbackValidator,
-  ChallengeSettingsSchema: ChallengeSettingsSchema2,
   ChallengeForeignValidator,
-  ChallengePayloadValidator
+  ChallengeListParamsValidator,
+  ChallengePayloadValidator,
+  ChallengeSettingsForeignValidator,
+  ChallengeSettingsValidator
 };
 var ChallengeValidator_default = ChallengeValidator;
 
@@ -448,6 +451,7 @@ var import_mongoose8 = require("mongoose");
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
   UserChallengeStatus2["Undiscovered"] = "undiscovered";
+  UserChallengeStatus2["Discovered"] = "discovered";
   UserChallengeStatus2["OnGoing"] = "ongoing";
   UserChallengeStatus2["Completed"] = "completed";
   UserChallengeStatus2["Failed"] = "failed";
@@ -583,10 +587,24 @@ var UserChallengeForeignSchema = new import_mongoose8.Schema(
   },
   { _id: false }
 );
+var UserChallengeResultSchema = new import_mongoose8.Schema(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserChallengeSchema = new import_mongoose8.Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -594,7 +612,7 @@ var UserChallengeSchema = new import_mongoose8.Schema(
       default: "undiscovered" /* Undiscovered */
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }

@@ -103,7 +103,7 @@ var ChallengeForeignSchema = new Schema2(
     id: { type: String, required: true },
     name: { type: String, required: true },
     storyline: { type: [String], required: true },
-    settings: { type: ChallengeSettingsSchema, required: true }
+    order: { type: Number, default: null }
   },
   { _id: false }
 );
@@ -117,6 +117,7 @@ var ChallengeSchema = new Schema2(
       enum: Object.values(ChallengeStatus),
       default: "draft" /* Draft */
     },
+    order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
     deletedAt: { type: Date, default: null }
@@ -258,6 +259,7 @@ import { model as model7, models as models7, Schema as Schema8 } from "mongoose"
 // _src/models/UserChallengeModel/types.ts
 var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
   UserChallengeStatus2["Undiscovered"] = "undiscovered";
+  UserChallengeStatus2["Discovered"] = "discovered";
   UserChallengeStatus2["OnGoing"] = "ongoing";
   UserChallengeStatus2["Completed"] = "completed";
   UserChallengeStatus2["Failed"] = "failed";
@@ -362,10 +364,24 @@ var UserChallengeForeignSchema = new Schema8(
   },
   { _id: false }
 );
+var UserChallengeResultSchema = new Schema8(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    correctBonus: { type: Number, required: true },
+    correctCount: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+    startAt: { type: Date, default: Date.now() },
+    endAt: { type: Date, default: null },
+    timeUsed: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserChallengeSchema = new Schema8(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
+    settings: { type: ChallengeSettingsForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
@@ -373,7 +389,7 @@ var UserChallengeSchema = new Schema8(
       default: "undiscovered" /* Undiscovered */
     },
     contents: { type: [String], default: [] },
-    score: { type: Number, default: null },
+    results: { type: UserChallengeResultSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -383,12 +399,19 @@ UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = models7.UserChallenge || model7("UserChallenge", UserChallengeSchema, "usersChallenge");
 
 // _src/models/UserTriviaModel/index.ts
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
 var UserTriviaResultSchema = new Schema9(
   {
     answer: { type: String, required: true },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
-    score: { type: Number, required: true }
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
   },
   { _id: false }
 );
@@ -401,8 +424,8 @@ var UserTriviaSchema = new Schema9(
   },
   { timestamps: true }
 );
-UserTriviaSchema.set("toJSON", ToObject);
-UserTriviaSchema.set("toObject", ToObject);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models8.UserTrivia || model8("UserTrivia", UserTriviaSchema, "usersTrivia");
 var UserTriviaModel_default = UserTriviaModel;
 
@@ -412,7 +435,7 @@ import Joi3 from "joi";
 // _src/helpers/validator/index.ts
 import Joi2 from "joi";
 var PeriodeValidator = schema_default.generate({
-  startDate: Joi2.date().required().greater("now"),
+  startDate: Joi2.date().required(),
   endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
 });
 var DefaultListParamsFields = {
@@ -430,7 +453,7 @@ var ChallengeFeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
-var ChallengeSettingsSchema2 = schema_default.generate({
+var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
   duration: schema_default.number({ defaultValue: 0 }),
   type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType)),
@@ -439,18 +462,19 @@ var ChallengeSettingsSchema2 = schema_default.generate({
 var ChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi3.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    duration: schema_default.number({ allow: 0 }),
-    type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
-  })
+  order: schema_default.number({ defaultValue: null }),
+  storyline: schema_default.array(Joi3.string(), { defaultValue: [] })
+});
+var ChallengeSettingsForeignValidator = schema_default.generate({
+  duration: schema_default.number({ allow: 0 }),
+  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
 });
 var ChallengePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(schema_default.string()).default([]),
   stageId: schema_default.string({ required: true }),
   status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsSchema2.required()
+  settings: ChallengeSettingsValidator.required()
 });
 
 // _src/validators/TriviaValidator/index.ts
@@ -518,19 +542,16 @@ var setup = async (userPublic, userChallenge, content) => {
   const items = await Promise.all(payload);
   return items.map((item) => item.toObject().id);
 };
-var details = async (ids, TID) => {
+var details = async (ids, TID, hasResult) => {
+  const filter = {};
+  if (hasResult !== void 0)
+    filter.results = hasResult ? { $ne: null } : null;
   const data = await UserTriviaModel_default.find({
+    ...filter,
     _id: { $in: ids },
     "userPublic.code": TID
   });
-  return data.map(
-    (item) => item.toObject({
-      transform: (doc, ret) => {
-        const { _id, __v, userPublic, ...rest } = ret;
-        return { id: _id, ...rest };
-      }
-    })
-  );
+  return data.map((item) => item.toObject());
 };
 var UserTriviaService = { setup, details };
 var UserTriviaService_default = UserTriviaService;
