@@ -1,5 +1,10 @@
 import { Model, model, models, Schema } from "mongoose";
-import { UserStage, UserStageForeign, UserStageStatus } from "./types";
+import {
+  UserStage,
+  UserStageForeign,
+  UserStageResult,
+  UserStageStatus,
+} from "./types";
 import { ToObject } from "../../helpers/schema";
 import { StageForeignSchema } from "../StageModel";
 import { UserPublicForeignSchema } from "../UserPublicModel";
@@ -13,6 +18,15 @@ export const UserStageForeignSchema = new Schema<UserStageForeign>(
   { _id: false }
 );
 
+export const UserStageResultSchema = new Schema<UserStageResult>(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 const UserStageSchema = new Schema<UserStage>(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -22,7 +36,7 @@ const UserStageSchema = new Schema<UserStage>(
       enum: Object.values(UserStageStatus),
       default: UserStageStatus.OnGoing,
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] },
   },
   { timestamps: true }
