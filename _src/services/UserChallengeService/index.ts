@@ -1,7 +1,9 @@
+import dayjs from "dayjs";
 import ChallengeService from "../ChallengeService";
 import UserChallenge, {
   UserChallengeForeign,
   UserChallengeParams,
+  UserChallengeResult,
   UserChallengeStatus,
 } from "~/models/UserChallengeModel";
 import UserPublicService from "../UserPublicService";
@@ -15,6 +17,19 @@ import { ChallengeType } from "~/models/ChallengeModel";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
 import StageService from "../StageService";
 import service from "~/helpers/service";
+
+const initResult = (): UserChallengeResult => {
+  return {
+    baseScore: 0,
+    bonus: 0,
+    timeUsed: 0,
+    totalScore: 0,
+    correctBonus: 0,
+    correctCount: 0,
+    startAt: new Date(),
+    endAt: null,
+  };
+};
 
 export const verify = async (
   code: string,
@@ -203,7 +218,63 @@ export const detailContent = async (
   return await services[challengeType].details(contents, TID, hasResult);
 };
 
-export const submit = async (id: string, payload: any, TID: string) => {};
+export const submit = async (id: string, TID: string, bonus: number = 0) => {
+  const userChallenge = await UserChallenge.findOne({ _id: id });
+  if (!userChallenge) throw new Error("user challenge not found");
+  const results = userChallenge.results || initResult();
+  const contents = await UserChallengeService.detailContent(id, TID);
+  const contentsResults = await Promise.all(
+    contents.map((content) => UserTriviaService.submit(content.id, TID))
+  );
+  const { baseScore, correctBonus, correctCount } = contentsResults.reduce(
+    (acc, item) => {
+      acc.baseScore += item.results?.baseScore || 0;
+      acc.correctCount += item.results?.isCorrect ? 1 : 0;
+      acc.correctBonus += item.results?.bonus || 0;
+      return acc;
+    },
+    {
+      baseScore: 0,
+      correctBonus: 0,
+      correctCount: 0,
+    }
+  );
+
+  const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
+  const totalScore = baseScore + bonus + correctBonus;
+
+  results.baseScore = baseScore;
+  results.correctCount = correctCount;
+  results.correctBonus = correctBonus;
+  results.bonus = bonus;
+  results.totalScore = totalScore;
+  results.endAt = new Date();
+  results.timeUsed = timeUsed;
+
+  userChallenge.results = results;
+  userChallenge.status = UserChallengeStatus.Completed;
+  await userChallenge.save();
+  return userChallenge.toObject();
+};
+
+export const submitState = async (id: string, TID: string) => {
+  const userChallenge = await UserChallenge.findOne({ _id: id });
+  if (!userChallenge) throw new Error("user challenge not found");
+  if (userChallenge.status === UserChallengeStatus.Completed)
+    return userChallenge.toObject();
+  const results = userChallenge.results || initResult();
+
+  const contents = await UserChallengeService.detailContent(id, TID);
+  results.baseScore = contents.reduce(
+    (acc, item) => acc + (item.results?.baseScore ?? 0),
+    0
+  );
+
+  userChallenge.results = results;
+  userChallenge.status = UserChallengeStatus.OnGoing;
+  await userChallenge.save();
+  return userChallenge.toObject();
+};
 
 const UserChallengeService = {
   verify,
@@ -212,6 +283,7 @@ const UserChallengeService = {
   detail,
   detailContent,
   submit,
+  submitState,
 } as const;
 
 export default UserChallengeService;

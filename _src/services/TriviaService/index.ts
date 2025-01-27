@@ -42,7 +42,11 @@ export const content = async (challenge: Challenge) => {
   return items.map((item) => item.toObject());
 };
 
-export const detail = async (id: string) => {};
+export const detail = async (id: string) => {
+  const item = await Trivia.findOne({ _id: id });
+  if (!item) throw new Error("trivia not found");
+  return item;
+};
 
 export const verify = async (id: string) => {};
 
