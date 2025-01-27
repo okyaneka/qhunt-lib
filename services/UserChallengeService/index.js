@@ -59,6 +59,9 @@ var transaction = async (operation) => {
 var db = { transaction };
 var db_default = db;
 
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
 var import_mongoose2 = require("mongoose");

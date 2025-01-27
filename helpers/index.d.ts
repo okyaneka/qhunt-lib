@@ -1,7 +1,10 @@
 import db from "./db";
+import qrcode from "./qrcode";
 import response from "./response";
 import schema from "./schema";
 import service from "./service";
+export * from "./types";
+export { db, response, schema, service, qrcode };
 declare const helpers: {
     readonly db: {
         transaction: <T>(operation: (session: import("mongoose").ClientSession) => Promise<T>) => Promise<T>;
@@ -65,8 +68,10 @@ declare const helpers: {
             totalPages: number;
         }>;
     };
+    readonly qrcode: {
+        readonly scanByStream: (stream: MediaStream, el?: HTMLVideoElement) => Promise<import("@zxing/library").Result>;
+        readonly scanByFile: (file: File) => Promise<import("@zxing/library").Result>;
+    };
 };
-export * from "./types";
-export { db, response, schema, service };
 export default helpers;
 //# sourceMappingURL=index.d.ts.map

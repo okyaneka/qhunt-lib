@@ -32,6 +32,7 @@ var helpers_exports = {};
 __export(helpers_exports, {
   db: () => db_default,
   default: () => helpers_default,
+  qrcode: () => qrcode_default,
   response: () => response_default,
   schema: () => schema_default,
   service: () => service_default
@@ -55,6 +56,20 @@ var transaction = async (operation) => {
 };
 var db = { transaction };
 var db_default = db;
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+var scanByStream = (stream, el) => {
+  const reader = new import_browser.BrowserQRCodeReader();
+  return reader.decodeOnceFromStream(stream, el);
+};
+var scanByFile = (file) => {
+  const reader = new import_browser.BrowserQRCodeReader();
+  const url = URL.createObjectURL(file);
+  return reader.decodeFromImageUrl(url);
+};
+var qrcode = { scanByStream, scanByFile };
+var qrcode_default = qrcode;
 
 // _src/helpers/response/index.ts
 var success = (data = null, message = "success") => {
@@ -158,11 +173,12 @@ var service = { list };
 var service_default = service;
 
 // _src/helpers/index.ts
-var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default };
+var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default, qrcode: qrcode_default };
 var helpers_default = helpers;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   db,
+  qrcode,
   response,
   schema,
   service

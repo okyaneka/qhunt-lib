@@ -1,12 +1,13 @@
 import db from "./db";
+import qrcode from "./qrcode";
 import response from "./response";
 import schema from "./schema";
 import service from "./service";
 
-const helpers = { db, response, schema, service } as const;
-
 export * from "./types";
 
-export { db, response, schema, service };
+export { db, response, schema, service, qrcode };
+
+const helpers = { db, response, schema, service, qrcode } as const;
 
 export default helpers;

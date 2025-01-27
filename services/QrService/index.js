@@ -165,6 +165,9 @@ var transaction = async (operation) => {
 var db = { transaction };
 var db_default = db;
 
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
 // _src/helpers/service/index.ts
 var list = async (model10, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;

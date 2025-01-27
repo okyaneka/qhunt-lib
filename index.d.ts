@@ -68,6 +68,10 @@ declare const _default: {
                 totalPages: number;
             }>;
         };
+        readonly qrcode: {
+            readonly scanByStream: (stream: MediaStream, el?: HTMLVideoElement) => Promise<import("@zxing/library").Result>;
+            readonly scanByFile: (file: File) => Promise<import("@zxing/library").Result>;
+        };
     };
     models: {
         readonly ChallengeModel: mongoose.Model<import("./models/ChallengeModel").Challenge, {}, {}, {}, mongoose.Document<unknown, {}, import("./models/ChallengeModel").Challenge> & import("./models/ChallengeModel").Challenge & {
