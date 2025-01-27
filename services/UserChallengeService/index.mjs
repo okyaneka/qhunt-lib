@@ -16,6 +16,9 @@ var transaction = async (operation) => {
 var db = { transaction };
 var db_default = db;
 
+// _src/helpers/qrcode/index.ts
+import { BrowserQRCodeReader } from "@zxing/browser";
+
 // _src/helpers/schema/index.ts
 import Joi from "joi";
 import { Schema } from "mongoose";

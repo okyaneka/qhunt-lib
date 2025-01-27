@@ -16,6 +16,20 @@ var transaction = async (operation) => {
 var db = { transaction };
 var db_default = db;
 
+// _src/helpers/qrcode/index.ts
+import { BrowserQRCodeReader } from "@zxing/browser";
+var scanByStream = (stream, el) => {
+  const reader = new BrowserQRCodeReader();
+  return reader.decodeOnceFromStream(stream, el);
+};
+var scanByFile = (file) => {
+  const reader = new BrowserQRCodeReader();
+  const url = URL.createObjectURL(file);
+  return reader.decodeFromImageUrl(url);
+};
+var qrcode = { scanByStream, scanByFile };
+var qrcode_default = qrcode;
+
 // _src/helpers/response/index.ts
 var success = (data = null, message = "success") => {
   return {
@@ -118,7 +132,7 @@ var service = { list };
 var service_default = service;
 
 // _src/helpers/index.ts
-var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default };
+var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default, qrcode: qrcode_default };
 var helpers_default = helpers;
 
 // _src/models/ChallengeModel/index.ts

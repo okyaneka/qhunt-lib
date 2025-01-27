@@ -324,6 +324,9 @@ var verify = async (id) => {
 var StageService = { list, create, detail, update, delete: _delete, verify };
 var StageService_default = StageService;
 
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
 // _src/helpers/service/index.ts
 var list2 = async (model10, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;

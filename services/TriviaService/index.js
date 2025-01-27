@@ -196,6 +196,9 @@ var transaction = async (operation) => {
 var db = { transaction };
 var db_default = db;
 
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
 // _src/models/StageModel/types.ts
 var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
   StageStatus2["Draft"] = "draft";
