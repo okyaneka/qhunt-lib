@@ -212,7 +212,11 @@ declare const _default: {
             content: (challenge: import("./models/ChallengeModel").Challenge) => Promise<(import("./models/TriviaModel").Trivia & {
                 _id: mongoose.Types.ObjectId;
             })[]>;
-            detail: (id: string) => Promise<void>;
+            detail: (id: string) => Promise<mongoose.Document<unknown, {}, import("./models/TriviaModel").Trivia> & import("./models/TriviaModel").Trivia & {
+                _id: mongoose.Types.ObjectId;
+            } & {
+                __v: number;
+            }>;
             verify: (id: string) => Promise<void>;
         };
         readonly UserChallengeService: {
@@ -246,7 +250,12 @@ declare const _default: {
             readonly detailContent: (id: string, TID: string, hasResult?: boolean) => Promise<(import("./models/UserTriviaModel").UserTrivia & {
                 _id: mongoose.Types.ObjectId;
             })[]>;
-            readonly submit: (id: string, payload: any, TID: string) => Promise<void>;
+            readonly submit: (id: string, TID: string, bonus?: number) => Promise<import("./models/UserChallengeModel").UserChallenge & {
+                _id: mongoose.Types.ObjectId;
+            }>;
+            readonly submitState: (id: string, TID: string) => Promise<import("./models/UserChallengeModel").UserChallenge & {
+                _id: mongoose.Types.ObjectId;
+            }>;
         };
         readonly UserPublicService: {
             verify: (value: string) => Promise<import("./models/UserPublicModel").UserPublic & {
@@ -313,6 +322,9 @@ declare const _default: {
             readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("./models/UserTriviaModel").UserTrivia & {
                 _id: mongoose.Types.ObjectId;
             })[]>;
+            readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("./models/UserTriviaModel").UserTrivia & {
+                _id: mongoose.Types.ObjectId;
+            }>;
         };
     };
     validators: {

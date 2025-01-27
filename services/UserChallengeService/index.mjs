@@ -1,3 +1,6 @@
+// _src/services/UserChallengeService/index.ts
+import dayjs from "dayjs";
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 var transaction = async (operation) => {
@@ -374,6 +377,9 @@ var content = async (challenge) => {
   return items.map((item) => item.toObject());
 };
 var detail2 = async (id) => {
+  const item = await TriviaModel_default.findOne({ _id: id });
+  if (!item) throw new Error("trivia not found");
+  return item;
 };
 var verify2 = async (id) => {
 };
@@ -606,6 +612,14 @@ var UserStageForeignSchema = new Schema7(
   },
   { _id: false }
 );
+var UserStageResultSchema = new Schema7(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserStageSchema = new Schema7(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -615,7 +629,7 @@ var UserStageSchema = new Schema7(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }
@@ -731,7 +745,7 @@ var ToObject3 = {
 };
 var UserTriviaResultSchema = new Schema10(
   {
-    answer: { type: String, required: true },
+    answer: { type: String, default: null },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },
@@ -990,7 +1004,7 @@ var verify6 = async (triviaId, TID) => {
     "trivia.id": triviaId,
     deletedAt: null
   });
-  if (!item) throw new Error("user challenge is undiscovered");
+  if (!item) throw new Error("user trivia not found");
   return item;
 };
 var setup3 = async (userPublic, userChallenge, content2) => {
@@ -1023,10 +1037,45 @@ var details = async (ids, TID, hasResult) => {
   });
   return data.map((item) => item.toObject());
 };
-var UserTriviaService = { setup: setup3, details };
+var submit = async (id, TID, answer = null, bonus) => {
+  const userTrivia = await UserTriviaModel_default.findOne({
+    _id: id,
+    "userPublic.code": TID
+  });
+  if (!userTrivia) throw new Error("user trivia not found");
+  if (userTrivia.results) return userTrivia.toObject();
+  const trivia = await TriviaService_default.detail(userTrivia.trivia.id);
+  const selectedAnswer = trivia.options.find((v) => v.text == answer);
+  const isCorrect = Boolean(selectedAnswer?.isCorrect);
+  const baseScore = selectedAnswer?.point || 0;
+  const results = {
+    answer,
+    feedback: trivia.feedback[isCorrect ? "positive" : "negative"],
+    isCorrect,
+    baseScore,
+    bonus: bonus || 0,
+    totalScore: baseScore + (bonus || 0)
+  };
+  userTrivia.results = results;
+  await userTrivia.save();
+  return userTrivia.toObject();
+};
+var UserTriviaService = { setup: setup3, details, submit };
 var UserTriviaService_default = UserTriviaService;
 
 // _src/services/UserChallengeService/index.ts
+var initResult = () => {
+  return {
+    baseScore: 0,
+    bonus: 0,
+    timeUsed: 0,
+    totalScore: 0,
+    correctBonus: 0,
+    correctCount: 0,
+    startAt: /* @__PURE__ */ new Date(),
+    endAt: null
+  };
+};
 var verify7 = async (code, challengeId, isDiscover) => {
   const item = await UserChallengeModel_default.findOne({
     "userPublic.code": code,
@@ -1169,7 +1218,56 @@ var detailContent2 = async (id, TID, hasResult) => {
   };
   return await services[challengeType].details(contents, TID, hasResult);
 };
-var submit = async (id, payload, TID) => {
+var submit2 = async (id, TID, bonus = 0) => {
+  const userChallenge = await UserChallengeModel_default.findOne({ _id: id });
+  if (!userChallenge) throw new Error("user challenge not found");
+  const results = userChallenge.results || initResult();
+  const contents = await UserChallengeService.detailContent(id, TID);
+  const contentsResults = await Promise.all(
+    contents.map((content2) => UserTriviaService_default.submit(content2.id, TID))
+  );
+  const { baseScore, correctBonus, correctCount } = contentsResults.reduce(
+    (acc, item) => {
+      acc.baseScore += item.results?.baseScore || 0;
+      acc.correctCount += item.results?.isCorrect ? 1 : 0;
+      acc.correctBonus += item.results?.bonus || 0;
+      return acc;
+    },
+    {
+      baseScore: 0,
+      correctBonus: 0,
+      correctCount: 0
+    }
+  );
+  const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
+  const totalScore = baseScore + bonus + correctBonus;
+  results.baseScore = baseScore;
+  results.correctCount = correctCount;
+  results.correctBonus = correctBonus;
+  results.bonus = bonus;
+  results.totalScore = totalScore;
+  results.endAt = /* @__PURE__ */ new Date();
+  results.timeUsed = timeUsed;
+  userChallenge.results = results;
+  userChallenge.status = "completed" /* Completed */;
+  await userChallenge.save();
+  return userChallenge.toObject();
+};
+var submitState = async (id, TID) => {
+  const userChallenge = await UserChallengeModel_default.findOne({ _id: id });
+  if (!userChallenge) throw new Error("user challenge not found");
+  if (userChallenge.status === "completed" /* Completed */)
+    return userChallenge.toObject();
+  const results = userChallenge.results || initResult();
+  const contents = await UserChallengeService.detailContent(id, TID);
+  results.baseScore = contents.reduce(
+    (acc, item) => acc + (item.results?.baseScore ?? 0),
+    0
+  );
+  userChallenge.results = results;
+  userChallenge.status = "ongoing" /* OnGoing */;
+  await userChallenge.save();
+  return userChallenge.toObject();
 };
 var UserChallengeService = {
   verify: verify7,
@@ -1177,7 +1275,8 @@ var UserChallengeService = {
   list: list5,
   detail: detail5,
   detailContent: detailContent2,
-  submit
+  submit: submit2,
+  submitState
 };
 var UserChallengeService_default = UserChallengeService;
 export {
@@ -1187,6 +1286,7 @@ export {
   discover,
   list5 as list,
   setup4 as setup,
-  submit,
+  submit2 as submit,
+  submitState,
   verify7 as verify
 };

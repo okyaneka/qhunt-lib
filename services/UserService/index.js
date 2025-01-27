@@ -423,6 +423,14 @@ var UserStageForeignSchema = new import_mongoose9.Schema(
   },
   { _id: false }
 );
+var UserStageResultSchema = new import_mongoose9.Schema(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserStageSchema = new import_mongoose9.Schema(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -432,7 +440,7 @@ var UserStageSchema = new import_mongoose9.Schema(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }
@@ -494,7 +502,7 @@ var ToObject3 = {
 };
 var UserTriviaResultSchema = new import_mongoose11.Schema(
   {
-    answer: { type: String, required: true },
+    answer: { type: String, default: null },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },

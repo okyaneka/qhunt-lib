@@ -14,12 +14,17 @@ export interface UserStageForeign {
     stageId: string;
     name: string;
 }
+export interface UserStageResult {
+    baseScore: number;
+    bonus: number;
+    totalScore: number;
+}
 export interface UserStage extends Timestamps {
     id: string;
     userPublic: UserPublicForeign;
     stage: StageForeign;
     status: UserStageStatus;
-    score: number | null;
+    results: UserStageResult | null;
     contents: string[];
 }
 //# sourceMappingURL=types.d.ts.map

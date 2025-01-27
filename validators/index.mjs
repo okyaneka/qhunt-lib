@@ -516,6 +516,14 @@ var UserStageForeignSchema = new Schema7(
   },
   { _id: false }
 );
+var UserStageResultSchema = new Schema7(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserStageSchema = new Schema7(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -525,7 +533,7 @@ var UserStageSchema = new Schema7(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }

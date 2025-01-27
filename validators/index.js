@@ -560,6 +560,14 @@ var UserStageForeignSchema = new import_mongoose7.Schema(
   },
   { _id: false }
 );
+var UserStageResultSchema = new import_mongoose7.Schema(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserStageSchema = new import_mongoose7.Schema(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -569,7 +577,7 @@ var UserStageSchema = new import_mongoose7.Schema(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }

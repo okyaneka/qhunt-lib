@@ -9,11 +9,17 @@ export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserC
 export declare const details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
+export declare const submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../../models/UserTriviaModel").UserTrivia & {
+    _id: import("mongoose").Types.ObjectId;
+}>;
 declare const UserTriviaService: {
     readonly setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, content: string[]) => Promise<string[]>;
     readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../models/UserTriviaModel").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
+    readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../../models/UserTriviaModel").UserTrivia & {
+        _id: import("mongoose").Types.ObjectId;
+    }>;
 };
 export default UserTriviaService;
 //# sourceMappingURL=index.d.ts.map

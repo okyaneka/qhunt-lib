@@ -263,6 +263,14 @@ var UserStageForeignSchema = new Schema6(
   },
   { _id: false }
 );
+var UserStageResultSchema = new Schema6(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserStageSchema = new Schema6(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -272,7 +280,7 @@ var UserStageSchema = new Schema6(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }
@@ -373,7 +381,7 @@ var ToObject3 = {
 };
 var UserTriviaResultSchema = new Schema9(
   {
-    answer: { type: String, required: true },
+    answer: { type: String, default: null },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },

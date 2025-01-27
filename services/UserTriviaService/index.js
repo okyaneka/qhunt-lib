@@ -33,7 +33,8 @@ __export(UserTriviaService_exports, {
   default: () => UserTriviaService_default,
   details: () => details,
   setup: () => setup,
-  verify: () => verify
+  submit: () => submit,
+  verify: () => verify4
 });
 module.exports = __toCommonJS(UserTriviaService_exports);
 
@@ -166,6 +167,7 @@ var ChallengeSchema = new import_mongoose2.Schema(
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 var ChallengeModel = import_mongoose2.models.Challenge || (0, import_mongoose2.model)("Challenge", ChallengeSchema);
+var ChallengeModel_default = ChallengeModel;
 
 // _src/models/TriviaModel/index.ts
 var TriviaOptionSchema = new import_mongoose3.Schema(
@@ -366,6 +368,7 @@ var StageSchema = new import_mongoose6.Schema(
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = import_mongoose6.models.Stage || (0, import_mongoose6.model)("Stage", StageSchema);
+var StageModel_default = StageModel;
 
 // _src/models/UserStageModel/index.ts
 var UserStageForeignSchema = new import_mongoose7.Schema(
@@ -373,6 +376,14 @@ var UserStageForeignSchema = new import_mongoose7.Schema(
     id: { type: String, required: true },
     stageId: { type: String, required: true },
     name: { type: String, required: true }
+  },
+  { _id: false }
+);
+var UserStageResultSchema = new import_mongoose7.Schema(
+  {
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
   },
   { _id: false }
 );
@@ -385,7 +396,7 @@ var UserStageSchema = new import_mongoose7.Schema(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }
@@ -446,7 +457,7 @@ var ToObject3 = {
 };
 var UserTriviaResultSchema = new import_mongoose9.Schema(
   {
-    answer: { type: String, required: true },
+    answer: { type: String, default: null },
     feedback: { type: String, default: "" },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },
@@ -552,23 +563,276 @@ var TriviaForeignValidator = schema_default.generate({
   options: schema_default.array(TriviaForeignOptionValidator, { required: true })
 });
 
+// _src/helpers/db/index.ts
+var import_mongoose10 = require("mongoose");
+var transaction = async (operation) => {
+  const session = await (0, import_mongoose10.startSession)();
+  session.startTransaction();
+  return await operation(session).then(async (res) => {
+    await session.commitTransaction();
+    return res;
+  }).catch(async (err) => {
+    await session.abortTransaction();
+    throw err;
+  }).finally(() => {
+    session.endSession();
+  });
+};
+var db = { transaction };
+var db_default = db;
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
+// _src/services/StageService/index.ts
+var isUsed = async (ids, id) => {
+  const filter = {
+    _id: { $in: ids },
+    deletedAt: null,
+    stage: { $ne: null }
+  };
+  if (id) filter["stage.id"] = { $ne: id };
+  const used = (await ChallengeModel_default.find(filter)).map((item) => item.id);
+  if (used.length)
+    throw new Error(
+      `challenge${used.length > 1 ? "s" : ""} ${used.join(", ")} ${used.length > 1 ? "are" : "is"} used`
+    );
+};
+var list = async (params) => {
+  const skip = (params.page - 1) * params.limit;
+  const filter = {
+    deletedAt: null,
+    name: { $regex: params.search, $options: "i" }
+  };
+  const items = await StageModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const totalItems = await StageModel_default.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / params.limit);
+  return {
+    list: items.map((item) => item.toObject()),
+    page: params.page,
+    totalItems,
+    totalPages
+  };
+};
+var create = async (payload) => {
+  await isUsed(payload.contents);
+  const contents = await ChallengeModel_default.find({ _id: { $in: payload.contents } });
+  const stage = await StageModel_default.create({
+    ...payload,
+    contents: contents.map((item) => item.id)
+  });
+  const sync2 = contents.map((item) => {
+    item.stage = { id: stage.id, name: stage.name };
+    return item.save();
+  });
+  await Promise.all(sync2);
+  return stage.toObject();
+};
+var detail = async (id) => {
+  const item = await StageModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("stage not found");
+  return item.toObject();
+};
+var update = async (id, payload) => {
+  return await db_default.transaction(async (session) => {
+    await isUsed(payload.contents, id);
+    const stage = await StageModel_default.findOne({ _id: id, deletedAt: null });
+    if (!stage) throw new Error("stage not found");
+    const contents = (await ChallengeModel_default.find({ _id: { $in: payload.contents }, deletedAt: null })).map((item) => item.id);
+    await ChallengeModel_default.updateMany(
+      { "stage.id": stage.id },
+      { $set: { stage: null } },
+      { session }
+    );
+    await ChallengeModel_default.updateMany(
+      { _id: { $in: contents } },
+      { $set: { stage: { id: stage.id, name: stage.name } } },
+      { session }
+    );
+    Object.assign(stage, { ...payload, contents });
+    await stage.save({ session });
+    return stage.toObject();
+  });
+};
+var _delete = async (id) => {
+  const item = await StageModel_default.findOneAndUpdate(
+    { _id: id, deletedAt: null },
+    { $set: { deletedAt: Date.now() } }
+  );
+  if (!item) throw new Error("stage not found");
+  return item;
+};
+var verify = async (id) => {
+  const item = await StageModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("stage not found");
+  if (item.status !== "publish" /* Publish */)
+    throw new Error("stage not published yet");
+  return item.toObject();
+};
+var StageService = { list, create, detail, update, delete: _delete, verify };
+var StageService_default = StageService;
+
+// _src/services/ChallengeService/index.ts
+var list2 = async (params) => {
+  const skip = (params.page - 1) * params.limit;
+  const filter = { deletedAt: null };
+  if (params.stageId == "null") filter.stage = null;
+  else if (params.stageId) filter["stage.id"] = params.stageId;
+  const list3 = await ChallengeModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const totalItems = await ChallengeModel_default.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / params.limit);
+  return {
+    list: list3.map((item) => item.toObject()),
+    page: params.page,
+    totalItems,
+    totalPages
+  };
+};
+var create2 = async (payload) => {
+  const { stageId, ...value } = payload;
+  const stage = await StageService_default.detail(stageId).catch(() => null);
+  value.stage = stage ? { id: stage.id, name: stage.name } : null;
+  const item = await ChallengeModel_default.create(value);
+  if (stage) {
+    const contents = stage.contents || [];
+    contents.push(item.id);
+    item.order = contents.length;
+    await Promise.all([
+      StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } }),
+      item.save()
+    ]);
+  }
+  return item.toObject();
+};
+var detail2 = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  return item.toObject();
+};
+var detailContent = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  const services = {
+    ["trivia" /* Trivia */]: TriviaService_default
+  };
+  return await services[item.settings.type].content(item);
+};
+var update2 = async (id, payload) => {
+  return await db_default.transaction(async (session) => {
+    const { stageId, ...value } = payload;
+    const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+    if (!item) throw new Error("challenge not found");
+    const newStage = await StageService_default.detail(stageId).catch(() => null);
+    const oldStage = item?.stage?.id && item.stage.id != stageId ? await StageService_default.detail(item.stage.id).catch(() => null) : null;
+    const newContent = newStage?.contents || [];
+    const oldContent = oldStage?.contents || [];
+    value.stage = newStage ? { id: newStage.id, name: newStage.name } : null;
+    if (!newContent.includes(id)) newContent.push(id);
+    if (oldContent.includes(id)) oldContent.splice(oldContent.indexOf(id), 1);
+    await StageModel_default.findOneAndUpdate(
+      { _id: newStage?.id },
+      { $set: { contents: newContent } },
+      { session }
+    );
+    await StageModel_default.findOneAndUpdate(
+      { _id: oldStage?.id },
+      { $set: { contents: oldContent } },
+      { session }
+    );
+    Object.assign(item, value);
+    await item.save({ session });
+    return item.toObject();
+  });
+};
+var updateContent = async (id, contents) => {
+  const item = await ChallengeModel_default.findOneAndUpdate(
+    { _id: id, deletedAt: null },
+    { $set: { contents } },
+    { new: true }
+  );
+  if (!item) throw new Error("challenge not found");
+  return item.toObject();
+};
+var _delete2 = async (id) => {
+  const item = await ChallengeModel_default.findOneAndUpdate(
+    { _id: id, deletedAt: null },
+    { $set: { deletedAt: Date.now() } },
+    { new: true }
+  );
+  if (!item) throw new Error("challenge not found");
+  return item.toObject();
+};
+var verify2 = async (id) => {
+  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  if (item.status !== "publish" /* Publish */)
+    throw new Error("challenge not published yet");
+  return item.toObject();
+};
+var ChallengeService = {
+  list: list2,
+  create: create2,
+  detail: detail2,
+  detailContent,
+  update: update2,
+  updateContent,
+  delete: _delete2,
+  verify: verify2
+};
+var ChallengeService_default = ChallengeService;
+
+// _src/services/TriviaService/index.ts
+var sync = async (challenge, items) => {
+  const idName = { id: challenge.id, name: challenge.name };
+  const create3 = items.filter((item) => !item.id).map((item) => ({ ...item, challenge: idName }));
+  const update3 = items.filter((item) => item.id);
+  await TriviaModel_default.updateMany(
+    { "challenge.id": challenge.id },
+    { $set: { challenge: null } }
+  );
+  const actCreate = TriviaModel_default.insertMany(create3);
+  const actUpdate = update3.map(
+    (item) => TriviaModel_default.findOneAndUpdate({ _id: item.id }, { $set: item }, { new: true })
+  );
+  const [resCreate, ...resUpdate] = await Promise.all([
+    actCreate,
+    ...actUpdate
+  ]);
+  const content2 = resUpdate.map((item) => item?._id.toString()).concat(...resCreate.map((item) => item._id.toString())).filter((v) => v != void 0);
+  await ChallengeService_default.updateContent(challenge.id, content2);
+  return content2;
+};
+var content = async (challenge) => {
+  const items = await TriviaModel_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+var detail3 = async (id) => {
+  const item = await TriviaModel_default.findOne({ _id: id });
+  if (!item) throw new Error("trivia not found");
+  return item;
+};
+var verify3 = async (id) => {
+};
+var TriviaService = { sync, content, detail: detail3, verify: verify3 };
+var TriviaService_default = TriviaService;
+
 // _src/services/UserTriviaService/index.ts
-var verify = async (triviaId, TID) => {
+var verify4 = async (triviaId, TID) => {
   const item = await UserTriviaModel_default.findOne({
     "userPublic.code": TID,
     "trivia.id": triviaId,
     deletedAt: null
   });
-  if (!item) throw new Error("user challenge is undiscovered");
+  if (!item) throw new Error("user trivia not found");
   return item;
 };
-var setup = async (userPublic, userChallenge, content) => {
-  const trivias = await TriviaModel_default.find({ _id: { $in: content } });
+var setup = async (userPublic, userChallenge, content2) => {
+  const trivias = await TriviaModel_default.find({ _id: { $in: content2 } });
   const payload = trivias.map((item) => item.toObject()).map(async (item) => {
     const trivia = await TriviaForeignValidator.validateAsync(item, {
       stripUnknown: true
     });
-    const userTrivia = await verify(trivia.id, userPublic.code).catch(
+    const userTrivia = await verify4(trivia.id, userPublic.code).catch(
       () => null
     );
     if (userTrivia) return userTrivia;
@@ -592,11 +856,35 @@ var details = async (ids, TID, hasResult) => {
   });
   return data.map((item) => item.toObject());
 };
-var UserTriviaService = { setup, details };
+var submit = async (id, TID, answer = null, bonus) => {
+  const userTrivia = await UserTriviaModel_default.findOne({
+    _id: id,
+    "userPublic.code": TID
+  });
+  if (!userTrivia) throw new Error("user trivia not found");
+  if (userTrivia.results) return userTrivia.toObject();
+  const trivia = await TriviaService_default.detail(userTrivia.trivia.id);
+  const selectedAnswer = trivia.options.find((v) => v.text == answer);
+  const isCorrect = Boolean(selectedAnswer?.isCorrect);
+  const baseScore = selectedAnswer?.point || 0;
+  const results = {
+    answer,
+    feedback: trivia.feedback[isCorrect ? "positive" : "negative"],
+    isCorrect,
+    baseScore,
+    bonus: bonus || 0,
+    totalScore: baseScore + (bonus || 0)
+  };
+  userTrivia.results = results;
+  await userTrivia.save();
+  return userTrivia.toObject();
+};
+var UserTriviaService = { setup, details, submit };
 var UserTriviaService_default = UserTriviaService;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   details,
   setup,
+  submit,
   verify
 });
