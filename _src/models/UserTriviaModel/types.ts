@@ -15,7 +15,7 @@ export interface UserTriviaContent {
 }
 
 export interface UserTriviaResult {
-  answer: string | undefined;
+  answer: string | null;
   baseScore: number;
   bonus: number;
   totalScore: number;
