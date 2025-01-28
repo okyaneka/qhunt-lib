@@ -5,6 +5,7 @@ import UserChallenge, {
   UserChallengeParams,
   UserChallengeResult,
   UserChallengeStatus,
+  UserChallengeSummary,
 } from "~/models/UserChallengeModel";
 import UserPublicService from "../UserPublicService";
 import UserStageService from "../UserStageService";
@@ -222,38 +223,27 @@ export const submit = async (id: string, TID: string, bonus: number = 0) => {
   const userChallenge = await UserChallenge.findOne({ _id: id });
   if (!userChallenge) throw new Error("user challenge not found");
   const results = userChallenge.results || initResult();
-  const contents = await UserChallengeService.detailContent(id, TID);
-  const contentsResults = await Promise.all(
+  const contents = await detailContent(id, TID);
+  await Promise.all(
     contents.map((content) => UserTriviaService.submit(content.id, TID))
   );
-  const { baseScore, correctBonus, correctCount } = contentsResults.reduce(
-    (acc, item) => {
-      acc.baseScore += item.results?.baseScore || 0;
-      acc.correctCount += item.results?.isCorrect ? 1 : 0;
-      acc.correctBonus += item.results?.bonus || 0;
-      return acc;
-    },
-    {
-      baseScore: 0,
-      correctBonus: 0,
-      correctCount: 0,
-    }
-  );
+  const [summary] = await UserTriviaService.summary(id, TID);
 
   const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
-  const totalScore = baseScore + bonus + correctBonus;
 
-  results.baseScore = baseScore;
-  results.correctCount = correctCount;
-  results.correctBonus = correctBonus;
+  results.baseScore = summary.totalBaseScore;
+  results.correctCount = summary.totalCorrect;
+  results.correctBonus = summary.totalBonus;
   results.bonus = bonus;
-  results.totalScore = totalScore;
+  results.totalScore = summary.totalBaseScore + summary.totalBonus + bonus;
   results.endAt = new Date();
   results.timeUsed = timeUsed;
 
   userChallenge.results = results;
   userChallenge.status = UserChallengeStatus.Completed;
   await userChallenge.save();
+  if (userChallenge.userStage)
+    await UserStageService.submitState(userChallenge.userStage.id, TID);
   return userChallenge.toObject();
 };
 
@@ -264,16 +254,37 @@ export const submitState = async (id: string, TID: string) => {
     return userChallenge.toObject();
   const results = userChallenge.results || initResult();
 
-  const contents = await UserChallengeService.detailContent(id, TID);
-  results.baseScore = contents.reduce(
-    (acc, item) => acc + (item.results?.baseScore ?? 0),
-    0
-  );
+  const [summary] = await UserTriviaService.summary(id, TID);
+
+  results.baseScore = summary.totalBaseScore;
+  results.correctBonus = summary.totalBonus;
+  results.totalScore = summary.totalBaseScore + summary.totalBonus;
 
   userChallenge.results = results;
   userChallenge.status = UserChallengeStatus.OnGoing;
   await userChallenge.save();
   return userChallenge.toObject();
+};
+
+export const summary = async (
+  userStageId: string,
+  TID: string
+): Promise<UserChallengeSummary[]> => {
+  return UserChallenge.aggregate()
+    .match({
+      "userStage.id": userStageId,
+      "userPublic.code": TID,
+    })
+    .group({
+      _id: "$userPublic.code",
+      userPublic: { $first: "$userPublic" },
+      userStage: { $first: "$userStage" },
+      totalBaseScore: { $sum: "$results.baseScore" },
+      totalBonus: {
+        $sum: { $add: ["$results.bonus", "$results.correctBonus"] },
+      },
+      totalScore: { $sum: "$results.totalScore" },
+    });
 };
 
 const UserChallengeService = {
@@ -284,6 +295,7 @@ const UserChallengeService = {
   detailContent,
   submit,
   submitState,
+  summary,
 } as const;
 
 export default UserChallengeService;
