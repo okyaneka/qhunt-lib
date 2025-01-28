@@ -1,7 +1,10 @@
 import Trivia from "~/models/TriviaModel";
 import { UserChallengeForeign } from "~/models/UserChallengeModel";
 import { UserPublicForeign } from "~/models/UserPublicModel";
-import UserTrivia, { UserTriviaResult } from "~/models/UserTriviaModel";
+import UserTrivia, {
+  UserTriviaResult,
+  UserTriviaSummary,
+} from "~/models/UserTriviaModel";
 import { TriviaForeignValidator } from "~/validators/TriviaValidator";
 import TriviaService from "../TriviaService";
 import UserTriviaModel from "~/models/UserTriviaModel";
@@ -94,6 +97,37 @@ export const submit = async (
   return userTrivia.toObject();
 };
 
-const UserTriviaService = { setup, details, submit } as const;
+export const summary = async (
+  userChallengeId: string,
+  TID: string
+): Promise<UserTriviaSummary[]> => {
+  return UserTrivia.aggregate()
+    .match({
+      "userChallenge.id": userChallengeId,
+      "userPublic.code": TID,
+    })
+    .group({
+      _id: {
+        userChallenge: "$userChallenge.id",
+        userPublic: "$userPublic.code",
+      },
+      userPublic: { $first: "$userPublic" },
+      userChallenge: { $first: "$userChallenge" },
+      totalCorrect: {
+        $sum: {
+          $cond: {
+            if: { $eq: ["$results.isCorrect", true] },
+            then: 1,
+            else: 0,
+          },
+        },
+      },
+      totalBaseScore: { $sum: "$results.baseScore" },
+      totalBonus: { $sum: "$results.bonus" },
+      totalScore: { $sum: "$results.totalScore" },
+    });
+};
+
+const UserTriviaService = { setup, details, submit, summary } as const;
 
 export default UserTriviaService;
