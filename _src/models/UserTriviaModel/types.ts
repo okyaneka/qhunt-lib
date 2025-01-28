@@ -1,21 +1,18 @@
-import { TriviaOption } from "../TriviaModel";
-import { UserPublic } from "../UserPublicModel";
+import { TriviaForeign, TriviaOption } from "../TriviaModel";
+import { UserChallengeForeign } from "../UserChallengeModel";
+import { UserPublicForeign } from "../UserPublicModel";
 
-export interface UserTriviaChallenge {
-  id: string;
-  challengeId: string;
-  name: string;
-}
-
-export interface UserTriviaContent {
-  id: string;
-  question: string;
-  allowMultiple: boolean;
-  options: Pick<TriviaOption, "text">[];
+export interface UserTriviaSummary {
+  userPublic: UserPublicForeign;
+  userChallenge: UserChallengeForeign;
+  totalCorrect: number;
+  totalBaseScore: number;
+  totalBonus: number;
+  totalScore: number;
 }
 
 export interface UserTriviaResult {
-  answer: string | undefined;
+  answer: string | null;
   baseScore: number;
   bonus: number;
   totalScore: number;
@@ -25,8 +22,8 @@ export interface UserTriviaResult {
 
 export interface UserTrivia {
   id: string;
-  userPublic: Pick<UserPublic, "id" | "name" | "code">;
-  userChallenge: UserTriviaChallenge;
-  trivia: UserTriviaContent;
+  userPublic: UserPublicForeign;
+  userChallenge: UserChallengeForeign;
+  trivia: TriviaForeign;
   results: UserTriviaResult | null;
 }

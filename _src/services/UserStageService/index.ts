@@ -1,15 +1,25 @@
+import { UserChallengeModel } from "~/models";
 import StageService from "../StageService";
 import UserChallengeService from "../UserChallengeService";
 import UserPublicService from "../UserPublicService";
-import UserStage, { UserStageListParams } from "~/models/UserStageModel";
+import UserStage, {
+  UserStageListParams,
+  UserStageResult,
+} from "~/models/UserStageModel";
 import { StageForeignValidator } from "~/validators/StageValidator";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
+
+const initResults = (): UserStageResult => ({
+  baseScore: 0,
+  challengeBonus: 0,
+  bonus: 0,
+  totalScore: 0,
+});
 
 export const verify = async (code: string, stageId: string) => {
   const item = await UserStage.findOne({
     "userPublic.code": code,
     "stage.id": stageId,
-    deletedAt: null,
   });
   if (!item) throw new Error("user stage not found");
 
@@ -17,6 +27,7 @@ export const verify = async (code: string, stageId: string) => {
 };
 
 export const setup = async (code: string, stageId: string) => {
+  console.log(stageId);
   const exist = await verify(code, stageId).catch(() => null);
 
   if (exist) return exist;
@@ -96,6 +107,28 @@ export const detail = async (id: string, TID: string) => {
   });
 };
 
-const UserStageService = { verify, setup, list, detail };
+export const submitState = async (id: string, TID: string) => {
+  const item = await UserStage.findOne({
+    _id: id,
+    "userPublic.code": TID,
+  });
+  if (!item) throw new Error("user stage not found");
+
+  const results = item?.results || initResults();
+
+  const [summary] = await UserChallengeService.summary(id, TID);
+  console.log(summary);
+
+  results.baseScore = summary.totalBaseScore;
+  results.bonus = 0; //summary.totalBonus
+  results.challengeBonus = summary.totalBonus;
+  results.totalScore = summary.totalScore;
+
+  item.results = results;
+  await item.save();
+  return item;
+};
+
+const UserStageService = { verify, setup, list, detail, submitState };
 
 export default UserStageService;

@@ -434,6 +434,9 @@ var content = async (challenge) => {
   return items.map((item) => item.toObject());
 };
 var detail3 = async (id) => {
+  const item = await TriviaModel_default.findOne({ _id: id });
+  if (!item) throw new Error("trivia not found");
+  return item;
 };
 var verify3 = async (id) => {
 };

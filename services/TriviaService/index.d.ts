@@ -4,14 +4,22 @@ export declare const sync: (challenge: Challenge, items: TriviaPayload[]) => Pro
 export declare const content: (challenge: Challenge) => Promise<(import("../../models/TriviaModel").Trivia & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
-export declare const detail: (id: string) => Promise<void>;
+export declare const detail: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../../models/TriviaModel").Trivia> & import("../../models/TriviaModel").Trivia & {
+    _id: import("mongoose").Types.ObjectId;
+} & {
+    __v: number;
+}>;
 export declare const verify: (id: string) => Promise<void>;
 declare const TriviaService: {
     sync: (challenge: Challenge, items: TriviaPayload[]) => Promise<string[]>;
     content: (challenge: Challenge) => Promise<(import("../../models/TriviaModel").Trivia & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
-    detail: (id: string) => Promise<void>;
+    detail: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../../models/TriviaModel").Trivia> & import("../../models/TriviaModel").Trivia & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }>;
     verify: (id: string) => Promise<void>;
 };
 export default TriviaService;

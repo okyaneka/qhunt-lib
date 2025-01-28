@@ -16,6 +16,11 @@ export declare const list: (params: UserStageListParams, TID: string) => Promise
 export declare const detail: (id: string, TID: string) => Promise<import("../../models/UserStageModel").UserStage & {
     _id: import("mongoose").Types.ObjectId;
 }>;
+export declare const submitState: (id: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../../models/UserStageModel").UserStage> & import("../../models/UserStageModel").UserStage & {
+    _id: import("mongoose").Types.ObjectId;
+} & {
+    __v: number;
+}>;
 declare const UserStageService: {
     verify: (code: string, stageId: string) => Promise<import("../../models/UserStageModel").UserStage & {
         _id: import("mongoose").Types.ObjectId;
@@ -33,6 +38,11 @@ declare const UserStageService: {
     }>;
     detail: (id: string, TID: string) => Promise<import("../../models/UserStageModel").UserStage & {
         _id: import("mongoose").Types.ObjectId;
+    }>;
+    submitState: (id: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../../models/UserStageModel").UserStage> & import("../../models/UserStageModel").UserStage & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
     }>;
 };
 export default UserStageService;

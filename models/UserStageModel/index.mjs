@@ -175,6 +175,15 @@ var UserStageForeignSchema = new Schema5(
   },
   { _id: false }
 );
+var UserStageResultSchema = new Schema5(
+  {
+    baseScore: { type: Number, required: true },
+    challengeBonus: { type: Number, required: true },
+    bonus: { type: Number, required: true },
+    totalScore: { type: Number, required: true }
+  },
+  { _id: false }
+);
 var UserStageSchema = new Schema5(
   {
     stage: { type: StageForeignSchema, required: true },
@@ -184,7 +193,7 @@ var UserStageSchema = new Schema5(
       enum: Object.values(UserStageStatus),
       default: "ongoing" /* OnGoing */
     },
-    score: { type: Number, default: null },
+    results: { type: UserStageResultSchema, default: null },
     contents: { type: [String], default: [] }
   },
   { timestamps: true }
@@ -195,6 +204,7 @@ var UserStageModel = models4.UserStage || model4("UserStage", UserStageSchema, "
 var UserStageModel_default = UserStageModel;
 export {
   UserStageForeignSchema,
+  UserStageResultSchema,
   UserStageStatus,
   UserStageModel_default as default
 };

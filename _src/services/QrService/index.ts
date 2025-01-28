@@ -118,6 +118,10 @@ export const verify = async (code: string, TID: string) => {
   const service = services[content.type];
   const data = await service?.setup(TID, content.refId, true);
   if (data) content.refId = data.id;
+  await Qr.updateOne(
+    { _id: qrData.id },
+    { accessCount: (qrData.accessCount || 0) + 1 }
+  );
 
   return content;
 };

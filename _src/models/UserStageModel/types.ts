@@ -18,11 +18,18 @@ export interface UserStageForeign {
   name: string;
 }
 
+export interface UserStageResult {
+  baseScore: number;
+  challengeBonus: number;
+  bonus: number;
+  totalScore: number;
+}
+
 export interface UserStage extends Timestamps {
   id: string;
   userPublic: UserPublicForeign;
   stage: StageForeign;
   status: UserStageStatus;
-  score: number | null;
+  results: UserStageResult | null;
   contents: string[];
 }

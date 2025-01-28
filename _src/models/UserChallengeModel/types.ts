@@ -37,6 +37,15 @@ export interface UserChallengeResult {
   totalScore: number;
 }
 
+export interface UserChallengeSummary {
+  code: string;
+  userPublic: UserPublicForeign;
+  userStage: UserStageForeign;
+  totalBaseScore: number;
+  totalBonus: number;
+  totalScore: number;
+}
+
 export interface UserChallenge extends Timestamps {
   id: string;
   challenge: ChallengeForeign;
