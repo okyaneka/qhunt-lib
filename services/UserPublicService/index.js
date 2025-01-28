@@ -393,6 +393,7 @@ var UserStageForeignSchema = new import_mongoose8.Schema(
 var UserStageResultSchema = new import_mongoose8.Schema(
   {
     baseScore: { type: Number, required: true },
+    challengeBonus: { type: Number, required: true },
     bonus: { type: Number, required: true },
     totalScore: { type: Number, required: true }
   },

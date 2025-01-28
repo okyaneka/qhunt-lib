@@ -266,6 +266,7 @@ var UserStageForeignSchema = new Schema6(
 var UserStageResultSchema = new Schema6(
   {
     baseScore: { type: Number, required: true },
+    challengeBonus: { type: Number, required: true },
     bonus: { type: Number, required: true },
     totalScore: { type: Number, required: true }
   },

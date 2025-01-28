@@ -1,4 +1,4 @@
-import { UserChallengeParams, UserChallengeResult, UserChallengeStatus } from "../../models/UserChallengeModel";
+import { UserChallengeParams, UserChallengeResult, UserChallengeStatus, UserChallengeSummary } from "../../models/UserChallengeModel";
 export declare const verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
@@ -38,6 +38,7 @@ export declare const submit: (id: string, TID: string, bonus?: number) => Promis
 export declare const submitState: (id: string, TID: string) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
+export declare const summary: (userStageId: string, TID: string) => Promise<UserChallengeSummary[]>;
 declare const UserChallengeService: {
     readonly verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
@@ -75,6 +76,7 @@ declare const UserChallengeService: {
     readonly submitState: (id: string, TID: string) => Promise<import("../../models/UserChallengeModel").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
+    readonly summary: (userStageId: string, TID: string) => Promise<UserChallengeSummary[]>;
 };
 export default UserChallengeService;
 //# sourceMappingURL=index.d.ts.map

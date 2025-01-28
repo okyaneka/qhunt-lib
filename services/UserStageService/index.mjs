@@ -615,6 +615,7 @@ var UserStageForeignSchema = new Schema7(
 var UserStageResultSchema = new Schema7(
   {
     baseScore: { type: Number, required: true },
+    challengeBonus: { type: Number, required: true },
     bonus: { type: Number, required: true },
     totalScore: { type: Number, required: true }
   },
@@ -946,7 +947,32 @@ var submit = async (id, TID, answer = null, bonus) => {
   await userTrivia.save();
   return userTrivia.toObject();
 };
-var UserTriviaService = { setup: setup2, details, submit };
+var summary = async (userChallengeId, TID) => {
+  return UserTriviaModel_default.aggregate().match({
+    "userChallenge.id": userChallengeId,
+    "userPublic.code": TID
+  }).group({
+    _id: {
+      userChallenge: "$userChallenge.id",
+      userPublic: "$userPublic.code"
+    },
+    userPublic: { $first: "$userPublic" },
+    userChallenge: { $first: "$userChallenge" },
+    totalCorrect: {
+      $sum: {
+        $cond: {
+          if: { $eq: ["$results.isCorrect", true] },
+          then: 1,
+          else: 0
+        }
+      }
+    },
+    totalBaseScore: { $sum: "$results.baseScore" },
+    totalBonus: { $sum: "$results.bonus" },
+    totalScore: { $sum: "$results.totalScore" }
+  });
+};
+var UserTriviaService = { setup: setup2, details, submit, summary };
 var UserTriviaService_default = UserTriviaService;
 
 // _src/validators/UserPublicValidator/index.ts
@@ -1115,35 +1141,24 @@ var submit2 = async (id, TID, bonus = 0) => {
   const userChallenge = await UserChallengeModel_default.findOne({ _id: id });
   if (!userChallenge) throw new Error("user challenge not found");
   const results = userChallenge.results || initResult();
-  const contents = await UserChallengeService.detailContent(id, TID);
-  const contentsResults = await Promise.all(
+  const contents = await detailContent2(id, TID);
+  await Promise.all(
     contents.map((content2) => UserTriviaService_default.submit(content2.id, TID))
   );
-  const { baseScore, correctBonus, correctCount } = contentsResults.reduce(
-    (acc, item) => {
-      acc.baseScore += item.results?.baseScore || 0;
-      acc.correctCount += item.results?.isCorrect ? 1 : 0;
-      acc.correctBonus += item.results?.bonus || 0;
-      return acc;
-    },
-    {
-      baseScore: 0,
-      correctBonus: 0,
-      correctCount: 0
-    }
-  );
+  const [summary3] = await UserTriviaService_default.summary(id, TID);
   const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
-  const totalScore = baseScore + bonus + correctBonus;
-  results.baseScore = baseScore;
-  results.correctCount = correctCount;
-  results.correctBonus = correctBonus;
+  results.baseScore = summary3.totalBaseScore;
+  results.correctCount = summary3.totalCorrect;
+  results.correctBonus = summary3.totalBonus;
   results.bonus = bonus;
-  results.totalScore = totalScore;
+  results.totalScore = summary3.totalBaseScore + summary3.totalBonus + bonus;
   results.endAt = /* @__PURE__ */ new Date();
   results.timeUsed = timeUsed;
   userChallenge.results = results;
   userChallenge.status = "completed" /* Completed */;
   await userChallenge.save();
+  if (userChallenge.userStage)
+    await UserStageService_default.submitState(userChallenge.userStage.id, TID);
   return userChallenge.toObject();
 };
 var submitState = async (id, TID) => {
@@ -1152,15 +1167,29 @@ var submitState = async (id, TID) => {
   if (userChallenge.status === "completed" /* Completed */)
     return userChallenge.toObject();
   const results = userChallenge.results || initResult();
-  const contents = await UserChallengeService.detailContent(id, TID);
-  results.baseScore = contents.reduce(
-    (acc, item) => acc + (item.results?.baseScore ?? 0),
-    0
-  );
+  const [summary3] = await UserTriviaService_default.summary(id, TID);
+  results.baseScore = summary3.totalBaseScore;
+  results.correctBonus = summary3.totalBonus;
+  results.totalScore = summary3.totalBaseScore + summary3.totalBonus;
   userChallenge.results = results;
   userChallenge.status = "ongoing" /* OnGoing */;
   await userChallenge.save();
   return userChallenge.toObject();
+};
+var summary2 = async (userStageId, TID) => {
+  return UserChallengeModel_default.aggregate().match({
+    "userStage.id": userStageId,
+    "userPublic.code": TID
+  }).group({
+    _id: "$userPublic.code",
+    userPublic: { $first: "$userPublic" },
+    userStage: { $first: "$userStage" },
+    totalBaseScore: { $sum: "$results.baseScore" },
+    totalBonus: {
+      $sum: { $add: ["$results.bonus", "$results.correctBonus"] }
+    },
+    totalScore: { $sum: "$results.totalScore" }
+  });
 };
 var UserChallengeService = {
   verify: verify6,
@@ -1169,7 +1198,8 @@ var UserChallengeService = {
   detail: detail4,
   detailContent: detailContent2,
   submit: submit2,
-  submitState
+  submitState,
+  summary: summary2
 };
 var UserChallengeService_default = UserChallengeService;
 
@@ -1203,16 +1233,22 @@ var StageForeignValidator = schema_default.generate({
 });
 
 // _src/services/UserStageService/index.ts
+var initResults = () => ({
+  baseScore: 0,
+  challengeBonus: 0,
+  bonus: 0,
+  totalScore: 0
+});
 var verify7 = async (code, stageId) => {
   const item = await UserStageModel_default.findOne({
     "userPublic.code": code,
-    "stage.id": stageId,
-    deletedAt: null
+    "stage.id": stageId
   });
   if (!item) throw new Error("user stage not found");
   return item.toObject();
 };
 var setup4 = async (code, stageId) => {
+  console.log(stageId);
   const exist = await verify7(code, stageId).catch(() => null);
   if (exist) return exist;
   const userPublicData = await UserPublicService_default.verify(code);
@@ -1277,12 +1313,30 @@ var detail5 = async (id, TID) => {
     }
   });
 };
-var UserStageService = { verify: verify7, setup: setup4, list: list5, detail: detail5 };
+var submitState2 = async (id, TID) => {
+  const item = await UserStageModel_default.findOne({
+    _id: id,
+    "userPublic.code": TID
+  });
+  if (!item) throw new Error("user stage not found");
+  const results = item?.results || initResults();
+  const [summary3] = await UserChallengeService_default.summary(id, TID);
+  console.log(summary3);
+  results.baseScore = summary3.totalBaseScore;
+  results.bonus = 0;
+  results.challengeBonus = summary3.totalBonus;
+  results.totalScore = summary3.totalScore;
+  item.results = results;
+  await item.save();
+  return item;
+};
+var UserStageService = { verify: verify7, setup: setup4, list: list5, detail: detail5, submitState: submitState2 };
 var UserStageService_default = UserStageService;
 export {
   UserStageService_default as default,
   detail5 as detail,
   list5 as list,
   setup4 as setup,
+  submitState2 as submitState,
   verify7 as verify
 };

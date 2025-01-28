@@ -16,6 +16,7 @@ export interface UserStageForeign {
 }
 export interface UserStageResult {
     baseScore: number;
+    challengeBonus: number;
     bonus: number;
     totalScore: number;
 }

@@ -34,6 +34,7 @@ __export(UserTriviaService_exports, {
   details: () => details,
   setup: () => setup,
   submit: () => submit,
+  summary: () => summary,
   verify: () => verify4
 });
 module.exports = __toCommonJS(UserTriviaService_exports);
@@ -382,6 +383,7 @@ var UserStageForeignSchema = new import_mongoose7.Schema(
 var UserStageResultSchema = new import_mongoose7.Schema(
   {
     baseScore: { type: Number, required: true },
+    challengeBonus: { type: Number, required: true },
     bonus: { type: Number, required: true },
     totalScore: { type: Number, required: true }
   },
@@ -879,12 +881,38 @@ var submit = async (id, TID, answer = null, bonus) => {
   await userTrivia.save();
   return userTrivia.toObject();
 };
-var UserTriviaService = { setup, details, submit };
+var summary = async (userChallengeId, TID) => {
+  return UserTriviaModel_default.aggregate().match({
+    "userChallenge.id": userChallengeId,
+    "userPublic.code": TID
+  }).group({
+    _id: {
+      userChallenge: "$userChallenge.id",
+      userPublic: "$userPublic.code"
+    },
+    userPublic: { $first: "$userPublic" },
+    userChallenge: { $first: "$userChallenge" },
+    totalCorrect: {
+      $sum: {
+        $cond: {
+          if: { $eq: ["$results.isCorrect", true] },
+          then: 1,
+          else: 0
+        }
+      }
+    },
+    totalBaseScore: { $sum: "$results.baseScore" },
+    totalBonus: { $sum: "$results.bonus" },
+    totalScore: { $sum: "$results.totalScore" }
+  });
+};
+var UserTriviaService = { setup, details, submit, summary };
 var UserTriviaService_default = UserTriviaService;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   details,
   setup,
   submit,
+  summary,
   verify
 });

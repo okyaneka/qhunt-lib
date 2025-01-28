@@ -256,6 +256,7 @@ declare const _default: {
             readonly submitState: (id: string, TID: string) => Promise<import("./models/UserChallengeModel").UserChallenge & {
                 _id: mongoose.Types.ObjectId;
             }>;
+            readonly summary: (userStageId: string, TID: string) => Promise<import("./models/UserChallengeModel").UserChallengeSummary[]>;
         };
         readonly UserPublicService: {
             verify: (value: string) => Promise<import("./models/UserPublicModel").UserPublic & {
@@ -316,6 +317,11 @@ declare const _default: {
             detail: (id: string, TID: string) => Promise<import("./models/UserStageModel").UserStage & {
                 _id: mongoose.Types.ObjectId;
             }>;
+            submitState: (id: string, TID: string) => Promise<mongoose.Document<unknown, {}, import("./models/UserStageModel").UserStage> & import("./models/UserStageModel").UserStage & {
+                _id: mongoose.Types.ObjectId;
+            } & {
+                __v: number;
+            }>;
         };
         readonly UserTriviaService: {
             readonly setup: (userPublic: import("./models/UserPublicModel").UserPublicForeign, userChallenge: import("./models/UserChallengeModel").UserChallengeForeign, content: string[]) => Promise<string[]>;
@@ -325,6 +331,7 @@ declare const _default: {
             readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("./models/UserTriviaModel").UserTrivia & {
                 _id: mongoose.Types.ObjectId;
             }>;
+            readonly summary: (userChallengeId: string, TID: string) => Promise<import("./models/UserTriviaModel").UserTriviaSummary[]>;
         };
     };
     validators: {

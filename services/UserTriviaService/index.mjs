@@ -342,6 +342,7 @@ var UserStageForeignSchema = new Schema7(
 var UserStageResultSchema = new Schema7(
   {
     baseScore: { type: Number, required: true },
+    challengeBonus: { type: Number, required: true },
     bonus: { type: Number, required: true },
     totalScore: { type: Number, required: true }
   },
@@ -839,12 +840,38 @@ var submit = async (id, TID, answer = null, bonus) => {
   await userTrivia.save();
   return userTrivia.toObject();
 };
-var UserTriviaService = { setup, details, submit };
+var summary = async (userChallengeId, TID) => {
+  return UserTriviaModel_default.aggregate().match({
+    "userChallenge.id": userChallengeId,
+    "userPublic.code": TID
+  }).group({
+    _id: {
+      userChallenge: "$userChallenge.id",
+      userPublic: "$userPublic.code"
+    },
+    userPublic: { $first: "$userPublic" },
+    userChallenge: { $first: "$userChallenge" },
+    totalCorrect: {
+      $sum: {
+        $cond: {
+          if: { $eq: ["$results.isCorrect", true] },
+          then: 1,
+          else: 0
+        }
+      }
+    },
+    totalBaseScore: { $sum: "$results.baseScore" },
+    totalBonus: { $sum: "$results.bonus" },
+    totalScore: { $sum: "$results.totalScore" }
+  });
+};
+var UserTriviaService = { setup, details, submit, summary };
 var UserTriviaService_default = UserTriviaService;
 export {
   UserTriviaService_default as default,
   details,
   setup,
   submit,
+  summary,
   verify4 as verify
 };
