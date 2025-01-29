@@ -1,7 +1,6 @@
 import Joi from "joi";
 import schema from "~/helpers/schema";
 import {
-  ChallengeFeedback,
   ChallengeForeign,
   ChallengeListParams,
   ChallengePayload,
@@ -10,7 +9,10 @@ import {
   ChallengeStatus,
   ChallengeType,
 } from "~/models/ChallengeModel";
-import { DefaultListParamsFields } from "~/helpers/validator";
+import {
+  DefaultListParamsFields,
+  FeedbackValidator,
+} from "~/helpers/validator";
 
 export const ChallengeListParamsValidator =
   schema.generate<ChallengeListParams>({
@@ -18,20 +20,13 @@ export const ChallengeListParamsValidator =
     stageId: schema.string().allow("").default(""),
   });
 
-export const ChallengeFeedbackValidator = schema
-  .generate<ChallengeFeedback>({
-    positive: schema.string({ allow: "", defaultValue: "" }),
-    negative: schema.string({ allow: "", defaultValue: "" }),
-  })
-  .default({ positive: "", negative: "" });
-
 export const ChallengeSettingsValidator = schema.generate<ChallengeSettings>({
   clue: schema.string({ defaultValue: "" }),
   duration: schema.number({ defaultValue: 0 }),
   type: schema
     .string({ required: true })
     .valid(...Object.values(ChallengeType)),
-  feedback: ChallengeFeedbackValidator,
+  feedback: FeedbackValidator,
 });
 
 export const ChallengeForeignValidator = schema.generate<ChallengeForeign>({
@@ -60,7 +55,6 @@ export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
 });
 
 const ChallengeValidator = {
-  ChallengeFeedbackValidator,
   ChallengeForeignValidator,
   ChallengeListParamsValidator,
   ChallengePayloadValidator,

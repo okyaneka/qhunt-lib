@@ -46,6 +46,11 @@ export interface QrDeleteBulkPayload {
   ids: string[];
 }
 
+export interface QrForeign {
+  id: string;
+  code: string;
+}
+
 export interface Qr extends Timestamps {
   id: string;
   code: string;

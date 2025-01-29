@@ -1,4 +1,4 @@
-import { DefaultListParams, Timestamps } from "~/helpers";
+import { DefaultListParams, Feedback, Timestamps } from "~/helpers";
 import { Stage } from "../StageModel";
 
 export enum ChallengeStatus {
@@ -10,16 +10,11 @@ export enum ChallengeType {
   Trivia = "trivia",
 }
 
-export interface ChallengeFeedback {
-  positive: string;
-  negative: string;
-}
-
 export interface ChallengeSettings {
   type: ChallengeType;
   duration: number;
   clue: string;
-  feedback: ChallengeFeedback;
+  feedback: Feedback;
 }
 
 export interface ChallengeListParams extends DefaultListParams {

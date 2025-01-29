@@ -1,6 +1,21 @@
 import { Model, model, models, Schema } from "mongoose";
-import { ToObject } from "../../helpers/schema";
-import { Qr, QrContent, QrContentType, QrLocation, QrStatus } from "./types";
+import { ToObject } from "~/helpers/model";
+import {
+  Qr,
+  QrContent,
+  QrContentType,
+  QrForeign,
+  QrLocation,
+  QrStatus,
+} from "./types";
+
+export const QrForeignSchema = new Schema<QrForeign>(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true },
+  },
+  { _id: false, versionKey: false }
+);
 
 const QrContentSchema = new Schema<QrContent>(
   {

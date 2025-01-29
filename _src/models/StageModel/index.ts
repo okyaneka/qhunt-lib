@@ -1,4 +1,4 @@
-import { PeriodSchema, ToObject } from "../../helpers/schema";
+import { PeriodSchema, ToObject } from "~/helpers/model";
 import {
   Stage,
   StageForeign,

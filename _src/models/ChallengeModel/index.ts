@@ -1,29 +1,20 @@
 import { Model, model, models, Schema } from "mongoose";
 import {
   Challenge,
-  ChallengeFeedback,
   ChallengeForeign,
   ChallengeSettings,
   ChallengeSettingsForeign,
   ChallengeStatus,
   ChallengeType,
 } from "./types";
-import { IdNameSchema, ToObject } from "../../helpers/schema";
-
-export const ChallengeFeedbackSchema = new Schema<ChallengeFeedback>(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" },
-  },
-  { _id: false, versionKey: false }
-);
+import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
 
 const ChallengeSettingsSchema = new Schema<ChallengeSettings>(
   {
     type: { type: String, enum: Object.values(ChallengeType), required: true },
     duration: { type: Number },
     clue: { type: String },
-    feedback: { type: ChallengeFeedbackSchema },
+    feedback: { type: FeedbackSchema },
   },
   { _id: false, versionKey: false }
 );
