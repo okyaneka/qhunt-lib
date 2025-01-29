@@ -1,9 +1,13 @@
-import { DefaultListParams, Periode, Timestamps } from "~/helpers";
+import {
+  DefaultListParams,
+  Periode,
+  PublishingStatus,
+  PublishingStatusValues,
+  Timestamps,
+} from "~/helpers";
 
-export enum StageStatus {
-  Draft = "draft",
-  Publish = "publish",
-}
+export const StageStatusValues = PublishingStatusValues;
+export type StageStatus = PublishingStatus;
 
 export interface StageSettings {
   periode: Periode | null;

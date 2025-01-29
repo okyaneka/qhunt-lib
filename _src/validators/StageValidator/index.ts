@@ -4,7 +4,7 @@ import {
   StageForeign,
   StageListParams,
   StagePayload,
-  StageStatus,
+  StageStatusValues,
 } from "~/models/StageModel";
 import { DefaultListParamsFields, PeriodeValidator } from "~/helpers/validator";
 
@@ -18,7 +18,9 @@ export const StageSettingsValidator = schema.generate<StagePayload["settings"]>(
 
 export const StageListParamsValidator = schema.generate<StageListParams>({
   ...DefaultListParamsFields,
-  status: schema.string({ allow: null }).valid(...Object.values(StageStatus)),
+  status: schema
+    .string({ allow: null })
+    .valid(...Object.values(StageStatusValues)),
 });
 
 export const StagePayloadValidator = schema.generate<StagePayload>({
@@ -27,7 +29,7 @@ export const StagePayloadValidator = schema.generate<StagePayload>({
   contents: schema.array(Joi.string()).default([]),
   status: schema
     .string({ required: true })
-    .valid(...Object.values(StageStatus)),
+    .valid(...Object.values(StageStatusValues)),
   settings: StageSettingsValidator.required(),
 });
 

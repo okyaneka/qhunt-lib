@@ -3,7 +3,7 @@ import Challenge from "~/models/ChallengeModel";
 import Stage, {
   StageListParams,
   StagePayload,
-  StageStatus,
+  StageStatusValues,
 } from "~/models/StageModel";
 
 const isUsed = async (ids: string[], id?: string) => {
@@ -112,7 +112,7 @@ export const _delete = async (id: string) => {
 export const verify = async (id: string) => {
   const item = await Stage.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("stage not found");
-  if (item.status !== StageStatus.Publish)
+  if (item.status !== StageStatusValues.Publish)
     throw new Error("stage not published yet");
   return item.toObject();
 };
