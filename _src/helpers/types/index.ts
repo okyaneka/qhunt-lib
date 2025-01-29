@@ -19,3 +19,8 @@ export interface DefaultListParams {
   limit: number;
   search: string;
 }
+
+export interface Feedback {
+  positive: string;
+  negative: string;
+}
