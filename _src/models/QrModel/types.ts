@@ -1,9 +1,12 @@
-import { DefaultListParams, Timestamps } from "~/helpers";
+import {
+  DefaultListParams,
+  PublishingStatus,
+  PublishingStatusValues,
+  Timestamps,
+} from "~/helpers";
 
-export enum QrStatus {
-  Draft = "draft",
-  Publish = "publish",
-}
+export const QrStatusValues = PublishingStatusValues;
+export type QrStatus = PublishingStatus;
 
 export enum QrContentType {
   Stage = "stage",

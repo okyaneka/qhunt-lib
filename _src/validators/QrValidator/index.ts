@@ -8,6 +8,7 @@ import {
   QrListParams,
   QrLocation,
   QrStatus,
+  QrStatusValues,
   QrUpdatePayload,
 } from "~/models/QrModel";
 import { DefaultListParamsFields } from "~/helpers/validator";
@@ -15,7 +16,7 @@ import { DefaultListParamsFields } from "~/helpers/validator";
 export const QrListParamsValidator = schema.generate<QrListParams>({
   ...DefaultListParamsFields,
   code: schema.string({ allow: "" }),
-  status: schema.string({ allow: "" }).valid(...Object.values(QrStatus)),
+  status: schema.string({ allow: "" }).valid(...Object.values(QrStatusValues)),
 });
 
 export const QrGeneratePayloadValidator = schema.generate<QrGeneratePayload>({
@@ -36,7 +37,9 @@ const QrLocationValidator = schema.generate<QrLocation>({
 });
 
 export const QrUpdatePayloadValidator = schema.generate<QrUpdatePayload>({
-  status: schema.string({ required: true }).valid(...Object.values(QrStatus)),
+  status: schema
+    .string({ required: true })
+    .valid(...Object.values(QrStatusValues)),
   content: QrContentValidator.allow(null).default(null),
   location: QrLocationValidator.allow(null).default(null),
 });

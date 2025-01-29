@@ -7,6 +7,7 @@ import {
   QrForeign,
   QrLocation,
   QrStatus,
+  QrStatusValues,
 } from "./types";
 
 export const QrForeignSchema = new Schema<QrForeign>(
@@ -37,7 +38,11 @@ const QrLocationSchema = new Schema<QrLocation>(
 const QrSchema = new Schema<Qr>(
   {
     code: { type: String, required: true, unique: true },
-    status: { type: String, enum: Object.values(QrStatus), required: true },
+    status: {
+      type: String,
+      enum: Object.values(QrStatusValues),
+      required: true,
+    },
     content: { type: QrContentSchema, default: null },
     location: { type: QrLocationSchema, default: null },
     accessCount: { type: Number, default: null },
