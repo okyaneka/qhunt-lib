@@ -1,14 +1,20 @@
-import { DefaultListParams, Feedback, Timestamps } from "~/helpers";
+import {
+  DefaultListParams,
+  Feedback,
+  PublishingStatus,
+  PublishingStatusValues,
+  Timestamps,
+} from "~/helpers";
 import { Stage } from "../StageModel";
 
-export enum ChallengeStatus {
-  Draft = "draft",
-  Publish = "publish",
-}
+export const ChallengeStatusValues = PublishingStatusValues;
+export type ChallengeStatus = PublishingStatus;
 
-export enum ChallengeType {
-  Trivia = "trivia",
-}
+export const ChallengeTypeValues = {
+  Trivia: "trivia",
+};
+export type ChallengeType =
+  (typeof ChallengeTypeValues)[keyof typeof ChallengeTypeValues];
 
 export interface ChallengeSettings {
   type: ChallengeType;

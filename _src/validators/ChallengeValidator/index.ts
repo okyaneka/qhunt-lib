@@ -6,8 +6,8 @@ import {
   ChallengePayload,
   ChallengeSettings,
   ChallengeSettingsForeign,
-  ChallengeStatus,
-  ChallengeType,
+  ChallengeStatusValues,
+  ChallengeTypeValues,
 } from "~/models/ChallengeModel";
 import {
   DefaultListParamsFields,
@@ -25,7 +25,7 @@ export const ChallengeSettingsValidator = schema.generate<ChallengeSettings>({
   duration: schema.number({ defaultValue: 0 }),
   type: schema
     .string({ required: true })
-    .valid(...Object.values(ChallengeType)),
+    .valid(...Object.values(ChallengeTypeValues)),
   feedback: FeedbackValidator,
 });
 
@@ -41,7 +41,7 @@ export const ChallengeSettingsForeignValidator =
     duration: schema.number({ allow: 0 }),
     type: schema
       .string({ required: true })
-      .valid(...Object.values(ChallengeType)),
+      .valid(...Object.values(ChallengeTypeValues)),
   });
 
 export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
@@ -50,7 +50,7 @@ export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
   stageId: schema.string({ required: true }),
   status: schema
     .string({ required: true })
-    .valid(...Object.values(ChallengeStatus)),
+    .valid(...Object.values(ChallengeStatusValues)),
   settings: ChallengeSettingsValidator.required(),
 });
 
