@@ -1,4 +1,3 @@
-import { UserChallengeModel } from "~/models";
 import StageService from "../StageService";
 import UserChallengeService from "../UserChallengeService";
 import UserPublicService from "../UserPublicService";

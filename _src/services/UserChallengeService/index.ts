@@ -14,7 +14,7 @@ import {
   ChallengeForeignValidator,
   ChallengeSettingsForeignValidator,
 } from "~/validators/ChallengeValidator";
-import { ChallengeType, ChallengeTypeValues } from "~/models/ChallengeModel";
+import { ChallengeTypeValues } from "~/models/ChallengeModel";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
 import StageService from "../StageService";
 import service from "~/helpers/service";

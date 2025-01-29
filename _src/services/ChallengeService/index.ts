@@ -3,7 +3,6 @@ import Challenge, {
   ChallengeListParams,
   ChallengePayload,
   ChallengeStatusValues,
-  ChallengeType,
   ChallengeTypeValues,
 } from "~/models/ChallengeModel";
 import StageService from "../StageService";

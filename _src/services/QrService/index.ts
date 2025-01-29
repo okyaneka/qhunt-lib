@@ -3,7 +3,6 @@ import Qr, {
   QrContentType,
   QrListParams,
   QrPayload,
-  QrStatus,
   QrStatusValues,
   QrUpdatePayload,
 } from "~/models/QrModel";

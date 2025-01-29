@@ -6,7 +6,6 @@ import {
   QrContentType,
   QrForeign,
   QrLocation,
-  QrStatus,
   QrStatusValues,
 } from "./types";
 

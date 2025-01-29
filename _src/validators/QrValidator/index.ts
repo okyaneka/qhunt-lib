@@ -7,7 +7,6 @@ import {
   QrGeneratePayload,
   QrListParams,
   QrLocation,
-  QrStatus,
   QrStatusValues,
   QrUpdatePayload,
 } from "~/models/QrModel";

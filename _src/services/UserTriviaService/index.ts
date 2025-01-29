@@ -7,7 +7,6 @@ import UserTrivia, {
 } from "~/models/UserTriviaModel";
 import { TriviaForeignValidator } from "~/validators/TriviaValidator";
 import TriviaService from "../TriviaService";
-import UserTriviaModel from "~/models/UserTriviaModel";
 
 export const verify = async (triviaId: string, TID: string) => {
   const item = await UserTrivia.findOne({
