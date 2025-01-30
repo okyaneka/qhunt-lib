@@ -41,7 +41,6 @@ module.exports = __toCommonJS(TriviaValidator_exports);
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
-var import_mongoose = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -61,113 +60,15 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new import_mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new import_mongoose.Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
-
-// _src/validators/ChallengeValidator/index.ts
-var import_joi3 = __toESM(require("joi"));
-
-// _src/models/ChallengeModel/index.ts
-var import_mongoose2 = require("mongoose");
-
-// _src/models/ChallengeModel/types.ts
-var ChallengeStatus = /* @__PURE__ */ ((ChallengeStatus2) => {
-  ChallengeStatus2["Draft"] = "draft";
-  ChallengeStatus2["Publish"] = "publish";
-  return ChallengeStatus2;
-})(ChallengeStatus || {});
-var ChallengeType = /* @__PURE__ */ ((ChallengeType2) => {
-  ChallengeType2["Trivia"] = "trivia";
-  return ChallengeType2;
-})(ChallengeType || {});
-
-// _src/models/ChallengeModel/index.ts
-var ChallengeFeedbackSchema = new import_mongoose2.Schema(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" }
-  },
-  { _id: false, versionKey: false }
-);
-var ChallengeSettingsSchema = new import_mongoose2.Schema(
-  {
-    type: { type: String, enum: Object.values(ChallengeType), required: true },
-    duration: { type: Number },
-    clue: { type: String },
-    feedback: { type: ChallengeFeedbackSchema }
-  },
-  { _id: false, versionKey: false }
-);
-var ChallengeSettingsForeignSchema = new import_mongoose2.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(ChallengeType),
-      required: true
-    },
-    duration: { type: Number }
-  },
-  { _id: false }
-);
-var ChallengeForeignSchema = new import_mongoose2.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true },
-    storyline: { type: [String], required: true },
-    order: { type: Number, default: null }
-  },
-  { _id: false }
-);
-var ChallengeSchema = new import_mongoose2.Schema(
-  {
-    name: { type: String, required: true },
-    stage: { type: IdNameSchema, default: null },
-    storyline: { type: [String] },
-    status: {
-      type: String,
-      enum: Object.values(ChallengeStatus),
-      default: "draft" /* Draft */
-    },
-    order: { type: Number, default: null },
-    settings: { type: ChallengeSettingsSchema, default: null },
-    contents: { type: [String] },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-ChallengeSchema.set("toJSON", ToObject);
-ChallengeSchema.set("toObject", ToObject);
-var ChallengeModel = import_mongoose2.models.Challenge || (0, import_mongoose2.model)("Challenge", ChallengeSchema);
 
 // _src/helpers/validator/index.ts
 var import_joi2 = __toESM(require("joi"));
@@ -180,39 +81,10 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
-
-// _src/validators/ChallengeValidator/index.ts
-var ChallengeListParamsValidator = schema_default.generate({
-  ...DefaultListParamsFields,
-  stageId: schema_default.string().allow("").default("")
-});
-var ChallengeFeedbackValidator = schema_default.generate({
+var FeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
-var ChallengeSettingsValidator = schema_default.generate({
-  clue: schema_default.string({ defaultValue: "" }),
-  duration: schema_default.number({ defaultValue: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType)),
-  feedback: ChallengeFeedbackValidator
-});
-var ChallengeForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  order: schema_default.number({ defaultValue: null }),
-  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] })
-});
-var ChallengeSettingsForeignValidator = schema_default.generate({
-  duration: schema_default.number({ allow: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
-});
-var ChallengePayloadValidator = schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string({ required: true }),
-  status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsValidator.required()
-});
 
 // _src/validators/TriviaValidator/index.ts
 var TriviaOptionValidator = schema_default.generate({
@@ -231,7 +103,7 @@ var TriviaOptionsValidator = schema_default.array(TriviaOptionValidator, {
 var TriviaPayloadValidator = schema_default.generate({
   id: schema_default.string(),
   question: schema_default.string({ required: true }),
-  feedback: ChallengeFeedbackValidator,
+  feedback: FeedbackValidator,
   allowMultiple: schema_default.boolean({ defaultValue: false }),
   options: TriviaOptionsValidator
 });

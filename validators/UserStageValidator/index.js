@@ -38,7 +38,6 @@ module.exports = __toCommonJS(UserStageValidator_exports);
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
-var import_mongoose = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -58,36 +57,13 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new import_mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new import_mongoose.Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
 
@@ -102,9 +78,13 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
+var FeedbackValidator = schema_default.generate({
+  positive: schema_default.string({ allow: "", defaultValue: "" }),
+  negative: schema_default.string({ allow: "", defaultValue: "" })
+}).default({ positive: "", negative: "" });
 
 // _src/models/UserStageModel/index.ts
-var import_mongoose5 = require("mongoose");
+var import_mongoose6 = require("mongoose");
 
 // _src/models/UserStageModel/types.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -114,16 +94,54 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   return UserStageStatus2;
 })(UserStageStatus || {});
 
+// _src/helpers/model/index.ts
+var import_mongoose = require("mongoose");
+var IdNameSchema = new import_mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var PeriodSchema = new import_mongoose.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+var FeedbackSchema = new import_mongoose.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+
+// _src/helpers/db/index.ts
+var import_mongoose2 = require("mongoose");
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
+
 // _src/models/StageModel/types.ts
-var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
-  StageStatus2["Draft"] = "draft";
-  StageStatus2["Publish"] = "publish";
-  return StageStatus2;
-})(StageStatus || {});
+var StageStatusValues = PublishingStatusValues;
 
 // _src/models/StageModel/index.ts
-var import_mongoose2 = require("mongoose");
-var StageSettingsSchema = new import_mongoose2.Schema(
+var import_mongoose3 = require("mongoose");
+var StageSettingsSchema = new import_mongoose3.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -131,13 +149,13 @@ var StageSettingsSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new import_mongoose2.Schema(
+var StageSettingsForeignSchema = new import_mongoose3.Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new import_mongoose2.Schema(
+var StageForeignSchema = new import_mongoose3.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -146,14 +164,14 @@ var StageForeignSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var StageSchema = new import_mongoose2.Schema(
+var StageSchema = new import_mongoose3.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
@@ -163,10 +181,10 @@ var StageSchema = new import_mongoose2.Schema(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = import_mongoose2.models.Stage || (0, import_mongoose2.model)("Stage", StageSchema);
+var StageModel = import_mongoose3.models.Stage || (0, import_mongoose3.model)("Stage", StageSchema);
 
 // _src/models/UserPublicModel/index.ts
-var import_mongoose4 = require("mongoose");
+var import_mongoose5 = require("mongoose");
 
 // _src/models/UserPublicModel/types.ts
 var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
@@ -177,7 +195,7 @@ var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
 })(UserPublicGender || {});
 
 // _src/models/UserModel/index.ts
-var import_mongoose3 = require("mongoose");
+var import_mongoose4 = require("mongoose");
 
 // _src/models/UserModel/types.ts
 var UserRole = /* @__PURE__ */ ((UserRole2) => {
@@ -194,14 +212,14 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
-var UserForeignSchema = new import_mongoose3.Schema(
+var UserForeignSchema = new import_mongoose4.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" }
   },
   { _id: false }
 );
-var UserSchema = new import_mongoose3.Schema(
+var UserSchema = new import_mongoose4.Schema(
   {
     name: { type: String, default: "" },
     role: { type: String, enum: Object.values(UserRole) },
@@ -215,10 +233,10 @@ var UserSchema = new import_mongoose3.Schema(
 );
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
-var UserModel = import_mongoose3.models.User || (0, import_mongoose3.model)("User", UserSchema);
+var UserModel = import_mongoose4.models.User || (0, import_mongoose4.model)("User", UserSchema);
 
 // _src/models/UserPublicModel/index.ts
-var UserPublicForeignSchema = new import_mongoose4.Schema(
+var UserPublicForeignSchema = new import_mongoose5.Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -226,7 +244,7 @@ var UserPublicForeignSchema = new import_mongoose4.Schema(
   },
   { _id: false }
 );
-var UserPublicSchema = new import_mongoose4.Schema(
+var UserPublicSchema = new import_mongoose5.Schema(
   {
     user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
@@ -245,10 +263,10 @@ var UserPublicSchema = new import_mongoose4.Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = import_mongoose4.models.UserPublic || (0, import_mongoose4.model)("UserPublic", UserPublicSchema, "usersPublic");
+var UserPublicModel = import_mongoose5.models.UserPublic || (0, import_mongoose5.model)("UserPublic", UserPublicSchema, "usersPublic");
 
 // _src/models/UserStageModel/index.ts
-var UserStageForeignSchema = new import_mongoose5.Schema(
+var UserStageForeignSchema = new import_mongoose6.Schema(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -256,7 +274,7 @@ var UserStageForeignSchema = new import_mongoose5.Schema(
   },
   { _id: false }
 );
-var UserStageResultSchema = new import_mongoose5.Schema(
+var UserStageResultSchema = new import_mongoose6.Schema(
   {
     baseScore: { type: Number, required: true },
     challengeBonus: { type: Number, required: true },
@@ -265,7 +283,7 @@ var UserStageResultSchema = new import_mongoose5.Schema(
   },
   { _id: false }
 );
-var UserStageSchema = new import_mongoose5.Schema(
+var UserStageSchema = new import_mongoose6.Schema(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -281,7 +299,7 @@ var UserStageSchema = new import_mongoose5.Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-var UserStageModel = import_mongoose5.models.UserStage || (0, import_mongoose5.model)("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = import_mongoose6.models.UserStage || (0, import_mongoose6.model)("UserStage", UserStageSchema, "usersStage");
 
 // _src/validators/UserStageValidator/index.ts
 var UserStageForeignValidator = schema_default.generate({

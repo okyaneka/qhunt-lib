@@ -16,12 +16,41 @@ var transaction = async (operation) => {
 var db = { transaction };
 var db_default = db;
 
+// _src/helpers/model/index.ts
+import { Schema } from "mongoose";
+var IdNameSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var PeriodSchema = new Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+var FeedbackSchema = new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+
 // _src/helpers/qrcode/index.ts
 import { BrowserQRCodeReader } from "@zxing/browser";
 
 // _src/helpers/schema/index.ts
 import Joi from "joi";
-import { Schema } from "mongoose";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -41,36 +70,13 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => Joi.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
 
@@ -94,34 +100,32 @@ var list = async (model10, page, limit, filters = {}, sort) => {
 var service = { list };
 var service_default = service;
 
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
+
 // _src/models/ChallengeModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
 
 // _src/models/ChallengeModel/types.ts
-var ChallengeStatus = /* @__PURE__ */ ((ChallengeStatus2) => {
-  ChallengeStatus2["Draft"] = "draft";
-  ChallengeStatus2["Publish"] = "publish";
-  return ChallengeStatus2;
-})(ChallengeStatus || {});
-var ChallengeType = /* @__PURE__ */ ((ChallengeType2) => {
-  ChallengeType2["Trivia"] = "trivia";
-  return ChallengeType2;
-})(ChallengeType || {});
+var ChallengeStatusValues = PublishingStatusValues;
+var ChallengeTypeValues = {
+  Trivia: "trivia"
+};
 
 // _src/models/ChallengeModel/index.ts
-var ChallengeFeedbackSchema = new Schema2(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" }
-  },
-  { _id: false, versionKey: false }
-);
 var ChallengeSettingsSchema = new Schema2(
   {
-    type: { type: String, enum: Object.values(ChallengeType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(ChallengeTypeValues),
+      required: true
+    },
     duration: { type: Number },
     clue: { type: String },
-    feedback: { type: ChallengeFeedbackSchema }
+    feedback: { type: FeedbackSchema }
   },
   { _id: false, versionKey: false }
 );
@@ -129,7 +133,7 @@ var ChallengeSettingsForeignSchema = new Schema2(
   {
     type: {
       type: String,
-      enum: Object.values(ChallengeType),
+      enum: Object.values(ChallengeTypeValues),
       required: true
     },
     duration: { type: Number }
@@ -152,8 +156,8 @@ var ChallengeSchema = new Schema2(
     storyline: { type: [String] },
     status: {
       type: String,
-      enum: Object.values(ChallengeStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(ChallengeStatusValues),
+      default: ChallengeStatusValues.Draft
     },
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
@@ -168,11 +172,7 @@ var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 var ChallengeModel_default = ChallengeModel;
 
 // _src/models/StageModel/types.ts
-var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
-  StageStatus2["Draft"] = "draft";
-  StageStatus2["Publish"] = "publish";
-  return StageStatus2;
-})(StageStatus || {});
+var StageStatusValues = PublishingStatusValues;
 
 // _src/models/StageModel/index.ts
 import { model as model2, models as models2, Schema as Schema3 } from "mongoose";
@@ -205,8 +205,8 @@ var StageSchema = new Schema3(
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
@@ -300,7 +300,7 @@ var _delete = async (id) => {
 var verify = async (id) => {
   const item = await StageModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("stage not found");
-  if (item.status !== "publish" /* Publish */)
+  if (item.status !== StageStatusValues.Publish)
     throw new Error("stage not published yet");
   return item.toObject();
 };
@@ -336,7 +336,7 @@ var TriviaSchema = new Schema4(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
-    feedback: { type: ChallengeFeedbackSchema, default: {} },
+    feedback: { type: FeedbackSchema, default: {} },
     allowMultiple: { type: Boolean, default: false },
     options: { type: [TriviaOptionSchema], required: true },
     deletedAt: { type: Date, default: null }
@@ -424,7 +424,7 @@ var detailContent = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   const services2 = {
-    ["trivia" /* Trivia */]: TriviaService_default
+    [ChallengeTypeValues.Trivia]: TriviaService_default
   };
   return await services2[item.settings.type].content(item);
 };
@@ -476,7 +476,7 @@ var _delete2 = async (id) => {
 var verify3 = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
-  if (item.status !== "publish" /* Publish */)
+  if (item.status !== ChallengeStatusValues.Publish)
     throw new Error("challenge not published yet");
   return item.toObject();
 };
@@ -499,11 +499,7 @@ import CryptoJS from "crypto-js";
 import { model as model4, models as models4, Schema as Schema5 } from "mongoose";
 
 // _src/models/QrModel/types.ts
-var QrStatus = /* @__PURE__ */ ((QrStatus2) => {
-  QrStatus2["Draft"] = "draft";
-  QrStatus2["Publish"] = "publish";
-  return QrStatus2;
-})(QrStatus || {});
+var QrStatusValues = PublishingStatusValues;
 var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
   QrContentType2["Stage"] = "stage";
   QrContentType2["Challenge"] = "challenge";
@@ -512,6 +508,13 @@ var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
 })(QrContentType || {});
 
 // _src/models/QrModel/index.ts
+var QrForeignSchema = new Schema5(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
 var QrContentSchema = new Schema5(
   {
     type: { type: String, enum: Object.values(QrContentType), required: true },
@@ -530,7 +533,11 @@ var QrLocationSchema = new Schema5(
 var QrSchema = new Schema5(
   {
     code: { type: String, required: true, unique: true },
-    status: { type: String, enum: Object.values(QrStatus), required: true },
+    status: {
+      type: String,
+      enum: Object.values(QrStatusValues),
+      required: true
+    },
     content: { type: QrContentSchema, default: null },
     location: { type: QrLocationSchema, default: null },
     accessCount: { type: Number, default: null },
@@ -804,9 +811,6 @@ var setup = async (userId) => {
 var UserPublicService = { verify: verify4, setup };
 var UserPublicService_default = UserPublicService;
 
-// _src/validators/ChallengeValidator/index.ts
-import Joi3 from "joi";
-
 // _src/helpers/validator/index.ts
 import Joi2 from "joi";
 var PeriodeValidator = schema_default.generate({
@@ -818,39 +822,10 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
-
-// _src/validators/ChallengeValidator/index.ts
-var ChallengeListParamsValidator = schema_default.generate({
-  ...DefaultListParamsFields,
-  stageId: schema_default.string().allow("").default("")
-});
-var ChallengeFeedbackValidator = schema_default.generate({
+var FeedbackValidator = schema_default.generate({
   positive: schema_default.string({ allow: "", defaultValue: "" }),
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
-var ChallengeSettingsValidator = schema_default.generate({
-  clue: schema_default.string({ defaultValue: "" }),
-  duration: schema_default.number({ defaultValue: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType)),
-  feedback: ChallengeFeedbackValidator
-});
-var ChallengeForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  order: schema_default.number({ defaultValue: null }),
-  storyline: schema_default.array(Joi3.string(), { defaultValue: [] })
-});
-var ChallengeSettingsForeignValidator = schema_default.generate({
-  duration: schema_default.number({ allow: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeType))
-});
-var ChallengePayloadValidator = schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string({ required: true }),
-  status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatus)),
-  settings: ChallengeSettingsValidator.required()
-});
 
 // _src/validators/TriviaValidator/index.ts
 var TriviaOptionValidator = schema_default.generate({
@@ -869,7 +844,7 @@ var TriviaOptionsValidator = schema_default.array(TriviaOptionValidator, {
 var TriviaPayloadValidator = schema_default.generate({
   id: schema_default.string(),
   question: schema_default.string({ required: true }),
-  feedback: ChallengeFeedbackValidator,
+  feedback: FeedbackValidator,
   allowMultiple: schema_default.boolean({ defaultValue: false }),
   options: TriviaOptionsValidator
 });
@@ -979,6 +954,36 @@ var summary = async (userChallengeId, TID) => {
 var UserTriviaService = { setup: setup2, details, submit, summary };
 var UserTriviaService_default = UserTriviaService;
 
+// _src/validators/ChallengeValidator/index.ts
+import Joi3 from "joi";
+var ChallengeListParamsValidator = schema_default.generate({
+  ...DefaultListParamsFields,
+  stageId: schema_default.string().allow("").default("")
+});
+var ChallengeSettingsValidator = schema_default.generate({
+  clue: schema_default.string({ defaultValue: "" }),
+  duration: schema_default.number({ defaultValue: 0 }),
+  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeTypeValues)),
+  feedback: FeedbackValidator
+});
+var ChallengeForeignValidator = schema_default.generate({
+  id: schema_default.string({ required: true }),
+  name: schema_default.string({ required: true }),
+  order: schema_default.number({ defaultValue: null }),
+  storyline: schema_default.array(Joi3.string(), { defaultValue: [] })
+});
+var ChallengeSettingsForeignValidator = schema_default.generate({
+  duration: schema_default.number({ allow: 0 }),
+  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeTypeValues))
+});
+var ChallengePayloadValidator = schema_default.generate({
+  name: schema_default.string({ required: true }),
+  storyline: schema_default.array(schema_default.string()).default([]),
+  stageId: schema_default.string({ required: true }),
+  status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatusValues)),
+  settings: ChallengeSettingsValidator.required()
+});
+
 // _src/validators/UserPublicValidator/index.ts
 var UserPublicForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
@@ -1079,7 +1084,7 @@ var setup3 = async (code, challengeId, isDiscover) => {
     name: userChallengeData.challenge.name
   };
   const services2 = {
-    ["trivia" /* Trivia */]: UserTriviaService_default
+    [ChallengeTypeValues.Trivia]: UserTriviaService_default
   };
   const contents = await services2[settings.type].setup(
     userPublic,
@@ -1137,7 +1142,7 @@ var detailContent2 = async (id, TID, hasResult) => {
   if (status === "undiscovered" /* Undiscovered */)
     throw new Error("user challenge is undiscovered");
   const services2 = {
-    ["trivia" /* Trivia */]: UserTriviaService_default
+    [ChallengeTypeValues.Trivia]: UserTriviaService_default
   };
   return await services2[challengeType].details(contents, TID, hasResult);
 };
@@ -1218,13 +1223,13 @@ var StageSettingsValidator = schema_default.generate(
 );
 var StageListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
+  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatusValues))
 });
 var StagePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(Joi4.string()).default([]),
   contents: schema_default.array(Joi4.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(StageStatus)),
+  status: schema_default.string({ required: true }).valid(...Object.values(StageStatusValues)),
   settings: StageSettingsValidator.required()
 });
 var StageForeignValidator = schema_default.generate({
@@ -1358,7 +1363,7 @@ var generate2 = async (count) => {
     const salt = Math.floor(Math.random() * Math.pow(16, 8)).toString(16).padStart(8, "0");
     return {
       code: CryptoJS.SHA256(`${Date.now()}${salt}`).toString(CryptoJS.enc.Hex),
-      status: "draft" /* Draft */
+      status: QrStatusValues.Draft
     };
   });
   return QrModel_default.insertMany(items);
@@ -1379,7 +1384,7 @@ var update3 = async (id, payload) => {
       ["trivia" /* Trivia */]: TriviaService_default
     };
     const service2 = serviceMap[content2.type];
-    const action = payload.status === "draft" /* Draft */ ? "detail" : "verify";
+    const action = payload.status === QrStatusValues.Draft ? "detail" : "verify";
     await service2[action](content2.refId);
   }
   Object.assign(item, payload);
@@ -1399,7 +1404,7 @@ var deleteMany = async (ids) => {
     {
       _id: { $in: ids },
       deletedAt: null,
-      status: "draft" /* Draft */
+      status: QrStatusValues.Draft
     },
     { $set: { deletedAt: /* @__PURE__ */ new Date() } }
   );
@@ -1410,7 +1415,7 @@ var verify8 = async (code, TID) => {
   const qrData = await QrModel_default.findOne({
     code,
     deletedAt: null,
-    status: "publish" /* Publish */
+    status: QrStatusValues.Publish
   });
   if (!qrData) throw new Error("qr code invalid");
   const { content: content2 } = qrData;

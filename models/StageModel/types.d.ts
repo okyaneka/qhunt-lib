@@ -1,8 +1,9 @@
-import { DefaultListParams, Periode, Timestamps } from "../../helpers";
-export declare enum StageStatus {
-    Draft = "draft",
-    Publish = "publish"
-}
+import { DefaultListParams, Periode, PublishingStatus, Timestamps } from "../../helpers";
+export declare const StageStatusValues: {
+    readonly Draft: "draft";
+    readonly Publish: "publish";
+};
+export type StageStatus = PublishingStatus;
 export interface StageSettings {
     periode: Periode | null;
     canDoRandomChallenges: boolean;

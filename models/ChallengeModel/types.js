@@ -1,7 +1,9 @@
 "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -15,26 +17,70 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // _src/models/ChallengeModel/types.ts
 var types_exports = {};
 __export(types_exports, {
-  ChallengeStatus: () => ChallengeStatus,
-  ChallengeType: () => ChallengeType
+  ChallengeStatusValues: () => ChallengeStatusValues,
+  ChallengeTypeValues: () => ChallengeTypeValues
 });
 module.exports = __toCommonJS(types_exports);
-var ChallengeStatus = /* @__PURE__ */ ((ChallengeStatus2) => {
-  ChallengeStatus2["Draft"] = "draft";
-  ChallengeStatus2["Publish"] = "publish";
-  return ChallengeStatus2;
-})(ChallengeStatus || {});
-var ChallengeType = /* @__PURE__ */ ((ChallengeType2) => {
-  ChallengeType2["Trivia"] = "trivia";
-  return ChallengeType2;
-})(ChallengeType || {});
+
+// _src/helpers/db/index.ts
+var import_mongoose = require("mongoose");
+
+// _src/helpers/model/index.ts
+var import_mongoose2 = require("mongoose");
+var IdNameSchema = new import_mongoose2.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var PeriodSchema = new import_mongoose2.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+var FeedbackSchema = new import_mongoose2.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
+// _src/helpers/schema/index.ts
+var import_joi = __toESM(require("joi"));
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
+
+// _src/models/ChallengeModel/types.ts
+var ChallengeStatusValues = PublishingStatusValues;
+var ChallengeTypeValues = {
+  Trivia: "trivia"
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  ChallengeStatus,
-  ChallengeType
+  ChallengeStatusValues,
+  ChallengeTypeValues
 });

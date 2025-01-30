@@ -1,6 +1,3 @@
-// _src/helpers/db/index.ts
-import { startSession } from "mongoose";
-
 // _src/helpers/model/index.ts
 import { Schema } from "mongoose";
 var IdNameSchema = new Schema(
@@ -24,25 +21,23 @@ var FeedbackSchema = new Schema(
   },
   { _id: false }
 );
-
-// _src/helpers/qrcode/index.ts
-import { BrowserQRCodeReader } from "@zxing/browser";
-
-// _src/helpers/schema/index.ts
-import Joi from "joi";
-
-// _src/helpers/types/index.ts
-var PublishingStatusValues = {
-  Draft: "draft",
-  Publish: "publish"
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
 };
-
-// _src/models/ChallengeModel/types.ts
-var ChallengeStatusValues = PublishingStatusValues;
-var ChallengeTypeValues = {
-  Trivia: "trivia"
+var model = {
+  IdNameSchema,
+  PeriodSchema,
+  FeedbackSchema,
+  ToObject
 };
+var model_default = model;
 export {
-  ChallengeStatusValues,
-  ChallengeTypeValues
+  FeedbackSchema,
+  IdNameSchema,
+  PeriodSchema,
+  ToObject,
+  model_default as default
 };

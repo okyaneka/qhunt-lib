@@ -3,7 +3,6 @@ import Joi3 from "joi";
 
 // _src/helpers/schema/index.ts
 import Joi from "joi";
-import { Schema } from "mongoose";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -23,12 +22,18 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => Joi.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
+var schema = {
+  createValidator,
+  string,
+  number,
+  boolean,
+  array,
+  generate
 };
+var schema_default = schema;
+
+// _src/helpers/model/index.ts
+import { Schema } from "mongoose";
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -43,25 +48,34 @@ var PeriodSchema = new Schema(
   },
   { _id: false }
 );
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+var FeedbackSchema = new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
 };
-var schema_default = schema;
+
+// _src/helpers/db/index.ts
+import { startSession } from "mongoose";
+
+// _src/helpers/qrcode/index.ts
+import { BrowserQRCodeReader } from "@zxing/browser";
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
 
 // _src/models/StageModel/types.ts
-var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
-  StageStatus2["Draft"] = "draft";
-  StageStatus2["Publish"] = "publish";
-  return StageStatus2;
-})(StageStatus || {});
+var StageStatusValues = PublishingStatusValues;
 
 // _src/models/StageModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
@@ -94,8 +108,8 @@ var StageSchema = new Schema2(
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
@@ -118,6 +132,10 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
+var FeedbackValidator = schema_default.generate({
+  positive: schema_default.string({ allow: "", defaultValue: "" }),
+  negative: schema_default.string({ allow: "", defaultValue: "" })
+}).default({ positive: "", negative: "" });
 
 // _src/validators/StageValidator/index.ts
 var StageSettingsValidator = schema_default.generate(
@@ -129,13 +147,13 @@ var StageSettingsValidator = schema_default.generate(
 );
 var StageListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
+  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatusValues))
 });
 var StagePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(Joi3.string()).default([]),
   contents: schema_default.array(Joi3.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(StageStatus)),
+  status: schema_default.string({ required: true }).valid(...Object.values(StageStatusValues)),
   settings: StageSettingsValidator.required()
 });
 var StageForeignValidator = schema_default.generate({

@@ -3,7 +3,6 @@ import Joi3 from "joi";
 
 // _src/helpers/schema/index.ts
 import Joi from "joi";
-import { Schema } from "mongoose";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -23,12 +22,21 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => Joi.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
+var schema = {
+  createValidator,
+  string,
+  number,
+  boolean,
+  array,
+  generate
 };
+var schema_default = schema;
+
+// _src/models/QrModel/index.ts
+import { model, models, Schema as Schema2 } from "mongoose";
+
+// _src/helpers/model/index.ts
+import { Schema } from "mongoose";
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -43,28 +51,34 @@ var PeriodSchema = new Schema(
   },
   { _id: false }
 );
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+var FeedbackSchema = new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
 };
-var schema_default = schema;
 
-// _src/models/QrModel/index.ts
-import { model, models, Schema as Schema2 } from "mongoose";
+// _src/helpers/db/index.ts
+import { startSession } from "mongoose";
+
+// _src/helpers/qrcode/index.ts
+import { BrowserQRCodeReader } from "@zxing/browser";
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
 
 // _src/models/QrModel/types.ts
-var QrStatus = /* @__PURE__ */ ((QrStatus2) => {
-  QrStatus2["Draft"] = "draft";
-  QrStatus2["Publish"] = "publish";
-  return QrStatus2;
-})(QrStatus || {});
+var QrStatusValues = PublishingStatusValues;
 var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
   QrContentType2["Stage"] = "stage";
   QrContentType2["Challenge"] = "challenge";
@@ -73,6 +87,13 @@ var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
 })(QrContentType || {});
 
 // _src/models/QrModel/index.ts
+var QrForeignSchema = new Schema2(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
 var QrContentSchema = new Schema2(
   {
     type: { type: String, enum: Object.values(QrContentType), required: true },
@@ -91,7 +112,11 @@ var QrLocationSchema = new Schema2(
 var QrSchema = new Schema2(
   {
     code: { type: String, required: true, unique: true },
-    status: { type: String, enum: Object.values(QrStatus), required: true },
+    status: {
+      type: String,
+      enum: Object.values(QrStatusValues),
+      required: true
+    },
     content: { type: QrContentSchema, default: null },
     location: { type: QrLocationSchema, default: null },
     accessCount: { type: Number, default: null },
@@ -116,12 +141,16 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
+var FeedbackValidator = schema_default.generate({
+  positive: schema_default.string({ allow: "", defaultValue: "" }),
+  negative: schema_default.string({ allow: "", defaultValue: "" })
+}).default({ positive: "", negative: "" });
 
 // _src/validators/QrValidator/index.ts
 var QrListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
   code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatus))
+  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatusValues))
 });
 var QrGeneratePayloadValidator = schema_default.generate({
   amount: schema_default.number({ required: true })
@@ -136,7 +165,7 @@ var QrLocationValidator = schema_default.generate({
   latitude: schema_default.number({ required: true })
 });
 var QrUpdatePayloadValidator = schema_default.generate({
-  status: schema_default.string({ required: true }).valid(...Object.values(QrStatus)),
+  status: schema_default.string({ required: true }).valid(...Object.values(QrStatusValues)),
   content: QrContentValidator.allow(null).default(null),
   location: QrLocationValidator.allow(null).default(null)
 });
