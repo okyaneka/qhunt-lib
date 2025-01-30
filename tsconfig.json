@@ -6,6 +6,7 @@
     "paths": {
       "~/*": ["./*"]
     },
+    "noUnusedLocals": true,
     "rootDir": "_src",
     "skipLibCheck": true,
     "strict": true,
