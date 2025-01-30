@@ -1,6 +1,5 @@
 // _src/helpers/schema/index.ts
 import Joi from "joi";
-import { Schema } from "mongoose";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -20,42 +19,16 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => Joi.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
 export {
-  IdNameSchema,
-  PeriodSchema,
-  ToObject,
   array,
   boolean,
   createValidator,

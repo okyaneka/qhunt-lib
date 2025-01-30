@@ -12,15 +12,8 @@ var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
   return UserPublicGender2;
 })(UserPublicGender || {});
 
-// _src/helpers/schema/index.ts
-import Joi from "joi";
+// _src/helpers/model/index.ts
 import { Schema } from "mongoose";
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -35,6 +28,19 @@ var PeriodSchema = new Schema(
   },
   { _id: false }
 );
+var FeedbackSchema = new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
 
 // _src/models/UserModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
@@ -123,31 +129,38 @@ var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
 // _src/models/ChallengeModel/index.ts
 import { model as model3, models as models3, Schema as Schema4 } from "mongoose";
 
+// _src/helpers/db/index.ts
+import { startSession } from "mongoose";
+
+// _src/helpers/qrcode/index.ts
+import { BrowserQRCodeReader } from "@zxing/browser";
+
+// _src/helpers/schema/index.ts
+import Joi from "joi";
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
+
 // _src/models/ChallengeModel/types.ts
-var ChallengeStatus = /* @__PURE__ */ ((ChallengeStatus2) => {
-  ChallengeStatus2["Draft"] = "draft";
-  ChallengeStatus2["Publish"] = "publish";
-  return ChallengeStatus2;
-})(ChallengeStatus || {});
-var ChallengeType = /* @__PURE__ */ ((ChallengeType2) => {
-  ChallengeType2["Trivia"] = "trivia";
-  return ChallengeType2;
-})(ChallengeType || {});
+var ChallengeStatusValues = PublishingStatusValues;
+var ChallengeTypeValues = {
+  Trivia: "trivia"
+};
 
 // _src/models/ChallengeModel/index.ts
-var ChallengeFeedbackSchema = new Schema4(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" }
-  },
-  { _id: false, versionKey: false }
-);
 var ChallengeSettingsSchema = new Schema4(
   {
-    type: { type: String, enum: Object.values(ChallengeType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(ChallengeTypeValues),
+      required: true
+    },
     duration: { type: Number },
     clue: { type: String },
-    feedback: { type: ChallengeFeedbackSchema }
+    feedback: { type: FeedbackSchema }
   },
   { _id: false, versionKey: false }
 );
@@ -155,7 +168,7 @@ var ChallengeSettingsForeignSchema = new Schema4(
   {
     type: {
       type: String,
-      enum: Object.values(ChallengeType),
+      enum: Object.values(ChallengeTypeValues),
       required: true
     },
     duration: { type: Number }
@@ -178,8 +191,8 @@ var ChallengeSchema = new Schema4(
     storyline: { type: [String] },
     status: {
       type: String,
-      enum: Object.values(ChallengeStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(ChallengeStatusValues),
+      default: ChallengeStatusValues.Draft
     },
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
@@ -204,11 +217,7 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
 })(UserStageStatus || {});
 
 // _src/models/StageModel/types.ts
-var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
-  StageStatus2["Draft"] = "draft";
-  StageStatus2["Publish"] = "publish";
-  return StageStatus2;
-})(StageStatus || {});
+var StageStatusValues = PublishingStatusValues;
 
 // _src/models/StageModel/index.ts
 import { model as model4, models as models4, Schema as Schema5 } from "mongoose";
@@ -241,8 +250,8 @@ var StageSchema = new Schema5(
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
@@ -362,7 +371,7 @@ var TriviaSchema = new Schema8(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
-    feedback: { type: ChallengeFeedbackSchema, default: {} },
+    feedback: { type: FeedbackSchema, default: {} },
     allowMultiple: { type: Boolean, default: false },
     options: { type: [TriviaOptionSchema], required: true },
     deletedAt: { type: Date, default: null }

@@ -1,6 +1,6 @@
 import { Model, model, models, Schema } from "mongoose";
 import { UserPublic, UserPublicForeign, UserPublicGender } from "./types";
-import { ToObject } from "../../helpers/schema";
+import { ToObject } from "~/helpers/model";
 import { UserForeignSchema } from "../UserModel";
 
 export const UserPublicForeignSchema = new Schema<UserPublicForeign>(

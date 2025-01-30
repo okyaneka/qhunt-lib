@@ -1,6 +1,6 @@
 import Joi from "joi";
 import schema from "../schema";
-import { Periode } from "../types";
+import { Feedback, Periode } from "../types";
 
 export const PeriodeValidator = schema.generate<Periode>({
   startDate: Joi.date().required(),
@@ -13,6 +13,17 @@ export const DefaultListParamsFields = {
   search: schema.string({ allow: "", defaultValue: "" }),
 };
 
-const validator = { PeriodeValidator, DefaultListParamsFields };
+export const FeedbackValidator = schema
+  .generate<Feedback>({
+    positive: schema.string({ allow: "", defaultValue: "" }),
+    negative: schema.string({ allow: "", defaultValue: "" }),
+  })
+  .default({ positive: "", negative: "" });
+
+const validator = {
+  PeriodeValidator,
+  DefaultListParamsFields,
+  FeedbackValidator,
+};
 
 export default validator;

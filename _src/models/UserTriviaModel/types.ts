@@ -1,4 +1,4 @@
-import { TriviaForeign, TriviaOption } from "../TriviaModel";
+import { TriviaForeign } from "../TriviaModel";
 import { UserChallengeForeign } from "../UserChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 

@@ -1,21 +1,19 @@
-import { DefaultListParams, Timestamps } from "../../helpers";
+import { DefaultListParams, Feedback, PublishingStatus, Timestamps } from "../../helpers";
 import { Stage } from "../StageModel";
-export declare enum ChallengeStatus {
-    Draft = "draft",
-    Publish = "publish"
-}
-export declare enum ChallengeType {
-    Trivia = "trivia"
-}
-export interface ChallengeFeedback {
-    positive: string;
-    negative: string;
-}
+export declare const ChallengeStatusValues: {
+    readonly Draft: "draft";
+    readonly Publish: "publish";
+};
+export type ChallengeStatus = PublishingStatus;
+export declare const ChallengeTypeValues: {
+    Trivia: string;
+};
+export type ChallengeType = (typeof ChallengeTypeValues)[keyof typeof ChallengeTypeValues];
 export interface ChallengeSettings {
     type: ChallengeType;
     duration: number;
     clue: string;
-    feedback: ChallengeFeedback;
+    feedback: Feedback;
 }
 export interface ChallengeListParams extends DefaultListParams {
     stageId: string;

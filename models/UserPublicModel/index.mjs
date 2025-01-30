@@ -9,15 +9,8 @@ var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
   return UserPublicGender2;
 })(UserPublicGender || {});
 
-// _src/helpers/schema/index.ts
-import Joi from "joi";
+// _src/helpers/model/index.ts
 import { Schema } from "mongoose";
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -32,6 +25,19 @@ var PeriodSchema = new Schema(
   },
   { _id: false }
 );
+var FeedbackSchema = new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
 
 // _src/models/UserModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";

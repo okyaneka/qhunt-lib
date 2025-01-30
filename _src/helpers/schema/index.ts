@@ -1,6 +1,4 @@
 import Joi from "joi";
-import mongoose, { Schema } from "mongoose";
-import { IdName, Periode } from "../types";
 
 export interface ValidatorOption<T = unknown> {
   required?: boolean;
@@ -44,29 +42,6 @@ export const generate = <T>(
   fields: Record<keyof T, Joi.Schema>
 ): Joi.ObjectSchema<T> => Joi.object(fields);
 
-export const ToObject: mongoose.ToObjectOptions = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  },
-};
-
-export const IdNameSchema = new Schema<IdName>(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true },
-  },
-  { _id: false, versionKey: false }
-);
-
-export const PeriodSchema = new Schema<Periode>(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
-  },
-  { _id: false }
-);
-
 const schema = {
   createValidator,
   string,
@@ -74,9 +49,6 @@ const schema = {
   boolean,
   array,
   generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema,
 };
 
 export default schema;

@@ -31,21 +31,15 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var QrModel_exports = {};
 __export(QrModel_exports, {
   QrContentType: () => QrContentType,
-  QrStatus: () => QrStatus,
+  QrForeignSchema: () => QrForeignSchema,
+  QrStatusValues: () => QrStatusValues,
   default: () => QrModel_default
 });
 module.exports = __toCommonJS(QrModel_exports);
-var import_mongoose2 = require("mongoose");
+var import_mongoose3 = require("mongoose");
 
-// _src/helpers/schema/index.ts
-var import_joi = __toESM(require("joi"));
+// _src/helpers/model/index.ts
 var import_mongoose = require("mongoose");
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
 var IdNameSchema = new import_mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -60,13 +54,37 @@ var PeriodSchema = new import_mongoose.Schema(
   },
   { _id: false }
 );
+var FeedbackSchema = new import_mongoose.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+
+// _src/helpers/db/index.ts
+var import_mongoose2 = require("mongoose");
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
+// _src/helpers/schema/index.ts
+var import_joi = __toESM(require("joi"));
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
 
 // _src/models/QrModel/types.ts
-var QrStatus = /* @__PURE__ */ ((QrStatus2) => {
-  QrStatus2["Draft"] = "draft";
-  QrStatus2["Publish"] = "publish";
-  return QrStatus2;
-})(QrStatus || {});
+var QrStatusValues = PublishingStatusValues;
 var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
   QrContentType2["Stage"] = "stage";
   QrContentType2["Challenge"] = "challenge";
@@ -75,14 +93,21 @@ var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
 })(QrContentType || {});
 
 // _src/models/QrModel/index.ts
-var QrContentSchema = new import_mongoose2.Schema(
+var QrForeignSchema = new import_mongoose3.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrContentSchema = new import_mongoose3.Schema(
   {
     type: { type: String, enum: Object.values(QrContentType), required: true },
     refId: { type: String, required: true }
   },
   { _id: false, versionKey: false }
 );
-var QrLocationSchema = new import_mongoose2.Schema(
+var QrLocationSchema = new import_mongoose3.Schema(
   {
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
@@ -90,10 +115,14 @@ var QrLocationSchema = new import_mongoose2.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrSchema = new import_mongoose2.Schema(
+var QrSchema = new import_mongoose3.Schema(
   {
     code: { type: String, required: true, unique: true },
-    status: { type: String, enum: Object.values(QrStatus), required: true },
+    status: {
+      type: String,
+      enum: Object.values(QrStatusValues),
+      required: true
+    },
     content: { type: QrContentSchema, default: null },
     location: { type: QrLocationSchema, default: null },
     accessCount: { type: Number, default: null },
@@ -105,10 +134,11 @@ var QrSchema = new import_mongoose2.Schema(
 );
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
-var QrModel = import_mongoose2.models.Qr || (0, import_mongoose2.model)("Qr", QrSchema);
+var QrModel = import_mongoose3.models.Qr || (0, import_mongoose3.model)("Qr", QrSchema);
 var QrModel_default = QrModel;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   QrContentType,
-  QrStatus
+  QrForeignSchema,
+  QrStatusValues
 });

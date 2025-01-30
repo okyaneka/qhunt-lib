@@ -1,6 +1,5 @@
 // _src/helpers/schema/index.ts
 import Joi from "joi";
-import { Schema } from "mongoose";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -20,36 +19,13 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => Joi.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
 
@@ -64,9 +40,13 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
+var FeedbackValidator = schema_default.generate({
+  positive: schema_default.string({ allow: "", defaultValue: "" }),
+  negative: schema_default.string({ allow: "", defaultValue: "" })
+}).default({ positive: "", negative: "" });
 
 // _src/models/UserModel/index.ts
-import { model, models, Schema as Schema2 } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 // _src/models/UserModel/types.ts
 var UserRole = /* @__PURE__ */ ((UserRole2) => {
@@ -77,20 +57,20 @@ var UserRole = /* @__PURE__ */ ((UserRole2) => {
 })(UserRole || {});
 
 // _src/models/UserModel/index.ts
-var ToObject2 = {
+var ToObject = {
   transform: (doc, ret) => {
     const { _id, __v, password, ...rest } = ret;
     return { id: _id, ...rest };
   }
 };
-var UserForeignSchema = new Schema2(
+var UserForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" }
   },
   { _id: false }
 );
-var UserSchema = new Schema2(
+var UserSchema = new Schema(
   {
     name: { type: String, default: "" },
     role: { type: String, enum: Object.values(UserRole) },
@@ -102,8 +82,8 @@ var UserSchema = new Schema2(
     timestamps: true
   }
 );
-UserSchema.set("toJSON", ToObject2);
-UserSchema.set("toObject", ToObject2);
+UserSchema.set("toJSON", ToObject);
+UserSchema.set("toObject", ToObject);
 var UserModel = models.User || model("User", UserSchema);
 
 // _src/validators/UserValidator/index.ts

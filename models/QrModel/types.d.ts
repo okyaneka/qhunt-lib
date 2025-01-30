@@ -1,8 +1,9 @@
-import { DefaultListParams, Timestamps } from "../../helpers";
-export declare enum QrStatus {
-    Draft = "draft",
-    Publish = "publish"
-}
+import { DefaultListParams, PublishingStatus, Timestamps } from "../../helpers";
+export declare const QrStatusValues: {
+    readonly Draft: "draft";
+    readonly Publish: "publish";
+};
+export type QrStatus = PublishingStatus;
 export declare enum QrContentType {
     Stage = "stage",
     Challenge = "challenge",
@@ -35,6 +36,10 @@ export interface QrGeneratePayload {
 }
 export interface QrDeleteBulkPayload {
     ids: string[];
+}
+export interface QrForeign {
+    id: string;
+    code: string;
 }
 export interface Qr extends Timestamps {
     id: string;

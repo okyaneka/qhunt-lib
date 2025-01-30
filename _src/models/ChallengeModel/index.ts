@@ -1,29 +1,24 @@
 import { Model, model, models, Schema } from "mongoose";
 import {
   Challenge,
-  ChallengeFeedback,
   ChallengeForeign,
   ChallengeSettings,
   ChallengeSettingsForeign,
-  ChallengeStatus,
-  ChallengeType,
+  ChallengeStatusValues,
+  ChallengeTypeValues,
 } from "./types";
-import { IdNameSchema, ToObject } from "../../helpers/schema";
-
-export const ChallengeFeedbackSchema = new Schema<ChallengeFeedback>(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" },
-  },
-  { _id: false, versionKey: false }
-);
+import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
 
 const ChallengeSettingsSchema = new Schema<ChallengeSettings>(
   {
-    type: { type: String, enum: Object.values(ChallengeType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(ChallengeTypeValues),
+      required: true,
+    },
     duration: { type: Number },
     clue: { type: String },
-    feedback: { type: ChallengeFeedbackSchema },
+    feedback: { type: FeedbackSchema },
   },
   { _id: false, versionKey: false }
 );
@@ -33,7 +28,7 @@ export const ChallengeSettingsForeignSchema =
     {
       type: {
         type: String,
-        enum: Object.values(ChallengeType),
+        enum: Object.values(ChallengeTypeValues),
         required: true,
       },
       duration: { type: Number },
@@ -58,8 +53,8 @@ const ChallengeSchema = new Schema<Challenge>(
     storyline: { type: [String] },
     status: {
       type: String,
-      enum: Object.values(ChallengeStatus),
-      default: ChallengeStatus.Draft,
+      enum: Object.values(ChallengeStatusValues),
+      default: ChallengeStatusValues.Draft,
     },
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },

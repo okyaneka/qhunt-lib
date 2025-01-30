@@ -2,8 +2,8 @@ import { db } from "~/helpers";
 import Challenge, {
   ChallengeListParams,
   ChallengePayload,
-  ChallengeStatus,
-  ChallengeType,
+  ChallengeStatusValues,
+  ChallengeTypeValues,
 } from "~/models/ChallengeModel";
 import StageService from "../StageService";
 import Stage from "~/models/StageModel";
@@ -61,7 +61,7 @@ export const detailContent = async (id: string) => {
   if (!item) throw new Error("challenge not found");
 
   const services = {
-    [ChallengeType.Trivia]: TriviaService,
+    [ChallengeTypeValues.Trivia]: TriviaService,
   };
 
   return await services[item.settings.type].content(item);
@@ -132,7 +132,7 @@ export const _delete = async (id: string) => {
 export const verify = async (id: string) => {
   const item = await Challenge.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
-  if (item.status !== ChallengeStatus.Publish)
+  if (item.status !== ChallengeStatusValues.Publish)
     throw new Error("challenge not published yet");
   return item.toObject();
 };

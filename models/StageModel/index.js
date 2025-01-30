@@ -32,20 +32,13 @@ var StageModel_exports = {};
 __export(StageModel_exports, {
   StageForeignSchema: () => StageForeignSchema,
   StageSettingsForeignSchema: () => StageSettingsForeignSchema,
-  StageStatus: () => StageStatus,
+  StageStatusValues: () => StageStatusValues,
   default: () => StageModel_default
 });
 module.exports = __toCommonJS(StageModel_exports);
 
-// _src/helpers/schema/index.ts
-var import_joi = __toESM(require("joi"));
+// _src/helpers/model/index.ts
 var import_mongoose = require("mongoose");
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
 var IdNameSchema = new import_mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -60,17 +53,41 @@ var PeriodSchema = new import_mongoose.Schema(
   },
   { _id: false }
 );
+var FeedbackSchema = new import_mongoose.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+
+// _src/helpers/db/index.ts
+var import_mongoose2 = require("mongoose");
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
+// _src/helpers/schema/index.ts
+var import_joi = __toESM(require("joi"));
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
 
 // _src/models/StageModel/types.ts
-var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
-  StageStatus2["Draft"] = "draft";
-  StageStatus2["Publish"] = "publish";
-  return StageStatus2;
-})(StageStatus || {});
+var StageStatusValues = PublishingStatusValues;
 
 // _src/models/StageModel/index.ts
-var import_mongoose2 = require("mongoose");
-var StageSettingsSchema = new import_mongoose2.Schema(
+var import_mongoose3 = require("mongoose");
+var StageSettingsSchema = new import_mongoose3.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -78,13 +95,13 @@ var StageSettingsSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new import_mongoose2.Schema(
+var StageSettingsForeignSchema = new import_mongoose3.Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new import_mongoose2.Schema(
+var StageForeignSchema = new import_mongoose3.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -93,14 +110,14 @@ var StageForeignSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var StageSchema = new import_mongoose2.Schema(
+var StageSchema = new import_mongoose3.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
@@ -110,11 +127,11 @@ var StageSchema = new import_mongoose2.Schema(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = import_mongoose2.models.Stage || (0, import_mongoose2.model)("Stage", StageSchema);
+var StageModel = import_mongoose3.models.Stage || (0, import_mongoose3.model)("Stage", StageSchema);
 var StageModel_default = StageModel;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   StageForeignSchema,
   StageSettingsForeignSchema,
-  StageStatus
+  StageStatusValues
 });

@@ -14,7 +14,7 @@ import {
   ChallengeForeignValidator,
   ChallengeSettingsForeignValidator,
 } from "~/validators/ChallengeValidator";
-import { ChallengeType } from "~/models/ChallengeModel";
+import { ChallengeTypeValues } from "~/models/ChallengeModel";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
 import StageService from "../StageService";
 import service from "~/helpers/service";
@@ -139,7 +139,7 @@ export const setup = async (
   };
 
   const services = {
-    [ChallengeType.Trivia]: UserTriviaService,
+    [ChallengeTypeValues.Trivia]: UserTriviaService,
   } as const;
 
   const contents = await services[settings.type].setup(
@@ -213,7 +213,7 @@ export const detailContent = async (
     throw new Error("user challenge is undiscovered");
 
   const services = {
-    [ChallengeType.Trivia]: UserTriviaService,
+    [ChallengeTypeValues.Trivia]: UserTriviaService,
   } as const;
 
   return await services[challengeType].details(contents, TID, hasResult);

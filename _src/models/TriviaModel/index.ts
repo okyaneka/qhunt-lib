@@ -1,12 +1,11 @@
 import { Model, model, models, Schema } from "mongoose";
-import { IdNameSchema, ToObject } from "../../helpers/schema";
+import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
 import {
   Trivia,
   TriviaForeign,
   TriviaForeignOption,
   TriviaOption,
 } from "./types";
-import { ChallengeFeedbackSchema } from "../ChallengeModel";
 
 const TriviaOptionSchema = new Schema<TriviaOption>(
   {
@@ -38,7 +37,7 @@ const TriviaSchema = new Schema<Trivia>(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
-    feedback: { type: ChallengeFeedbackSchema, default: {} },
+    feedback: { type: FeedbackSchema, default: {} },
     allowMultiple: { type: Boolean, default: false },
     options: { type: [TriviaOptionSchema], required: true },
     deletedAt: { type: Date, default: null },

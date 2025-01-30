@@ -1,5 +1,3 @@
-import Joi from "joi";
-import schema from "~/helpers/schema";
 import ChallengeValidator from "./ChallengeValidator";
 import QrValidator from "./QrValidator";
 import StageValidator from "./StageValidator";

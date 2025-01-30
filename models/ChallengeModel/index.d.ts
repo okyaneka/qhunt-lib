@@ -1,14 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { Challenge, ChallengeFeedback, ChallengeForeign, ChallengeSettingsForeign } from "./types";
-export declare const ChallengeFeedbackSchema: Schema<ChallengeFeedback, Model<ChallengeFeedback, any, any, any, import("mongoose").Document<unknown, any, ChallengeFeedback> & ChallengeFeedback & {
-    _id: import("mongoose").Types.ObjectId;
-} & {
-    __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, ChallengeFeedback, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<ChallengeFeedback>> & import("mongoose").FlatRecord<ChallengeFeedback> & {
-    _id: import("mongoose").Types.ObjectId;
-} & {
-    __v: number;
-}>;
+import { Challenge, ChallengeForeign, ChallengeSettingsForeign } from "./types";
 export declare const ChallengeSettingsForeignSchema: Schema<ChallengeSettingsForeign, Model<ChallengeSettingsForeign, any, any, any, import("mongoose").Document<unknown, any, ChallengeSettingsForeign> & ChallengeSettingsForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {

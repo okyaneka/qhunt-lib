@@ -1,6 +1,21 @@
 import { Model, model, models, Schema } from "mongoose";
-import { ToObject } from "../../helpers/schema";
-import { Qr, QrContent, QrContentType, QrLocation, QrStatus } from "./types";
+import { ToObject } from "~/helpers/model";
+import {
+  Qr,
+  QrContent,
+  QrContentType,
+  QrForeign,
+  QrLocation,
+  QrStatusValues,
+} from "./types";
+
+export const QrForeignSchema = new Schema<QrForeign>(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true },
+  },
+  { _id: false, versionKey: false }
+);
 
 const QrContentSchema = new Schema<QrContent>(
   {
@@ -22,7 +37,11 @@ const QrLocationSchema = new Schema<QrLocation>(
 const QrSchema = new Schema<Qr>(
   {
     code: { type: String, required: true, unique: true },
-    status: { type: String, enum: Object.values(QrStatus), required: true },
+    status: {
+      type: String,
+      enum: Object.values(QrStatusValues),
+      required: true,
+    },
     content: { type: QrContentSchema, default: null },
     location: { type: QrLocationSchema, default: null },
     accessCount: { type: Number, default: null },

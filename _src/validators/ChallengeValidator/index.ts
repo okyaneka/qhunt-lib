@@ -1,16 +1,18 @@
 import Joi from "joi";
 import schema from "~/helpers/schema";
 import {
-  ChallengeFeedback,
   ChallengeForeign,
   ChallengeListParams,
   ChallengePayload,
   ChallengeSettings,
   ChallengeSettingsForeign,
-  ChallengeStatus,
-  ChallengeType,
+  ChallengeStatusValues,
+  ChallengeTypeValues,
 } from "~/models/ChallengeModel";
-import { DefaultListParamsFields } from "~/helpers/validator";
+import {
+  DefaultListParamsFields,
+  FeedbackValidator,
+} from "~/helpers/validator";
 
 export const ChallengeListParamsValidator =
   schema.generate<ChallengeListParams>({
@@ -18,20 +20,13 @@ export const ChallengeListParamsValidator =
     stageId: schema.string().allow("").default(""),
   });
 
-export const ChallengeFeedbackValidator = schema
-  .generate<ChallengeFeedback>({
-    positive: schema.string({ allow: "", defaultValue: "" }),
-    negative: schema.string({ allow: "", defaultValue: "" }),
-  })
-  .default({ positive: "", negative: "" });
-
 export const ChallengeSettingsValidator = schema.generate<ChallengeSettings>({
   clue: schema.string({ defaultValue: "" }),
   duration: schema.number({ defaultValue: 0 }),
   type: schema
     .string({ required: true })
-    .valid(...Object.values(ChallengeType)),
-  feedback: ChallengeFeedbackValidator,
+    .valid(...Object.values(ChallengeTypeValues)),
+  feedback: FeedbackValidator,
 });
 
 export const ChallengeForeignValidator = schema.generate<ChallengeForeign>({
@@ -46,7 +41,7 @@ export const ChallengeSettingsForeignValidator =
     duration: schema.number({ allow: 0 }),
     type: schema
       .string({ required: true })
-      .valid(...Object.values(ChallengeType)),
+      .valid(...Object.values(ChallengeTypeValues)),
   });
 
 export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
@@ -55,12 +50,11 @@ export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
   stageId: schema.string({ required: true }),
   status: schema
     .string({ required: true })
-    .valid(...Object.values(ChallengeStatus)),
+    .valid(...Object.values(ChallengeStatusValues)),
   settings: ChallengeSettingsValidator.required(),
 });
 
 const ChallengeValidator = {
-  ChallengeFeedbackValidator,
   ChallengeForeignValidator,
   ChallengeListParamsValidator,
   ChallengePayloadValidator,

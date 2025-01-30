@@ -1,5 +1,4 @@
-import { IdName, Timestamps } from "../../helpers";
-import { ChallengeFeedback } from "../../models/ChallengeModel";
+import { Feedback, IdName, Timestamps } from "../../helpers";
 export interface TriviaOption {
     text: string;
     isCorrect: boolean;
@@ -8,7 +7,7 @@ export interface TriviaOption {
 export interface TriviaPayload {
     id?: string;
     question: string;
-    feedback: ChallengeFeedback;
+    feedback: Feedback;
     allowMultiple: boolean;
     options: TriviaOption[];
 }
@@ -20,7 +19,7 @@ export interface Trivia extends Timestamps {
     id: string;
     challenge: IdName | null;
     question: string;
-    feedback: ChallengeFeedback;
+    feedback: Feedback;
     allowMultiple: boolean;
     options: TriviaOption[];
 }

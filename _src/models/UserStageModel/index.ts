@@ -5,7 +5,7 @@ import {
   UserStageResult,
   UserStageStatus,
 } from "./types";
-import { ToObject } from "../../helpers/schema";
+import { ToObject } from "~/helpers/model";
 import { StageForeignSchema } from "../StageModel";
 import { UserPublicForeignSchema } from "../UserPublicModel";
 

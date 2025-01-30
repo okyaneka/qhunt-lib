@@ -41,7 +41,6 @@ var import_joi3 = __toESM(require("joi"));
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
-var import_mongoose = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -61,12 +60,18 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
+var schema = {
+  createValidator,
+  string,
+  number,
+  boolean,
+  array,
+  generate
 };
+var schema_default = schema;
+
+// _src/helpers/model/index.ts
+var import_mongoose = require("mongoose");
 var IdNameSchema = new import_mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -81,29 +86,38 @@ var PeriodSchema = new import_mongoose.Schema(
   },
   { _id: false }
 );
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+var FeedbackSchema = new import_mongoose.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
 };
-var schema_default = schema;
+
+// _src/helpers/db/index.ts
+var import_mongoose2 = require("mongoose");
+
+// _src/helpers/qrcode/index.ts
+var import_browser = require("@zxing/browser");
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
 
 // _src/models/StageModel/types.ts
-var StageStatus = /* @__PURE__ */ ((StageStatus2) => {
-  StageStatus2["Draft"] = "draft";
-  StageStatus2["Publish"] = "publish";
-  return StageStatus2;
-})(StageStatus || {});
+var StageStatusValues = PublishingStatusValues;
 
 // _src/models/StageModel/index.ts
-var import_mongoose2 = require("mongoose");
-var StageSettingsSchema = new import_mongoose2.Schema(
+var import_mongoose3 = require("mongoose");
+var StageSettingsSchema = new import_mongoose3.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -111,13 +125,13 @@ var StageSettingsSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new import_mongoose2.Schema(
+var StageSettingsForeignSchema = new import_mongoose3.Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new import_mongoose2.Schema(
+var StageForeignSchema = new import_mongoose3.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -126,14 +140,14 @@ var StageForeignSchema = new import_mongoose2.Schema(
   },
   { _id: false }
 );
-var StageSchema = new import_mongoose2.Schema(
+var StageSchema = new import_mongoose3.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: "draft" /* Draft */
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
@@ -143,7 +157,7 @@ var StageSchema = new import_mongoose2.Schema(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = import_mongoose2.models.Stage || (0, import_mongoose2.model)("Stage", StageSchema);
+var StageModel = import_mongoose3.models.Stage || (0, import_mongoose3.model)("Stage", StageSchema);
 
 // _src/helpers/validator/index.ts
 var import_joi2 = __toESM(require("joi"));
@@ -156,6 +170,10 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
+var FeedbackValidator = schema_default.generate({
+  positive: schema_default.string({ allow: "", defaultValue: "" }),
+  negative: schema_default.string({ allow: "", defaultValue: "" })
+}).default({ positive: "", negative: "" });
 
 // _src/validators/StageValidator/index.ts
 var StageSettingsValidator = schema_default.generate(
@@ -167,13 +185,13 @@ var StageSettingsValidator = schema_default.generate(
 );
 var StageListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatus))
+  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatusValues))
 });
 var StagePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(import_joi3.default.string()).default([]),
   contents: schema_default.array(import_joi3.default.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(StageStatus)),
+  status: schema_default.string({ required: true }).valid(...Object.values(StageStatusValues)),
   settings: StageSettingsValidator.required()
 });
 var StageForeignValidator = schema_default.generate({

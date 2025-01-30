@@ -1,11 +1,11 @@
 import schema from "~/helpers/schema";
+import { FeedbackValidator } from "~/helpers/validator";
 import {
   TriviaForeign,
   TriviaForeignOption,
   TriviaOption,
   TriviaPayload,
 } from "~/models/TriviaModel";
-import { ChallengeFeedbackValidator } from "~/validators/ChallengeValidator";
 
 export const TriviaOptionValidator = schema.generate<TriviaOption>({
   isCorrect: schema.boolean({ defaultValue: false }),
@@ -29,7 +29,7 @@ export const TriviaOptionsValidator = schema
 export const TriviaPayloadValidator = schema.generate<TriviaPayload>({
   id: schema.string(),
   question: schema.string({ required: true }),
-  feedback: ChallengeFeedbackValidator,
+  feedback: FeedbackValidator,
   allowMultiple: schema.boolean({ defaultValue: false }),
   options: TriviaOptionsValidator,
 });

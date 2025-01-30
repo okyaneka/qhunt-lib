@@ -38,7 +38,6 @@ module.exports = __toCommonJS(UserValidator_exports);
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
-var import_mongoose = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -58,36 +57,13 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new import_mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new import_mongoose.Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
 
@@ -102,9 +78,13 @@ var DefaultListParamsFields = {
   limit: schema_default.number({ defaultValue: 10 }),
   search: schema_default.string({ allow: "", defaultValue: "" })
 };
+var FeedbackValidator = schema_default.generate({
+  positive: schema_default.string({ allow: "", defaultValue: "" }),
+  negative: schema_default.string({ allow: "", defaultValue: "" })
+}).default({ positive: "", negative: "" });
 
 // _src/models/UserModel/index.ts
-var import_mongoose2 = require("mongoose");
+var import_mongoose = require("mongoose");
 
 // _src/models/UserModel/types.ts
 var UserRole = /* @__PURE__ */ ((UserRole2) => {
@@ -115,20 +95,20 @@ var UserRole = /* @__PURE__ */ ((UserRole2) => {
 })(UserRole || {});
 
 // _src/models/UserModel/index.ts
-var ToObject2 = {
+var ToObject = {
   transform: (doc, ret) => {
     const { _id, __v, password, ...rest } = ret;
     return { id: _id, ...rest };
   }
 };
-var UserForeignSchema = new import_mongoose2.Schema(
+var UserForeignSchema = new import_mongoose.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" }
   },
   { _id: false }
 );
-var UserSchema = new import_mongoose2.Schema(
+var UserSchema = new import_mongoose.Schema(
   {
     name: { type: String, default: "" },
     role: { type: String, enum: Object.values(UserRole) },
@@ -140,9 +120,9 @@ var UserSchema = new import_mongoose2.Schema(
     timestamps: true
   }
 );
-UserSchema.set("toJSON", ToObject2);
-UserSchema.set("toObject", ToObject2);
-var UserModel = import_mongoose2.models.User || (0, import_mongoose2.model)("User", UserSchema);
+UserSchema.set("toJSON", ToObject);
+UserSchema.set("toObject", ToObject);
+var UserModel = import_mongoose.models.User || (0, import_mongoose.model)("User", UserSchema);
 
 // _src/validators/UserValidator/index.ts
 var UserPayloadValidator = schema_default.generate({

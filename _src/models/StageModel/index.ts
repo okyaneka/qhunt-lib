@@ -1,9 +1,9 @@
-import { PeriodSchema, ToObject } from "../../helpers/schema";
+import { PeriodSchema, ToObject } from "~/helpers/model";
 import {
   Stage,
   StageForeign,
   StageSettingsForeign,
-  StageStatus,
+  StageStatusValues,
 } from "./types";
 import { Model, model, models, Schema } from "mongoose";
 
@@ -39,8 +39,8 @@ const StageSchema = new Schema<Stage>(
     storyline: { type: [String], default: [] },
     status: {
       type: String,
-      enum: Object.values(StageStatus),
-      default: StageStatus.Draft,
+      enum: Object.values(StageStatusValues),
+      default: StageStatusValues.Draft,
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },

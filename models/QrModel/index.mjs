@@ -1,15 +1,8 @@
 // _src/models/QrModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
 
-// _src/helpers/schema/index.ts
-import Joi from "joi";
+// _src/helpers/model/index.ts
 import { Schema } from "mongoose";
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -24,13 +17,37 @@ var PeriodSchema = new Schema(
   },
   { _id: false }
 );
+var FeedbackSchema = new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+
+// _src/helpers/db/index.ts
+import { startSession } from "mongoose";
+
+// _src/helpers/qrcode/index.ts
+import { BrowserQRCodeReader } from "@zxing/browser";
+
+// _src/helpers/schema/index.ts
+import Joi from "joi";
+
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
 
 // _src/models/QrModel/types.ts
-var QrStatus = /* @__PURE__ */ ((QrStatus2) => {
-  QrStatus2["Draft"] = "draft";
-  QrStatus2["Publish"] = "publish";
-  return QrStatus2;
-})(QrStatus || {});
+var QrStatusValues = PublishingStatusValues;
 var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
   QrContentType2["Stage"] = "stage";
   QrContentType2["Challenge"] = "challenge";
@@ -39,6 +56,13 @@ var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
 })(QrContentType || {});
 
 // _src/models/QrModel/index.ts
+var QrForeignSchema = new Schema2(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
 var QrContentSchema = new Schema2(
   {
     type: { type: String, enum: Object.values(QrContentType), required: true },
@@ -57,7 +81,11 @@ var QrLocationSchema = new Schema2(
 var QrSchema = new Schema2(
   {
     code: { type: String, required: true, unique: true },
-    status: { type: String, enum: Object.values(QrStatus), required: true },
+    status: {
+      type: String,
+      enum: Object.values(QrStatusValues),
+      required: true
+    },
     content: { type: QrContentSchema, default: null },
     location: { type: QrLocationSchema, default: null },
     accessCount: { type: Number, default: null },
@@ -73,6 +101,7 @@ var QrModel = models.Qr || model("Qr", QrSchema);
 var QrModel_default = QrModel;
 export {
   QrContentType,
-  QrStatus,
+  QrForeignSchema,
+  QrStatusValues,
   QrModel_default as default
 };

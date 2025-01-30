@@ -3,7 +3,7 @@ import Qr, {
   QrContentType,
   QrListParams,
   QrPayload,
-  QrStatus,
+  QrStatusValues,
   QrUpdatePayload,
 } from "~/models/QrModel";
 import ChallengeService from "../ChallengeService";
@@ -40,7 +40,7 @@ export const generate = async (count: number) => {
       .padStart(8, "0");
     return {
       code: CryptoJS.SHA256(`${Date.now()}${salt}`).toString(CryptoJS.enc.Hex),
-      status: QrStatus.Draft,
+      status: QrStatusValues.Draft,
     };
   });
 
@@ -66,7 +66,8 @@ export const update = async (id: string, payload: QrUpdatePayload) => {
     };
 
     const service = serviceMap[content.type];
-    const action = payload.status === QrStatus.Draft ? "detail" : "verify";
+    const action =
+      payload.status === QrStatusValues.Draft ? "detail" : "verify";
     await service[action](content.refId);
   }
 
@@ -89,7 +90,7 @@ export const deleteMany = async (ids: string[]) => {
     {
       _id: { $in: ids },
       deletedAt: null,
-      status: QrStatus.Draft,
+      status: QrStatusValues.Draft,
     },
     { $set: { deletedAt: new Date() } }
   );
@@ -101,7 +102,7 @@ export const verify = async (code: string, TID: string) => {
   const qrData = await Qr.findOne({
     code,
     deletedAt: null,
-    status: QrStatus.Publish,
+    status: QrStatusValues.Publish,
   });
 
   if (!qrData) throw new Error("qr code invalid");

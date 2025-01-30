@@ -30,8 +30,10 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // _src/helpers/index.ts
 var helpers_exports = {};
 __export(helpers_exports, {
+  PublishingStatusValues: () => PublishingStatusValues,
   db: () => db_default,
   default: () => helpers_default,
+  model: () => model_default,
   qrcode: () => qrcode_default,
   response: () => response_default,
   schema: () => schema_default,
@@ -56,6 +58,43 @@ var transaction = async (operation) => {
 };
 var db = { transaction };
 var db_default = db;
+
+// _src/helpers/model/index.ts
+var import_mongoose2 = require("mongoose");
+var IdNameSchema = new import_mongoose2.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var PeriodSchema = new import_mongoose2.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+var FeedbackSchema = new import_mongoose2.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+var model = {
+  IdNameSchema,
+  PeriodSchema,
+  FeedbackSchema,
+  ToObject
+};
+var model_default = model;
 
 // _src/helpers/qrcode/index.ts
 var import_browser = require("@zxing/browser");
@@ -99,7 +138,6 @@ var response_default = response;
 
 // _src/helpers/schema/index.ts
 var import_joi = __toESM(require("joi"));
-var import_mongoose2 = require("mongoose");
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
@@ -119,48 +157,25 @@ var array = (item, options) => {
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var IdNameSchema = new import_mongoose2.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new import_mongoose2.Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
 var schema = {
   createValidator,
   string,
   number,
   boolean,
   array,
-  generate,
-  ToObject,
-  PeriodSchema,
-  IdNameSchema
+  generate
 };
 var schema_default = schema;
 
 // _src/helpers/service/index.ts
-var list = async (model, page, limit, filters = {}, sort) => {
+var list = async (model2, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;
   const filter = {
     ...filters,
     deletedAt: null
   };
-  const items = await model.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
-  const totalItems = await model.countDocuments(filter);
+  const items = await model2.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
+  const totalItems = await model2.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);
   return {
     list: items.map((item) => item.toObject ? item.toObject() : item),
@@ -172,12 +187,20 @@ var list = async (model, page, limit, filters = {}, sort) => {
 var service = { list };
 var service_default = service;
 
+// _src/helpers/types/index.ts
+var PublishingStatusValues = {
+  Draft: "draft",
+  Publish: "publish"
+};
+
 // _src/helpers/index.ts
-var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default, qrcode: qrcode_default };
+var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default, qrcode: qrcode_default, model: model_default };
 var helpers_default = helpers;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  PublishingStatusValues,
   db,
+  model,
   qrcode,
   response,
   schema,
