@@ -17,6 +17,8 @@ export const list = async (params: QrListParams) => {
   const filter: any = { deletedAt: null };
   if (params.status) filter.status = params.status;
   if (params.code) filter.code = params.code;
+  if (params.hasContent != null)
+    filter.content = params.hasContent ? { $ne: null } : null;
   const items = await Qr.find(filter)
     .skip(skip)
     .limit(params.limit)
@@ -51,6 +53,11 @@ export const detail = async (id: string) => {
   const item = await Qr.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("item not found");
   return item.toObject();
+};
+
+export const details = async (ids: string[]) => {
+  const items = await Qr.find({ _id: { $in: ids } });
+  return items.map((item) => item.toObject());
 };
 
 export const update = async (id: string, payload: QrUpdatePayload) => {
@@ -131,6 +138,7 @@ const QrService = {
   generate,
   list,
   detail,
+  details,
   update,
   delete: _delete,
   deleteMany,

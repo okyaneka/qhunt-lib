@@ -54,6 +54,7 @@ const QrSchema = new Schema<Qr>(
 
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
+QrSchema.index({ code: 1 });
 
 export * from "./types";
 

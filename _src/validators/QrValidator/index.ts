@@ -16,6 +16,7 @@ export const QrListParamsValidator = schema.generate<QrListParams>({
   ...DefaultListParamsFields,
   code: schema.string({ allow: "" }),
   status: schema.string({ allow: "" }).valid(...Object.values(QrStatusValues)),
+  hasContent: schema.boolean({ defaultValue: null }),
 });
 
 export const QrGeneratePayloadValidator = schema.generate<QrGeneratePayload>({
