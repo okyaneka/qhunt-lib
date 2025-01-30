@@ -7,12 +7,14 @@ import UserChallengeModel from "./UserChallengeModel";
 import UserPublicModel from "./UserPublicModel";
 import UserStageModel from "./UserStageModel";
 import UserTriviaModel from "./UserTriviaModel";
+import PhotoHuntModel from "./PhotoHuntModel";
 
 const models = {
   ChallengeModel,
   QrModel,
   StageModel,
   TriviaModel,
+  PhotoHuntModel,
   UserModel,
   UserChallengeModel,
   UserPublicModel,
@@ -25,6 +27,7 @@ export {
   QrModel,
   StageModel,
   TriviaModel,
+  PhotoHuntModel,
   UserModel,
   UserChallengeModel,
   UserPublicModel,
