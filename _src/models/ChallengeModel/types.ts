@@ -12,7 +12,7 @@ export type ChallengeStatus = PublishingStatus;
 
 export const ChallengeTypeValues = {
   Trivia: "trivia",
-};
+} as const;
 export type ChallengeType =
   (typeof ChallengeTypeValues)[keyof typeof ChallengeTypeValues];
 
