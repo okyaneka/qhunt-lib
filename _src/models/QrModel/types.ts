@@ -28,6 +28,7 @@ export interface QrLocation {
 export interface QrListParams extends DefaultListParams {
   code: string;
   status: QrStatus | null;
+  hasContent: boolean | null;
 }
 
 export interface QrPayload {
