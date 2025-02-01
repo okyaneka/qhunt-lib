@@ -4,12 +4,11 @@ import UserChallenge, {
   UserChallengeForeign,
   UserChallengeParams,
   UserChallengeResult,
-  UserChallengeStatus,
+  UserChallengeStatusValues,
   UserChallengeSummary,
 } from "~/models/UserChallengeModel";
 import UserPublicService from "../UserPublicService";
 import UserStageService from "../UserStageService";
-import UserTriviaService from "../UserTriviaService";
 import {
   ChallengeForeignValidator,
   ChallengeSettingsForeignValidator,
@@ -18,6 +17,33 @@ import { ChallengeTypeValues } from "~/models/ChallengeModel";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
 import StageService from "../StageService";
 import service from "~/helpers/service";
+import {
+  details as UserTriviaDetails,
+  setup as UserTriviaSetup,
+  submitEmpties as UserTriviaSubmitEmpties,
+  summary as UserTriviaSummary,
+} from "~/services/UserTriviaService";
+import {
+  details as UserPhotoHuntDetails,
+  setup as UserPhotoHuntSetup,
+  submitEmpties as UserPhotoHuntSubmitEmpties,
+  summary as UserPhotoHuntSummary,
+} from "~/services/UserPhotoHuntService";
+
+const services = {
+  [ChallengeTypeValues.PhotoHunt]: {
+    setup: UserTriviaSetup,
+    details: UserTriviaDetails,
+    submitEmpties: UserTriviaSubmitEmpties,
+    summary: UserTriviaSummary,
+  },
+  [ChallengeTypeValues.Trivia]: {
+    setup: UserPhotoHuntSetup,
+    details: UserPhotoHuntDetails,
+    submitEmpties: UserPhotoHuntSubmitEmpties,
+    summary: UserPhotoHuntSummary,
+  },
+};
 
 const initResult = (): UserChallengeResult => {
   return {
@@ -25,101 +51,81 @@ const initResult = (): UserChallengeResult => {
     bonus: 0,
     timeUsed: 0,
     totalScore: 0,
-    correctBonus: 0,
-    correctCount: 0,
+    contentBonus: 0,
+    totalCorrect: 0,
     startAt: new Date(),
     endAt: null,
   };
 };
 
-export const verify = async (
-  code: string,
+const verify = async (
   challengeId: string,
-  isDiscover?: boolean
+  TID: string,
+  setDiscover?: boolean
 ) => {
   const item = await UserChallenge.findOne({
-    "userPublic.code": code,
+    "userPublic.code": TID,
     "challenge.id": challengeId,
     deletedAt: null,
   });
-  if (!item) throw new Error("user challenge is undiscovered");
-  if (isDiscover) {
-    item.status = UserChallengeStatus.Discovered;
-    await item.save();
-  }
-  return item.toObject();
-};
-
-export const discover = async (id: string) => {
-  const item = await UserChallenge.findOneAndUpdate(
-    { _id: id, deletedAt: null },
-    {
-      $set: { status: UserChallengeStatus.Discovered },
-    },
-    { new: true }
-  );
-  if (!item) throw new Error("user challenge is undiscovered");
+  if (!item) return null;
+  if (setDiscover)
+    await UserChallenge.updateOne(
+      { _id: item.id },
+      { $set: { status: UserChallengeStatusValues.Discovered } }
+    );
   return item.toObject();
 };
 
 export const setup = async (
-  code: string,
   challengeId: string,
-  isDiscover?: boolean
+  TID: string,
+  setDiscover?: boolean
 ) => {
-  const exist = await verify(code, challengeId).catch(() => null);
-  if (exist) return await discover(exist.id);
+  const exist = await verify(challengeId, TID, setDiscover);
+  if (exist) return exist;
 
-  const userPublicData = await UserPublicService.verify(code);
+  const userPublicData = await UserPublicService.verify(TID);
   const challengeData = await ChallengeService.verify(challengeId);
 
   const stageId = challengeData.stage?.id;
-  const userStageData = stageId
-    ? await UserStageService.verify(code, stageId).catch(() => null)
-    : null;
+  const userStageData =
+    stageId && (await UserStageService.verify(stageId, TID));
 
+  // challenges were discovered before stages
   if (stageId && !userStageData) {
     const stageData = await StageService.detail(stageId);
-    if (!stageData.settings.canStartFromChallenges)
-      throw new Error("user stage not discovered yet");
 
-    await UserStageService.setup(code, stageId);
-    return await verify(code, challengeId, isDiscover);
+    // check is can setup from challenge
+    if (!stageData.settings.canStartFromChallenges)
+      throw new Error("user stage has not been found yet");
+
+    // if yes, setup the stage and everything in it
+    await UserStageService.setup(stageId, TID);
+    const result = await verify(challengeId, TID, setDiscover);
+    if (result) return result;
+    throw new Error("challenge setup error");
   }
 
-  const userStage = userStageData
-    ? {
-        id: userStageData.id,
-        stageId: userStageData.stage.id,
-        name: userStageData.stage.name,
-      }
-    : null;
+  const userStage = userStageData && {
+    id: userStageData.id,
+    stageId: userStageData.stage.id,
+    name: userStageData.stage.name,
+  };
 
   const userPublic = await UserPublicForeignValidator.validateAsync(
     userPublicData,
-    {
-      abortEarly: false,
-      stripUnknown: true,
-      convert: true,
-    }
+    { abortEarly: false, stripUnknown: true, convert: true }
   );
 
   const challenge = await ChallengeForeignValidator.validateAsync(
     challengeData,
-    {
-      abortEarly: false,
-      stripUnknown: true,
-      convert: true,
-    }
+    { abortEarly: false, stripUnknown: true, convert: true }
   );
 
   const settings = await ChallengeSettingsForeignValidator.validateAsync(
     challengeData.settings,
-    {
-      abortEarly: false,
-      stripUnknown: true,
-      convert: true,
-    }
+    { abortEarly: false, stripUnknown: true, convert: true }
   );
 
   const userChallengeData = await UserChallenge.create({
@@ -127,9 +133,8 @@ export const setup = async (
     challenge,
     userPublic,
     settings,
-    status: isDiscover
-      ? UserChallengeStatus.Discovered
-      : UserChallengeStatus.Undiscovered,
+    status:
+      UserChallengeStatusValues[setDiscover ? "Discovered" : "Undiscovered"],
   });
 
   const userChallenge: UserChallengeForeign = {
@@ -138,14 +143,9 @@ export const setup = async (
     name: userChallengeData.challenge.name,
   };
 
-  const services = {
-    [ChallengeTypeValues.Trivia]: UserTriviaService,
-  } as const;
-
   const contents = await services[settings.type].setup(
     userPublic,
-    userChallenge,
-    challengeData.contents
+    userChallenge
   );
 
   userChallengeData.contents = contents;
@@ -191,77 +191,94 @@ export const detail = async (id: string, TID: string) => {
   });
 };
 
-export const detailContent = async (
-  id: string,
-  TID: string,
-  hasResult?: boolean
-) => {
-  const data = await UserChallenge.findOne({
-    _id: id,
-    deletedAt: null,
-    "userPublic.code": TID,
-  });
+// no longer used
+// export const detailContent = async (
+//   id: string,
+//   TID: string,
+//   hasResult?: boolean
+// ) => {
+//   const data = await UserChallenge.findOne({
+//     _id: id,
+//     deletedAt: null,
+//     "userPublic.code": TID,
+//   });
 
-  if (!data) throw new Error("user challenge not found");
-  const {
-    status,
-    settings: { type: challengeType },
-    contents,
-  } = data;
+//   if (!data) throw new Error("user challenge not found");
+//   const {
+//     status,
+//     settings: { type: challengeType },
+//     contents,
+//   } = data;
 
-  if (status === UserChallengeStatus.Undiscovered)
-    throw new Error("user challenge is undiscovered");
+//   if (status === UserChallengeStatusValues.Undiscovered)
+//     throw new Error("user challenge is undiscovered");
 
-  const services = {
-    [ChallengeTypeValues.Trivia]: UserTriviaService,
-  } as const;
+//   const services = {
+//     [ChallengeTypeValues.Trivia]: UserTriviaService,
+//   } as const;
 
-  return await services[challengeType].details(contents, TID, hasResult);
-};
+//   return await services[challengeType].details(contents, TID, hasResult);
+// };
 
 export const submit = async (id: string, TID: string, bonus: number = 0) => {
-  const userChallenge = await UserChallenge.findOne({ _id: id });
+  const userChallenge = await detail(id, TID);
   if (!userChallenge) throw new Error("user challenge not found");
-  const results = userChallenge.results || initResult();
-  const contents = await detailContent(id, TID);
-  await Promise.all(
-    contents.map((content) => UserTriviaService.submit(content.id, TID))
-  );
-  const [summary] = await UserTriviaService.summary(id, TID);
 
+  const {
+    settings: { type: challengeType },
+  } = userChallenge;
+
+  await services[challengeType].submitEmpties(id, TID);
+
+  const summary = await services[challengeType].summary(id, TID);
+
+  const results = userChallenge.results || initResult();
   const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
 
+  if (summary.type === ChallengeTypeValues.Trivia)
+    results.totalCorrect = summary.totalCorrect;
+  else results.totalCorrect = summary.totalFound;
+
+  results.contentBonus = summary.totalBonus || 0;
   results.baseScore = summary.totalBaseScore;
-  results.correctCount = summary.totalCorrect;
-  results.correctBonus = summary.totalBonus;
   results.bonus = bonus;
   results.totalScore = summary.totalBaseScore + summary.totalBonus + bonus;
   results.endAt = new Date();
   results.timeUsed = timeUsed;
 
   userChallenge.results = results;
-  userChallenge.status = UserChallengeStatus.Completed;
-  await userChallenge.save();
+  userChallenge.status = UserChallengeStatusValues.Completed;
+
+  const newUserChallenge = await UserChallenge.findOneAndUpdate(
+    { _id: userChallenge.id },
+    { $set: { results, status: UserChallengeStatusValues.Completed } }
+  );
+  if (!newUserChallenge) throw new Error("");
+
   if (userChallenge.userStage)
     await UserStageService.submitState(userChallenge.userStage.id, TID);
-  return userChallenge.toObject();
+  return newUserChallenge.toObject();
 };
 
 export const submitState = async (id: string, TID: string) => {
   const userChallenge = await UserChallenge.findOne({ _id: id });
   if (!userChallenge) throw new Error("user challenge not found");
-  if (userChallenge.status === UserChallengeStatus.Completed)
+  if (userChallenge.status === UserChallengeStatusValues.Completed)
     return userChallenge.toObject();
-  const results = userChallenge.results || initResult();
 
-  const [summary] = await UserTriviaService.summary(id, TID);
+  const results = userChallenge.results || initResult();
+  const {
+    settings: { type: challengeType },
+  } = userChallenge;
+
+  const summary = await services[challengeType].summary(id, TID);
 
   results.baseScore = summary.totalBaseScore;
-  results.correctBonus = summary.totalBonus;
+  results.contentBonus = summary.totalBonus;
   results.totalScore = summary.totalBaseScore + summary.totalBonus;
 
   userChallenge.results = results;
-  userChallenge.status = UserChallengeStatus.OnGoing;
+  userChallenge.status = UserChallengeStatusValues.OnGoing;
   await userChallenge.save();
   return userChallenge.toObject();
 };
@@ -292,7 +309,7 @@ const UserChallengeService = {
   setup,
   list,
   detail,
-  detailContent,
+  // detailContent,
   submit,
   submitState,
   summary,

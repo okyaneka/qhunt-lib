@@ -12,6 +12,7 @@ export type ChallengeStatus = PublishingStatus;
 
 export const ChallengeTypeValues = {
   Trivia: "trivia",
+  PhotoHunt: "photohunt",
 } as const;
 export type ChallengeType =
   (typeof ChallengeTypeValues)[keyof typeof ChallengeTypeValues];
@@ -24,7 +25,8 @@ export interface ChallengeSettings {
 }
 
 export interface ChallengeListParams extends DefaultListParams {
-  stageId: string;
+  stageId?: string;
+  type?: ChallengeType;
 }
 
 export interface ChallengePayload {
