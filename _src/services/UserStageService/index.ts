@@ -1,10 +1,13 @@
-import StageService from "../StageService";
-import UserChallengeService from "../UserChallengeService";
-import UserPublicService from "../UserPublicService";
 import UserStage, {
   UserStageListParams,
   UserStageResult,
 } from "~/models/UserStageModel";
+import { verify as StageServiceVerify } from "../StageService";
+import {
+  setup as UserChallengeServiceSetup,
+  summary as UserChallengeServiceSummary,
+} from "../UserChallengeService";
+import { verify as UserPublicServiceVerify } from "../UserPublicService";
 import { StageForeignValidator } from "~/validators/StageValidator";
 import { UserPublicForeignValidator } from "~/validators/UserPublicValidator";
 
@@ -15,24 +18,19 @@ const initResults = (): UserStageResult => ({
   totalScore: 0,
 });
 
-export const verify = async (code: string, stageId: string) => {
-  const item = await UserStage.findOne({
-    "userPublic.code": code,
+export const verify = async (stageId: string, TID: string) => {
+  return await UserStage.findOne({
+    "userPublic.code": TID,
     "stage.id": stageId,
   });
-  if (!item) throw new Error("user stage not found");
-
-  return item.toObject();
 };
 
-export const setup = async (code: string, stageId: string) => {
-  console.log(stageId);
-  const exist = await verify(code, stageId).catch(() => null);
-
+export const setup = async (stageId: string, TID: string) => {
+  const exist = await verify(stageId, TID);
   if (exist) return exist;
 
-  const userPublicData = await UserPublicService.verify(code);
-  const stageData = await StageService.verify(stageId);
+  const userPublicData = await UserPublicServiceVerify(TID);
+  const stageData = await StageServiceVerify(stageId);
 
   const userPublic = await UserPublicForeignValidator.validateAsync(
     userPublicData,
@@ -48,13 +46,13 @@ export const setup = async (code: string, stageId: string) => {
   const userStageData = await UserStage.create({ userPublic, stage });
 
   const contents = stageData.contents.map((challengeId) =>
-    UserChallengeService.setup(code, challengeId)
+    UserChallengeServiceSetup(challengeId, TID)
   );
   const contentsData = await Promise.all(contents).catch(async (err: Error) => {
     await userStageData.deleteOne();
     throw err;
   });
-  userStageData.contents = contentsData.map((item) => item.id);
+  userStageData.contents = contentsData.map((item) => item?.id);
   await userStageData.save();
 
   return userStageData.toObject();
@@ -115,7 +113,7 @@ export const submitState = async (id: string, TID: string) => {
 
   const results = item?.results || initResults();
 
-  const [summary] = await UserChallengeService.summary(id, TID);
+  const [summary] = await UserChallengeServiceSummary(id, TID);
   console.log(summary);
 
   results.baseScore = summary.totalBaseScore;
@@ -128,6 +126,6 @@ export const submitState = async (id: string, TID: string) => {
   return item;
 };
 
-const UserStageService = { verify, setup, list, detail, submitState };
+const UserStageService = { list, detail, setup, verify, submitState };
 
 export default UserStageService;
