@@ -34,13 +34,12 @@ export const TriviaPayloadValidator = schema.generate<TriviaPayload>({
   options: TriviaOptionsValidator,
 });
 
-export const TriviaItemsPayloadValidator = schema.generate<{
-  items: TriviaPayload[];
-}>({
-  items: schema.array(TriviaPayloadValidator, {
+export const TriviaItemsPayloadValidator = schema.array(
+  TriviaPayloadValidator,
+  {
     required: true,
-  }),
-});
+  }
+);
 
 const TriviaForeignOptionValidator = schema.generate<TriviaForeignOption>({
   text: schema.string({ required: true }),

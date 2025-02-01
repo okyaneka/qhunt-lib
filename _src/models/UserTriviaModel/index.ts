@@ -14,7 +14,7 @@ const ToObject: ToObjectOptions = {
 const UserTriviaResultSchema = new Schema<UserTriviaResult>(
   {
     answer: { type: String, default: null },
-    feedback: { type: String, default: "" },
+    feedback: { type: String, default: null },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
