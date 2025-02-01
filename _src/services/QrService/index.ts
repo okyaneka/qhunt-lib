@@ -1,6 +1,6 @@
 import CryptoJS from "crypto-js";
 import Qr, {
-  QrContentType,
+  QrContentTypeValues,
   QrListParams,
   QrPayload,
   QrStatusValues,
@@ -11,6 +11,7 @@ import StageService from "../StageService";
 import UserStageService from "../UserStageService";
 import TriviaService from "../TriviaService";
 import UserChallengeService from "../UserChallengeService";
+import PhotoHuntService from "../PhotoHuntService";
 
 export const list = async (params: QrListParams) => {
   const skip = (params.page - 1) * params.limit;
@@ -67,9 +68,10 @@ export const update = async (id: string, payload: QrUpdatePayload) => {
 
   if (content) {
     const serviceMap = {
-      [QrContentType.Challenge]: ChallengeService,
-      [QrContentType.Stage]: StageService,
-      [QrContentType.Trivia]: TriviaService,
+      [QrContentTypeValues.Challenge]: ChallengeService,
+      [QrContentTypeValues.Stage]: StageService,
+      [QrContentTypeValues.Trivia]: TriviaService,
+      [QrContentTypeValues.PhotoHunt]: PhotoHuntService,
     };
 
     const service = serviceMap[content.type];
@@ -118,9 +120,10 @@ export const verify = async (code: string, TID: string) => {
   if (!content) throw new Error("invalid qr content");
 
   const services = {
-    [QrContentType.Stage]: UserStageService,
-    [QrContentType.Challenge]: UserChallengeService,
-    [QrContentType.Trivia]: null,
+    [QrContentTypeValues.Stage]: UserStageService,
+    [QrContentTypeValues.Challenge]: UserChallengeService,
+    [QrContentTypeValues.Trivia]: null,
+    [QrContentTypeValues.PhotoHunt]: null,
   };
 
   const service = services[content.type];

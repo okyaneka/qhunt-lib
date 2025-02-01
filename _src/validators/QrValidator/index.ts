@@ -2,7 +2,7 @@ import Joi from "joi";
 import schema from "~/helpers/schema";
 import {
   QrContent,
-  QrContentType,
+  QrContentTypeValues,
   QrDeleteBulkPayload,
   QrGeneratePayload,
   QrListParams,
@@ -27,7 +27,7 @@ const QrContentValidator = schema.generate<QrContent>({
   refId: schema.string({ required: true }),
   type: schema
     .string({ required: true })
-    .valid(...Object.values(QrContentType)),
+    .valid(...Object.values(QrContentTypeValues)),
 });
 
 const QrLocationValidator = schema.generate<QrLocation>({
