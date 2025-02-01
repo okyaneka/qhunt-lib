@@ -15,10 +15,11 @@ var number = (option) => createValidator(Joi.number(), option);
 var boolean = (option) => createValidator(Joi.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    Joi.array().items(item),
-    options
+    Joi.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => Joi.object(fields);
@@ -34,6 +35,9 @@ var schema_default = schema;
 
 // _src/models/ChallengeModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
+
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
 
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
@@ -80,7 +84,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -157,7 +162,8 @@ var FeedbackValidator = schema_default.generate({
 // _src/validators/ChallengeValidator/index.ts
 var ChallengeListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  stageId: schema_default.string().allow("").default("")
+  type: schema_default.string().valid(...Object.values(ChallengeTypeValues)),
+  stageId: schema_default.string().allow(null, "")
 });
 var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
@@ -178,8 +184,8 @@ var ChallengeSettingsForeignValidator = schema_default.generate({
 var ChallengePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string({ required: true }),
-  status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatusValues)),
+  stageId: schema_default.string().allow(null, ""),
+  status: schema_default.string({ required: true, defaultValue: ChallengeStatusValues.Draft }).valid(...Object.values(ChallengeStatusValues)),
   settings: ChallengeSettingsValidator.required()
 });
 var ChallengeValidator = {
@@ -199,12 +205,12 @@ import { model as model2, models as models2, Schema as Schema3 } from "mongoose"
 
 // _src/models/QrModel/types.ts
 var QrStatusValues = PublishingStatusValues;
-var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
-  QrContentType2["Stage"] = "stage";
-  QrContentType2["Challenge"] = "challenge";
-  QrContentType2["Trivia"] = "trivia";
-  return QrContentType2;
-})(QrContentType || {});
+var QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 
 // _src/models/QrModel/index.ts
 var QrForeignSchema = new Schema3(
@@ -216,7 +222,11 @@ var QrForeignSchema = new Schema3(
 );
 var QrContentSchema = new Schema3(
   {
-    type: { type: String, enum: Object.values(QrContentType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(QrContentTypeValues),
+      required: true
+    },
     refId: { type: String, required: true }
   },
   { _id: false, versionKey: false }
@@ -231,7 +241,7 @@ var QrLocationSchema = new Schema3(
 );
 var QrSchema = new Schema3(
   {
-    code: { type: String, required: true, unique: true },
+    code: { type: String, required: true, unique: true, index: true },
     status: {
       type: String,
       enum: Object.values(QrStatusValues),
@@ -254,14 +264,15 @@ var QrModel = models2.Qr || model2("Qr", QrSchema);
 var QrListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
   code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatusValues))
+  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatusValues)),
+  hasContent: schema_default.boolean({ defaultValue: null })
 });
 var QrGeneratePayloadValidator = schema_default.generate({
   amount: schema_default.number({ required: true })
 });
 var QrContentValidator = schema_default.generate({
   refId: schema_default.string({ required: true }),
-  type: schema_default.string({ required: true }).valid(...Object.values(QrContentType))
+  type: schema_default.string({ required: true }).valid(...Object.values(QrContentTypeValues))
 });
 var QrLocationValidator = schema_default.generate({
   label: schema_default.string({ required: true, allow: "" }),
@@ -390,11 +401,12 @@ var TriviaPayloadValidator = schema_default.generate({
   allowMultiple: schema_default.boolean({ defaultValue: false }),
   options: TriviaOptionsValidator
 });
-var TriviaItemsPayloadValidator = schema_default.generate({
-  items: schema_default.array(TriviaPayloadValidator, {
+var TriviaItemsPayloadValidator = schema_default.array(
+  TriviaPayloadValidator,
+  {
     required: true
-  })
-});
+  }
+);
 var TriviaForeignOptionValidator = schema_default.generate({
   text: schema_default.string({ required: true })
 });
@@ -417,14 +429,13 @@ var TriviaValidator_default = TriviaValidator;
 import { model as model7, models as models7, Schema as Schema8 } from "mongoose";
 
 // _src/models/UserChallengeModel/types.ts
-var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
-  UserChallengeStatus2["Undiscovered"] = "undiscovered";
-  UserChallengeStatus2["Discovered"] = "discovered";
-  UserChallengeStatus2["OnGoing"] = "ongoing";
-  UserChallengeStatus2["Completed"] = "completed";
-  UserChallengeStatus2["Failed"] = "failed";
-  return UserChallengeStatus2;
-})(UserChallengeStatus || {});
+var UserChallengeStatusValues = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
 
 // _src/models/UserPublicModel/index.ts
 import { model as model5, models as models5, Schema as Schema6 } from "mongoose";
@@ -568,8 +579,8 @@ var UserChallengeResultSchema = new Schema8(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    correctBonus: { type: Number, required: true },
-    correctCount: { type: Number, required: true },
+    contentBonus: { type: Number, required: true },
+    totalCorrect: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -585,8 +596,8 @@ var UserChallengeSchema = new Schema8(
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
-      enum: Object.values(UserChallengeStatus),
-      default: "undiscovered" /* Undiscovered */
+      enum: Object.values(UserChallengeStatusValues),
+      default: UserChallengeStatusValues.Undiscovered
     },
     contents: { type: [String], default: [] },
     results: { type: UserChallengeResultSchema, default: null },
@@ -607,7 +618,7 @@ var UserChallengeForeignValidator = schema_default.generate({
 var UserChallengeParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
   userStageId: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatus))
+  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatusValues))
 });
 var UserChallengeValidator = {
   UserChallengeForeignValidator,

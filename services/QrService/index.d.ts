@@ -15,6 +15,9 @@ export declare const generate: (count: number) => Promise<import("mongoose").Mer
 export declare const detail: (id: string) => Promise<import("../../models/QrModel").Qr & {
     _id: import("mongoose").Types.ObjectId;
 }>;
+export declare const details: (ids: string[]) => Promise<(import("../../models/QrModel").Qr & {
+    _id: import("mongoose").Types.ObjectId;
+})[]>;
 export declare const update: (id: string, payload: QrUpdatePayload) => Promise<import("../../models/QrModel").Qr & {
     _id: import("mongoose").Types.ObjectId;
 }>;
@@ -42,6 +45,9 @@ declare const QrService: {
     detail: (id: string) => Promise<import("../../models/QrModel").Qr & {
         _id: import("mongoose").Types.ObjectId;
     }>;
+    details: (ids: string[]) => Promise<(import("../../models/QrModel").Qr & {
+        _id: import("mongoose").Types.ObjectId;
+    })[]>;
     update: (id: string, payload: QrUpdatePayload) => Promise<import("../../models/QrModel").Qr & {
         _id: import("mongoose").Types.ObjectId;
     }>;

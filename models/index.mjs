@@ -1,6 +1,9 @@
 // _src/models/ChallengeModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
 
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 
@@ -49,7 +52,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -113,12 +117,12 @@ import { model as model2, models as models2, Schema as Schema3 } from "mongoose"
 
 // _src/models/QrModel/types.ts
 var QrStatusValues = PublishingStatusValues;
-var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
-  QrContentType2["Stage"] = "stage";
-  QrContentType2["Challenge"] = "challenge";
-  QrContentType2["Trivia"] = "trivia";
-  return QrContentType2;
-})(QrContentType || {});
+var QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 
 // _src/models/QrModel/index.ts
 var QrForeignSchema = new Schema3(
@@ -130,7 +134,11 @@ var QrForeignSchema = new Schema3(
 );
 var QrContentSchema = new Schema3(
   {
-    type: { type: String, enum: Object.values(QrContentType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(QrContentTypeValues),
+      required: true
+    },
     refId: { type: String, required: true }
   },
   { _id: false, versionKey: false }
@@ -145,7 +153,7 @@ var QrLocationSchema = new Schema3(
 );
 var QrSchema = new Schema3(
   {
-    code: { type: String, required: true, unique: true },
+    code: { type: String, required: true, unique: true, index: true },
     status: {
       type: String,
       enum: Object.values(QrStatusValues),
@@ -300,14 +308,13 @@ var UserModel_default = UserModel;
 import { model as model8, models as models8, Schema as Schema9 } from "mongoose";
 
 // _src/models/UserChallengeModel/types.ts
-var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
-  UserChallengeStatus2["Undiscovered"] = "undiscovered";
-  UserChallengeStatus2["Discovered"] = "discovered";
-  UserChallengeStatus2["OnGoing"] = "ongoing";
-  UserChallengeStatus2["Completed"] = "completed";
-  UserChallengeStatus2["Failed"] = "failed";
-  return UserChallengeStatus2;
-})(UserChallengeStatus || {});
+var UserChallengeStatusValues = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
 
 // _src/models/UserPublicModel/index.ts
 import { model as model6, models as models6, Schema as Schema7 } from "mongoose";
@@ -412,8 +419,8 @@ var UserChallengeResultSchema = new Schema9(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    correctBonus: { type: Number, required: true },
-    correctCount: { type: Number, required: true },
+    contentBonus: { type: Number, required: true },
+    totalCorrect: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -429,8 +436,8 @@ var UserChallengeSchema = new Schema9(
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
-      enum: Object.values(UserChallengeStatus),
-      default: "undiscovered" /* Undiscovered */
+      enum: Object.values(UserChallengeStatusValues),
+      default: UserChallengeStatusValues.Undiscovered
     },
     contents: { type: [String], default: [] },
     results: { type: UserChallengeResultSchema, default: null },
@@ -454,7 +461,7 @@ var ToObject3 = {
 var UserTriviaResultSchema = new Schema10(
   {
     answer: { type: String, default: null },
-    feedback: { type: String, default: "" },
+    feedback: { type: String, default: null },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true }
@@ -475,21 +482,57 @@ UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models9.UserTrivia || model9("UserTrivia", UserTriviaSchema, "usersTrivia");
 var UserTriviaModel_default = UserTriviaModel;
 
+// _src/models/PhotoHuntModel/index.ts
+import { model as model10, models as models10, Schema as Schema11 } from "mongoose";
+
+// _src/models/PhotoHuntModel/types.ts
+var PhotoHuntStatusValues = PublishingStatusValues;
+
+// _src/models/PhotoHuntModel/index.ts
+var PhotoHuntForeignSchema = new Schema11(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new Schema11(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PhotoHuntStatusValues),
+      default: PhotoHuntStatusValues.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+var PhotoHuntModel = models10.PhotoHunt || model10("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var PhotoHuntModel_default = PhotoHuntModel;
+
 // _src/models/index.ts
-var models10 = {
+var models11 = {
   ChallengeModel: ChallengeModel_default,
   QrModel: QrModel_default,
   StageModel: StageModel_default,
   TriviaModel: TriviaModel_default,
+  PhotoHuntModel: PhotoHuntModel_default,
   UserModel: UserModel_default,
   UserChallengeModel: UserChallengeModel_default,
   UserPublicModel: UserPublicModel_default,
   UserStageModel: UserStageModel_default,
   UserTriviaModel: UserTriviaModel_default
 };
-var models_default = models10;
+var models_default = models11;
 export {
   ChallengeModel_default as ChallengeModel,
+  PhotoHuntModel_default as PhotoHuntModel,
   QrModel_default as QrModel,
   StageModel_default as StageModel,
   TriviaModel_default as TriviaModel,

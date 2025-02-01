@@ -4,7 +4,7 @@ import {
   UserChallenge,
   UserChallengeForeign,
   UserChallengeResult,
-  UserChallengeStatus,
+  UserChallengeStatusValues,
 } from "./types";
 import {
   ChallengeForeignSchema,
@@ -26,8 +26,8 @@ export const UserChallengeResultSchema = new Schema<UserChallengeResult>(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    correctBonus: { type: Number, required: true },
-    correctCount: { type: Number, required: true },
+    contentBonus: { type: Number, required: true },
+    totalCorrect: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -44,8 +44,8 @@ const UserChallengeSchema = new Schema<UserChallenge>(
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
-      enum: Object.values(UserChallengeStatus),
-      default: UserChallengeStatus.Undiscovered,
+      enum: Object.values(UserChallengeStatusValues),
+      default: UserChallengeStatusValues.Undiscovered,
     },
     contents: { type: [String], default: [] },
     results: { type: UserChallengeResultSchema, default: null },

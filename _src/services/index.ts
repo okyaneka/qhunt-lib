@@ -4,6 +4,7 @@ import QrService from "./QrService";
 import StageService from "./StageService";
 import TriviaService from "./TriviaService";
 import UserChallengeService from "./UserChallengeService";
+import UserPhotoHuntService from "./UserPhotoHuntService";
 import UserPublicService from "./UserPublicService";
 import UserService from "./UserService";
 import UserStageService from "./UserStageService";
@@ -20,6 +21,7 @@ const services = {
   UserService,
   UserStageService,
   UserTriviaService,
+  UserPhotoHuntService,
 } as const;
 
 export {
@@ -33,6 +35,7 @@ export {
   UserService,
   UserStageService,
   UserTriviaService,
+  UserPhotoHuntService,
 };
 
 export default services;

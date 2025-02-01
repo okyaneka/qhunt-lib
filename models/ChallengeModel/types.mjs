@@ -1,3 +1,6 @@
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 
@@ -40,7 +43,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 export {
   ChallengeStatusValues,

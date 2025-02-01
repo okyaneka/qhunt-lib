@@ -28,13 +28,14 @@ export const boolean = (option?: ValidatorOption<boolean | null>) =>
 
 export const array = <T = unknown>(
   item: Joi.Schema<T>,
-  options?: ValidatorOption<T>
+  options?: ValidatorOption<T[]>
 ) => {
   let v = createValidator<T | null>(
-    Joi.array<T>().items(item),
-    options
-  ) as Joi.ArraySchema<T>;
+    Joi.array<T>().items(item)
+  ) as Joi.ArraySchema<T[]>;
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 

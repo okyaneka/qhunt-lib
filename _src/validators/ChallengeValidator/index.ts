@@ -17,7 +17,8 @@ import {
 export const ChallengeListParamsValidator =
   schema.generate<ChallengeListParams>({
     ...DefaultListParamsFields,
-    stageId: schema.string().allow("").default(""),
+    type: schema.string().valid(...Object.values(ChallengeTypeValues)),
+    stageId: schema.string().allow(null, ""),
   });
 
 export const ChallengeSettingsValidator = schema.generate<ChallengeSettings>({
@@ -47,9 +48,9 @@ export const ChallengeSettingsForeignValidator =
 export const ChallengePayloadValidator = schema.generate<ChallengePayload>({
   name: schema.string({ required: true }),
   storyline: schema.array(schema.string()).default([]),
-  stageId: schema.string({ required: true }),
+  stageId: schema.string().allow(null, ""),
   status: schema
-    .string({ required: true })
+    .string({ required: true, defaultValue: ChallengeStatusValues.Draft })
     .valid(...Object.values(ChallengeStatusValues)),
   settings: ChallengeSettingsValidator.required(),
 });

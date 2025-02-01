@@ -30,10 +30,13 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // _src/models/QrModel/types.ts
 var types_exports = {};
 __export(types_exports, {
-  QrContentType: () => QrContentType,
+  QrContentTypeValues: () => QrContentTypeValues,
   QrStatusValues: () => QrStatusValues
 });
 module.exports = __toCommonJS(types_exports);
+
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
 
 // _src/helpers/db/index.ts
 var import_mongoose = require("mongoose");
@@ -76,14 +79,14 @@ var PublishingStatusValues = {
 
 // _src/models/QrModel/types.ts
 var QrStatusValues = PublishingStatusValues;
-var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
-  QrContentType2["Stage"] = "stage";
-  QrContentType2["Challenge"] = "challenge";
-  QrContentType2["Trivia"] = "trivia";
-  return QrContentType2;
-})(QrContentType || {});
+var QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  QrContentType,
+  QrContentTypeValues,
   QrStatusValues
 });

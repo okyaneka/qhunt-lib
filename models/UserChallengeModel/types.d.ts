@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams } from "../../helpers";
+import { Timestamps, DefaultListParams, ValueOf } from "../../helpers";
 import { ChallengeForeign, ChallengeSettingsForeign } from "../ChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
 import { UserStageForeign } from "../UserStageModel";
@@ -11,13 +11,14 @@ import { UserStageForeign } from "../UserStageModel";
  * Completed     : when user complete the challenge
  * Failed        : when user fail the challenge
  */
-export declare enum UserChallengeStatus {
-    Undiscovered = "undiscovered",
-    Discovered = "discovered",
-    OnGoing = "ongoing",
-    Completed = "completed",
-    Failed = "failed"
-}
+export declare const UserChallengeStatusValues: {
+    readonly Undiscovered: "undiscovered";
+    readonly Discovered: "discovered";
+    readonly OnGoing: "ongoing";
+    readonly Completed: "completed";
+    readonly Failed: "failed";
+};
+export type UserChallengeStatus = ValueOf<typeof UserChallengeStatusValues>;
 export interface UserChallengeForeign {
     id: string;
     challengeId: string;
@@ -27,9 +28,9 @@ export interface UserChallengeResult {
     startAt: Date;
     endAt: Date | null;
     timeUsed: number;
+    totalCorrect: number;
     baseScore: number;
-    correctCount: number;
-    correctBonus: number;
+    contentBonus: number;
     bonus: number;
     totalScore: number;
 }

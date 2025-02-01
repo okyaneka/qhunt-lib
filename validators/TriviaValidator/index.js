@@ -53,10 +53,11 @@ var number = (option) => createValidator(import_joi.default.number(), option);
 var boolean = (option) => createValidator(import_joi.default.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    import_joi.default.array().items(item),
-    options
+    import_joi.default.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
@@ -107,11 +108,12 @@ var TriviaPayloadValidator = schema_default.generate({
   allowMultiple: schema_default.boolean({ defaultValue: false }),
   options: TriviaOptionsValidator
 });
-var TriviaItemsPayloadValidator = schema_default.generate({
-  items: schema_default.array(TriviaPayloadValidator, {
+var TriviaItemsPayloadValidator = schema_default.array(
+  TriviaPayloadValidator,
+  {
     required: true
-  })
-});
+  }
+);
 var TriviaForeignOptionValidator = schema_default.generate({
   text: schema_default.string({ required: true })
 });

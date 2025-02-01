@@ -1,13 +1,13 @@
+import { ScoreSummary } from "../../helpers";
 import { TriviaForeign } from "../TriviaModel";
 import { UserChallengeForeign } from "../UserChallengeModel";
 import { UserPublicForeign } from "../UserPublicModel";
-export interface UserTriviaSummary {
+import { ChallengeTypeValues } from "../ChallengeModel";
+export interface UserTriviaSummary extends ScoreSummary {
+    type: typeof ChallengeTypeValues.Trivia;
     userPublic: UserPublicForeign;
     userChallenge: UserChallengeForeign;
     totalCorrect: number;
-    totalBaseScore: number;
-    totalBonus: number;
-    totalScore: number;
 }
 export interface UserTriviaResult {
     answer: string | null;
@@ -15,7 +15,7 @@ export interface UserTriviaResult {
     bonus: number;
     totalScore: number;
     isCorrect: boolean;
-    feedback: string;
+    feedback: string | null;
 }
 export interface UserTrivia {
     id: string;

@@ -20,18 +20,17 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // _src/models/UserChallengeModel/types.ts
 var types_exports = {};
 __export(types_exports, {
-  UserChallengeStatus: () => UserChallengeStatus
+  UserChallengeStatusValues: () => UserChallengeStatusValues
 });
 module.exports = __toCommonJS(types_exports);
-var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
-  UserChallengeStatus2["Undiscovered"] = "undiscovered";
-  UserChallengeStatus2["Discovered"] = "discovered";
-  UserChallengeStatus2["OnGoing"] = "ongoing";
-  UserChallengeStatus2["Completed"] = "completed";
-  UserChallengeStatus2["Failed"] = "failed";
-  return UserChallengeStatus2;
-})(UserChallengeStatus || {});
+var UserChallengeStatusValues = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  UserChallengeStatus
+  UserChallengeStatusValues
 });

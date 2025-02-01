@@ -15,10 +15,11 @@ var number = (option) => createValidator(Joi.number(), option);
 var boolean = (option) => createValidator(Joi.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    Joi.array().items(item),
-    options
+    Joi.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => Joi.object(fields);
@@ -34,6 +35,9 @@ var schema_default = schema;
 
 // _src/models/ChallengeModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
+
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
 
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
@@ -80,7 +84,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -157,7 +162,8 @@ var FeedbackValidator = schema_default.generate({
 // _src/validators/ChallengeValidator/index.ts
 var ChallengeListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  stageId: schema_default.string().allow("").default("")
+  type: schema_default.string().valid(...Object.values(ChallengeTypeValues)),
+  stageId: schema_default.string().allow(null, "")
 });
 var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
@@ -178,8 +184,8 @@ var ChallengeSettingsForeignValidator = schema_default.generate({
 var ChallengePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string({ required: true }),
-  status: schema_default.string({ required: true }).valid(...Object.values(ChallengeStatusValues)),
+  stageId: schema_default.string().allow(null, ""),
+  status: schema_default.string({ required: true, defaultValue: ChallengeStatusValues.Draft }).valid(...Object.values(ChallengeStatusValues)),
   settings: ChallengeSettingsValidator.required()
 });
 var ChallengeValidator = {

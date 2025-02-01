@@ -50,10 +50,11 @@ var number = (option) => createValidator(import_joi.default.number(), option);
 var boolean = (option) => createValidator(import_joi.default.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    import_joi.default.array().items(item),
-    options
+    import_joi.default.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
@@ -123,6 +124,9 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
 
 // _src/helpers/db/index.ts
 var import_mongoose2 = require("mongoose");

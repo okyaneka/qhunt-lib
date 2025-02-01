@@ -3,16 +3,19 @@ import {
   PublishingStatus,
   PublishingStatusValues,
   Timestamps,
+  ValueOf,
 } from "~/helpers";
 
 export const QrStatusValues = PublishingStatusValues;
 export type QrStatus = PublishingStatus;
 
-export enum QrContentType {
-  Stage = "stage",
-  Challenge = "challenge",
-  Trivia = "trivia",
-}
+export const QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt",
+} as const;
+export type QrContentType = ValueOf<typeof QrContentTypeValues>;
 
 export interface QrContent {
   type: QrContentType;

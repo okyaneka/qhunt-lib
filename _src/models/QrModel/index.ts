@@ -3,7 +3,7 @@ import { ToObject } from "~/helpers/model";
 import {
   Qr,
   QrContent,
-  QrContentType,
+  QrContentTypeValues,
   QrForeign,
   QrLocation,
   QrStatusValues,
@@ -19,7 +19,11 @@ export const QrForeignSchema = new Schema<QrForeign>(
 
 const QrContentSchema = new Schema<QrContent>(
   {
-    type: { type: String, enum: Object.values(QrContentType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(QrContentTypeValues),
+      required: true,
+    },
     refId: { type: String, required: true },
   },
   { _id: false, versionKey: false }
@@ -36,7 +40,7 @@ const QrLocationSchema = new Schema<QrLocation>(
 
 const QrSchema = new Schema<Qr>(
   {
-    code: { type: String, required: true, unique: true },
+    code: { type: String, required: true, unique: true, index: true },
     status: {
       type: String,
       enum: Object.values(QrStatusValues),
@@ -54,7 +58,6 @@ const QrSchema = new Schema<Qr>(
 
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
-QrSchema.index({ code: 1 });
 
 export * from "./types";
 

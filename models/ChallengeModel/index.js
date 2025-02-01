@@ -39,6 +39,9 @@ __export(ChallengeModel_exports, {
 module.exports = __toCommonJS(ChallengeModel_exports);
 var import_mongoose3 = require("mongoose");
 
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
+
 // _src/helpers/db/index.ts
 var import_mongoose = require("mongoose");
 
@@ -87,7 +90,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts

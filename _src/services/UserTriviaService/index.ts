@@ -1,4 +1,3 @@
-import Trivia from "~/models/TriviaModel";
 import { UserChallengeForeign } from "~/models/UserChallengeModel";
 import { UserPublicForeign } from "~/models/UserPublicModel";
 import UserTrivia, {
@@ -6,7 +5,11 @@ import UserTrivia, {
   UserTriviaSummary,
 } from "~/models/UserTriviaModel";
 import { TriviaForeignValidator } from "~/validators/TriviaValidator";
-import TriviaService from "../TriviaService";
+import {
+  details as TriviaServiceDetails,
+  detail as TriviaServiceDetail,
+} from "../TriviaService";
+import { ChallengeTypeValues } from "~/models/ChallengeModel";
 
 export const verify = async (triviaId: string, TID: string) => {
   const item = await UserTrivia.findOne({
@@ -20,28 +23,25 @@ export const verify = async (triviaId: string, TID: string) => {
 
 export const setup = async (
   userPublic: UserPublicForeign,
-  userChallenge: UserChallengeForeign,
-  content: string[]
+  userChallenge: UserChallengeForeign
 ): Promise<string[]> => {
-  const trivias = await Trivia.find({ _id: { $in: content } });
+  const trivias = await TriviaServiceDetails(userChallenge.challengeId);
 
-  const payload = trivias
-    .map((item) => item.toObject())
-    .map(async (item) => {
-      const trivia = await TriviaForeignValidator.validateAsync(item, {
-        stripUnknown: true,
-      });
-      const userTrivia = await verify(trivia.id, userPublic.code).catch(
-        () => null
-      );
-      if (userTrivia) return userTrivia;
-
-      return await UserTrivia.create({
-        userPublic,
-        userChallenge,
-        trivia,
-      });
+  const payload = trivias.map(async (item) => {
+    const trivia = await TriviaForeignValidator.validateAsync(item, {
+      stripUnknown: true,
     });
+    const userTrivia = await verify(trivia.id, userPublic.code).catch(
+      () => null
+    );
+    if (userTrivia) return userTrivia;
+
+    return await UserTrivia.create({
+      userPublic,
+      userChallenge,
+      trivia,
+    });
+  });
 
   const items = await Promise.all(payload);
 
@@ -79,7 +79,7 @@ export const submit = async (
   if (!userTrivia) throw new Error("user trivia not found");
   if (userTrivia.results) return userTrivia.toObject();
 
-  const trivia = await TriviaService.detail(userTrivia.trivia.id);
+  const trivia = await TriviaServiceDetail(userTrivia.trivia.id);
   const selectedAnswer = trivia.options.find((v) => v.text == answer);
   const isCorrect = Boolean(selectedAnswer?.isCorrect);
   const baseScore = selectedAnswer?.point || 0;
@@ -96,11 +96,30 @@ export const submit = async (
   return userTrivia.toObject();
 };
 
+export const submitEmpties = async (userChallengeId: string, TID: string) => {
+  const results = {
+    answer: null,
+    feedback: null,
+    isCorrect: false,
+    baseScore: 0,
+    bonus: 0,
+    totalScore: 0,
+  };
+  return await UserTrivia.updateMany(
+    {
+      "userChallenge.id": userChallengeId,
+      "userPublic.code": TID,
+      results: null,
+    },
+    { $set: { results } }
+  );
+};
+
 export const summary = async (
   userChallengeId: string,
   TID: string
-): Promise<UserTriviaSummary[]> => {
-  return UserTrivia.aggregate()
+): Promise<UserTriviaSummary> => {
+  const [summary] = await UserTrivia.aggregate()
     .match({
       "userChallenge.id": userChallengeId,
       "userPublic.code": TID,
@@ -110,6 +129,7 @@ export const summary = async (
         userChallenge: "$userChallenge.id",
         userPublic: "$userPublic.code",
       },
+
       userPublic: { $first: "$userPublic" },
       userChallenge: { $first: "$userChallenge" },
       totalCorrect: {
@@ -124,9 +144,18 @@ export const summary = async (
       totalBaseScore: { $sum: "$results.baseScore" },
       totalBonus: { $sum: "$results.bonus" },
       totalScore: { $sum: "$results.totalScore" },
-    });
+    })
+    .addFields({ type: ChallengeTypeValues.Trivia });
+
+  return summary;
 };
 
-const UserTriviaService = { setup, details, submit, summary } as const;
+const UserTriviaService = {
+  setup,
+  details,
+  submit,
+  submitEmpties,
+  summary,
+} as const;
 
 export default UserTriviaService;

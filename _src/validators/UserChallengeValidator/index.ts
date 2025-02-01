@@ -3,7 +3,7 @@ import { DefaultListParamsFields } from "~/helpers/validator";
 import {
   UserChallengeForeign,
   UserChallengeParams,
-  UserChallengeStatus,
+  UserChallengeStatusValues,
 } from "~/models/UserChallengeModel";
 
 export const UserChallengeForeignValidator =
@@ -19,7 +19,7 @@ export const UserChallengeParamsValidator =
     userStageId: schema.string({ allow: "" }),
     status: schema
       .string({ allow: "" })
-      .valid(...Object.values(UserChallengeStatus)),
+      .valid(...Object.values(UserChallengeStatusValues)),
   });
 
 const UserChallengeValidator = {

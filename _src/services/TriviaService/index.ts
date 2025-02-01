@@ -1,12 +1,15 @@
-import TriviaModel, { Trivia, TriviaPayload } from "~/models/TriviaModel";
 import ChallengeService from "../ChallengeService";
-import { deepmerge } from "~/helpers/common";
+import TriviaModel, { TriviaPayload } from "~/models/TriviaModel";
+import { db, IdName } from "~/helpers";
+import { ClientSession } from "mongoose";
+import { ChallengeTypeValues } from "~/models/ChallengeModel";
 
-const createMany = async (challengeId: string, payload: TriviaPayload[]) => {
+const createMany = async (
+  challenge: IdName,
+  payload: TriviaPayload[],
+  session: ClientSession
+) => {
   if (payload.length === 0) return [];
-
-  const challenge = await ChallengeService.detail(challengeId);
-  const challengeForeign = { id: challenge.id, name: challenge.name };
 
   // FOR NEXT DEVELOPMENT IF ITS ENABLE SINGULAR TRIVIA
   // const qrParams = await QrListParamsValidator.validateAsync({
@@ -22,30 +25,39 @@ const createMany = async (challengeId: string, payload: TriviaPayload[]) => {
 
   const items = payload.map((item, i) => ({
     ...item,
-    challenge: challengeForeign,
+    challenge,
   }));
-  return await TriviaModel.insertMany(items);
+  return await TriviaModel.insertMany(items, { session });
 };
 
-const updateMany = async (payload: TriviaPayload[]) => {
+const updateMany = async (
+  challenge: IdName,
+  payload: TriviaPayload[],
+  session: ClientSession
+) => {
   if (payload.length === 0) return [];
   const ids = payload.map(({ id }) => id);
-  const existing = await TriviaModel.find({ _id: { $in: ids } });
-  const newValue = existing.map((old) => {
-    const val = payload.find((val) => val.id == old.id);
-    return deepmerge<Trivia>(old.toObject(), val || {});
-  });
 
-  await TriviaModel.bulkWrite(
-    newValue.map((item) => {
+  const res = await TriviaModel.bulkWrite(
+    payload.map((item) => {
       return {
         updateOne: {
           filter: { _id: item.id },
-          update: { $set: item },
+          update: {
+            $set: {
+              ...item,
+              challenge,
+            },
+          },
         },
       };
-    })
+    }),
+    { session }
   );
+
+  if (res.modifiedCount !== payload.length)
+    throw new Error("trivia.sync.update_error");
+
   return await TriviaModel.find({ _id: { $in: ids } });
 };
 
@@ -56,28 +68,65 @@ export const detail = async (id: string) => {
 };
 
 export const details = async (challengeId: string) => {
-  const items = await TriviaModel.find({ "challenge.id": challengeId });
+  const challenge = await ChallengeService.detail(challengeId);
+
+  if (challenge.settings.type !== ChallengeTypeValues.Trivia)
+    throw new Error("challenge.not_trivia_type_error");
+
+  const items = await TriviaModel.find({ _id: { $in: challenge.contents } });
   return items.map((item) => item.toObject());
 };
 
 export const sync = async (challengeId: string, payload: TriviaPayload[]) => {
-  if (payload.length === 0) return [];
+  return await db.transaction(async (session) => {
+    // reset
+    await TriviaModel.updateMany(
+      { "challenge.id": challengeId },
+      { $set: { challenge: null } },
+      { session }
+    );
 
-  const { create: itemsCreate, update: itemsUpdate } = payload.reduce<{
-    create: TriviaPayload[];
-    update: TriviaPayload[];
-  }>(
-    (acc, cur) => {
-      acc[cur.id ? "update" : "create"].push(cur);
-      return acc;
-    },
-    { create: [], update: [] }
-  );
+    if (payload.length === 0) return [];
 
-  const itemsCreated = await createMany(challengeId, itemsCreate);
-  const itemsUpdated = await updateMany(itemsUpdate);
+    const challenge = await ChallengeService.detail(challengeId);
 
-  return [...itemsCreated, ...itemsUpdated].map((item) => item.toObject());
+    if (challenge.settings.type !== ChallengeTypeValues.Trivia)
+      throw new Error("challenge.not_trivia_type_error");
+
+    const challengeForeign = { id: challenge.id, name: challenge.name };
+
+    const { create: itemsCreate, update: itemsUpdate } = payload.reduce<{
+      create: TriviaPayload[];
+      update: TriviaPayload[];
+    }>(
+      (acc, cur) => {
+        acc[cur.id ? "update" : "create"].push(cur);
+        return acc;
+      },
+      { create: [], update: [] }
+    );
+
+    const itemsCreated = await createMany(
+      challengeForeign,
+      itemsCreate,
+      session
+    );
+    const itemsUpdated = await updateMany(
+      challengeForeign,
+      itemsUpdate,
+      session
+    );
+    const items = [...itemsCreated, ...itemsUpdated].map((item) =>
+      item.toObject()
+    );
+
+    await ChallengeService.updateContent(
+      challengeId,
+      items.map(({ id }) => id)
+    );
+
+    return items;
+  });
 };
 
 export const verify = async (id: string) => {};

@@ -14,6 +14,7 @@ export const PhotoHuntForeignSchema = new Schema<PhotoHuntForeign>(
 const PhotoHuntSchema = new Schema<PhotoHunt>(
   {
     hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
     feedback: { type: String, default: "" },
     challenge: { type: IdNameSchema, default: null },
     status: {
