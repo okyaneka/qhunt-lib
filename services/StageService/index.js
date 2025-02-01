@@ -61,6 +61,9 @@ var db_default = db;
 // _src/models/ChallengeModel/index.ts
 var import_mongoose3 = require("mongoose");
 
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
+
 // _src/helpers/model/index.ts
 var import_mongoose2 = require("mongoose");
 var IdNameSchema = new import_mongoose2.Schema(
@@ -106,7 +109,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts

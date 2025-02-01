@@ -117,17 +117,19 @@ var UserPublicModel = models2.UserPublic || model2("UserPublic", UserPublicSchem
 import { model as model6, models as models6, Schema as Schema7 } from "mongoose";
 
 // _src/models/UserChallengeModel/types.ts
-var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
-  UserChallengeStatus2["Undiscovered"] = "undiscovered";
-  UserChallengeStatus2["Discovered"] = "discovered";
-  UserChallengeStatus2["OnGoing"] = "ongoing";
-  UserChallengeStatus2["Completed"] = "completed";
-  UserChallengeStatus2["Failed"] = "failed";
-  return UserChallengeStatus2;
-})(UserChallengeStatus || {});
+var UserChallengeStatusValues = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
 
 // _src/models/ChallengeModel/index.ts
 import { model as model3, models as models3, Schema as Schema4 } from "mongoose";
+
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
 
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
@@ -147,7 +149,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -312,8 +315,8 @@ var UserChallengeResultSchema = new Schema7(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    correctBonus: { type: Number, required: true },
-    correctCount: { type: Number, required: true },
+    contentBonus: { type: Number, required: true },
+    totalCorrect: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -329,8 +332,8 @@ var UserChallengeSchema = new Schema7(
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
-      enum: Object.values(UserChallengeStatus),
-      default: "undiscovered" /* Undiscovered */
+      enum: Object.values(UserChallengeStatusValues),
+      default: UserChallengeStatusValues.Undiscovered
     },
     contents: { type: [String], default: [] },
     results: { type: UserChallengeResultSchema, default: null },
@@ -392,7 +395,7 @@ var ToObject3 = {
 var UserTriviaResultSchema = new Schema9(
   {
     answer: { type: String, default: null },
-    feedback: { type: String, default: "" },
+    feedback: { type: String, default: null },
     isCorrect: { type: Boolean, required: true },
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true }

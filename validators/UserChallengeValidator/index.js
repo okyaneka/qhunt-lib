@@ -50,10 +50,11 @@ var number = (option) => createValidator(import_joi.default.number(), option);
 var boolean = (option) => createValidator(import_joi.default.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    import_joi.default.array().items(item),
-    options
+    import_joi.default.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
@@ -117,17 +118,19 @@ var ToObject = {
 };
 
 // _src/models/UserChallengeModel/types.ts
-var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
-  UserChallengeStatus2["Undiscovered"] = "undiscovered";
-  UserChallengeStatus2["Discovered"] = "discovered";
-  UserChallengeStatus2["OnGoing"] = "ongoing";
-  UserChallengeStatus2["Completed"] = "completed";
-  UserChallengeStatus2["Failed"] = "failed";
-  return UserChallengeStatus2;
-})(UserChallengeStatus || {});
+var UserChallengeStatusValues = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
 
 // _src/models/ChallengeModel/index.ts
 var import_mongoose3 = require("mongoose");
+
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
 
 // _src/helpers/db/index.ts
 var import_mongoose2 = require("mongoose");
@@ -144,7 +147,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -391,8 +395,8 @@ var UserChallengeResultSchema = new import_mongoose8.Schema(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    correctBonus: { type: Number, required: true },
-    correctCount: { type: Number, required: true },
+    contentBonus: { type: Number, required: true },
+    totalCorrect: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -408,8 +412,8 @@ var UserChallengeSchema = new import_mongoose8.Schema(
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
-      enum: Object.values(UserChallengeStatus),
-      default: "undiscovered" /* Undiscovered */
+      enum: Object.values(UserChallengeStatusValues),
+      default: UserChallengeStatusValues.Undiscovered
     },
     contents: { type: [String], default: [] },
     results: { type: UserChallengeResultSchema, default: null },
@@ -430,7 +434,7 @@ var UserChallengeForeignValidator = schema_default.generate({
 var UserChallengeParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
   userStageId: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatus))
+  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatusValues))
 });
 var UserChallengeValidator = {
   UserChallengeForeignValidator,

@@ -31,6 +31,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var helpers_exports = {};
 __export(helpers_exports, {
   PublishingStatusValues: () => PublishingStatusValues,
+  common: () => common_default,
   db: () => db_default,
   default: () => helpers_default,
   model: () => model_default,
@@ -40,6 +41,11 @@ __export(helpers_exports, {
   service: () => service_default
 });
 module.exports = __toCommonJS(helpers_exports);
+
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
+var common = { deepmerge: import_deepmerge.default };
+var common_default = common;
 
 // _src/helpers/db/index.ts
 var import_mongoose = require("mongoose");
@@ -150,10 +156,11 @@ var number = (option) => createValidator(import_joi.default.number(), option);
 var boolean = (option) => createValidator(import_joi.default.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    import_joi.default.array().items(item),
-    options
+    import_joi.default.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => import_joi.default.object(fields);
@@ -194,11 +201,20 @@ var PublishingStatusValues = {
 };
 
 // _src/helpers/index.ts
-var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default, qrcode: qrcode_default, model: model_default };
+var helpers = {
+  common: common_default,
+  db: db_default,
+  model: model_default,
+  qrcode: qrcode_default,
+  response: response_default,
+  schema: schema_default,
+  service: service_default
+};
 var helpers_default = helpers;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   PublishingStatusValues,
+  common,
   db,
   model,
   qrcode,

@@ -1,8 +1,10 @@
 import ChallengeService from "./ChallengeService";
+import PhotoHuntService from "./PhotoHuntService";
 import QrService from "./QrService";
 import StageService from "./StageService";
 import TriviaService from "./TriviaService";
 import UserChallengeService from "./UserChallengeService";
+import UserPhotoHuntService from "./UserPhotoHuntService";
 import UserPublicService from "./UserPublicService";
 import UserService from "./UserService";
 import UserStageService from "./UserStageService";
@@ -23,9 +25,6 @@ declare const services: {
         readonly detail: (id: string) => Promise<import("../models/ChallengeModel").Challenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly detailContent: (id: string) => Promise<(import("../models/TriviaModel").Trivia & {
-            _id: import("mongoose").Types.ObjectId;
-        })[]>;
         readonly update: (id: string, payload: import("../models/ChallengeModel").ChallengePayload) => Promise<import("../models/ChallengeModel").Challenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
@@ -38,6 +37,18 @@ declare const services: {
         readonly verify: (id: string) => Promise<import("../models/ChallengeModel").Challenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
+    };
+    readonly PhotoHuntService: {
+        detail: (id: string) => Promise<import("../models/PhotoHuntModel").PhotoHunt & {
+            _id: import("mongoose").Types.ObjectId;
+        }>;
+        details: (challengeId: string) => Promise<(import("../models/PhotoHuntModel").PhotoHunt & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
+        sync: (challengeId: string, payload: import("../models/PhotoHuntModel").PhotoHuntPayload[]) => Promise<(import("../models/PhotoHuntModel").PhotoHunt & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
+        verify: (id: string) => Promise<void>;
     };
     readonly QrService: {
         generate: (count: number) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../models/QrModel").Qr> & import("../models/QrModel").Qr & {
@@ -56,6 +67,9 @@ declare const services: {
         detail: (id: string) => Promise<import("../models/QrModel").Qr & {
             _id: import("mongoose").Types.ObjectId;
         }>;
+        details: (ids: string[]) => Promise<(import("../models/QrModel").Qr & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
         update: (id: string, payload: import("../models/QrModel").QrUpdatePayload) => Promise<import("../models/QrModel").Qr & {
             _id: import("mongoose").Types.ObjectId;
         }>;
@@ -95,22 +109,24 @@ declare const services: {
         }>;
     };
     readonly TriviaService: {
-        sync: (challenge: import("../models/ChallengeModel").Challenge, items: import("../models/TriviaModel").TriviaPayload[]) => Promise<string[]>;
-        content: (challenge: import("../models/ChallengeModel").Challenge) => Promise<(import("../models/TriviaModel").Trivia & {
-            _id: import("mongoose").Types.ObjectId;
-        })[]>;
         detail: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../models/TriviaModel").Trivia> & import("../models/TriviaModel").Trivia & {
             _id: import("mongoose").Types.ObjectId;
         } & {
             __v: number;
         }>;
+        details: (challengeId: string) => Promise<(import("../models/TriviaModel").Trivia & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
+        sync: (challengeId: string, payload: import("../models/TriviaModel").TriviaPayload[]) => Promise<(import("../models/TriviaModel").Trivia & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
         verify: (id: string) => Promise<void>;
     };
     readonly UserChallengeService: {
-        readonly verify: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../models/UserChallengeModel").UserChallenge & {
+        readonly verify: (challengeId: string, TID: string, setDiscover?: boolean) => Promise<(import("../models/UserChallengeModel").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
-        }>;
-        readonly setup: (code: string, challengeId: string, isDiscover?: boolean) => Promise<import("../models/UserChallengeModel").UserChallenge & {
+        }) | null>;
+        readonly setup: (challengeId: string, TID: string, setDiscover?: boolean) => Promise<import("../models/UserChallengeModel").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
         readonly list: (params: import("../models/UserChallengeModel").UserChallengeParams, TID: string) => Promise<{
@@ -134,9 +150,6 @@ declare const services: {
         readonly detail: (id: string, TID: string) => Promise<import("../models/UserChallengeModel").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly detailContent: (id: string, TID: string, hasResult?: boolean) => Promise<(import("../models/UserTriviaModel").UserTrivia & {
-            _id: import("mongoose").Types.ObjectId;
-        })[]>;
         readonly submit: (id: string, TID: string, bonus?: number) => Promise<import("../models/UserChallengeModel").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
@@ -187,12 +200,6 @@ declare const services: {
         delete: (id: string) => Promise<void>;
     };
     readonly UserStageService: {
-        verify: (code: string, stageId: string) => Promise<import("../models/UserStageModel").UserStage & {
-            _id: import("mongoose").Types.ObjectId;
-        }>;
-        setup: (code: string, stageId: string) => Promise<import("../models/UserStageModel").UserStage & {
-            _id: import("mongoose").Types.ObjectId;
-        }>;
         list: (params: import("../models/UserStageModel").UserStageListParams, TID: string) => Promise<{
             list: (import("../models/UserStageModel").UserStage & {
                 _id: import("mongoose").Types.ObjectId;
@@ -204,6 +211,18 @@ declare const services: {
         detail: (id: string, TID: string) => Promise<import("../models/UserStageModel").UserStage & {
             _id: import("mongoose").Types.ObjectId;
         }>;
+        setup: (stageId: string, TID: string) => Promise<(import("../models/UserStageModel").UserStage & {
+            _id: import("mongoose").Types.ObjectId;
+        }) | (import("mongoose").Document<unknown, {}, import("../models/UserStageModel").UserStage> & import("../models/UserStageModel").UserStage & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        })>;
+        verify: (stageId: string, TID: string) => Promise<(import("mongoose").Document<unknown, {}, import("../models/UserStageModel").UserStage> & import("../models/UserStageModel").UserStage & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        }) | null>;
         submitState: (id: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../models/UserStageModel").UserStage> & import("../models/UserStageModel").UserStage & {
             _id: import("mongoose").Types.ObjectId;
         } & {
@@ -211,16 +230,28 @@ declare const services: {
         }>;
     };
     readonly UserTriviaService: {
-        readonly setup: (userPublic: import("../models/UserPublicModel").UserPublicForeign, userChallenge: import("../models/UserChallengeModel").UserChallengeForeign, content: string[]) => Promise<string[]>;
+        readonly setup: (userPublic: import("../models/UserPublicModel").UserPublicForeign, userChallenge: import("../models/UserChallengeModel").UserChallengeForeign) => Promise<string[]>;
         readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../models/UserTriviaModel").UserTrivia & {
             _id: import("mongoose").Types.ObjectId;
         })[]>;
         readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../models/UserTriviaModel").UserTrivia & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly summary: (userChallengeId: string, TID: string) => Promise<import("../models/UserTriviaModel").UserTriviaSummary[]>;
+        readonly submitEmpties: (userChallengeId: string, TID: string) => Promise<import("mongoose").UpdateWriteOpResult>;
+        readonly summary: (userChallengeId: string, TID: string) => Promise<import("../models/UserTriviaModel").UserTriviaSummary>;
+    };
+    readonly UserPhotoHuntService: {
+        readonly setup: (userPublic: import("../models/UserPublicModel").UserPublicForeign, userChallenge: import("../models/UserChallengeModel").UserChallengeForeign) => Promise<string[]>;
+        readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../models/UserPhotoHuntModel").UserPhotoHunt & {
+            _id: import("mongoose").Types.ObjectId;
+        })[]>;
+        readonly submit: (id: string, TID: string, isFound: boolean, bonus?: number) => Promise<import("../models/UserPhotoHuntModel").UserPhotoHunt & {
+            _id: import("mongoose").Types.ObjectId;
+        }>;
+        readonly submitEmpties: (userChallengeId: string, TID: string) => Promise<import("mongoose").UpdateWriteOpResult>;
+        readonly summary: (userChallengeId: string, TID: string) => Promise<import("../models/UserPhotoHuntModel").UserPhotoHuntSummary>;
     };
 };
-export { ChallengeService, QrService, StageService, TriviaService, UserChallengeService, UserPublicService, UserService, UserStageService, UserTriviaService, };
+export { ChallengeService, PhotoHuntService, QrService, StageService, TriviaService, UserChallengeService, UserPublicService, UserService, UserStageService, UserTriviaService, UserPhotoHuntService, };
 export default services;
 //# sourceMappingURL=index.d.ts.map

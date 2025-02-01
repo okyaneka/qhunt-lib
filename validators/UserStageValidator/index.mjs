@@ -12,10 +12,11 @@ var number = (option) => createValidator(Joi.number(), option);
 var boolean = (option) => createValidator(Joi.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    Joi.array().items(item),
-    options
+    Joi.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => Joi.object(fields);
@@ -85,6 +86,9 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
 
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";

@@ -6,7 +6,8 @@ export declare const ChallengeStatusValues: {
 };
 export type ChallengeStatus = PublishingStatus;
 export declare const ChallengeTypeValues: {
-    Trivia: string;
+    readonly Trivia: "trivia";
+    readonly PhotoHunt: "photohunt";
 };
 export type ChallengeType = (typeof ChallengeTypeValues)[keyof typeof ChallengeTypeValues];
 export interface ChallengeSettings {
@@ -16,7 +17,8 @@ export interface ChallengeSettings {
     feedback: Feedback;
 }
 export interface ChallengeListParams extends DefaultListParams {
-    stageId: string;
+    stageId?: string;
+    type?: ChallengeType;
 }
 export interface ChallengePayload {
     name: string;

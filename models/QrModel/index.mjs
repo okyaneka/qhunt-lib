@@ -31,6 +31,9 @@ var ToObject = {
   }
 };
 
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 
@@ -48,12 +51,12 @@ var PublishingStatusValues = {
 
 // _src/models/QrModel/types.ts
 var QrStatusValues = PublishingStatusValues;
-var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
-  QrContentType2["Stage"] = "stage";
-  QrContentType2["Challenge"] = "challenge";
-  QrContentType2["Trivia"] = "trivia";
-  return QrContentType2;
-})(QrContentType || {});
+var QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 
 // _src/models/QrModel/index.ts
 var QrForeignSchema = new Schema2(
@@ -65,7 +68,11 @@ var QrForeignSchema = new Schema2(
 );
 var QrContentSchema = new Schema2(
   {
-    type: { type: String, enum: Object.values(QrContentType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(QrContentTypeValues),
+      required: true
+    },
     refId: { type: String, required: true }
   },
   { _id: false, versionKey: false }
@@ -80,7 +87,7 @@ var QrLocationSchema = new Schema2(
 );
 var QrSchema = new Schema2(
   {
-    code: { type: String, required: true, unique: true },
+    code: { type: String, required: true, unique: true, index: true },
     status: {
       type: String,
       enum: Object.values(QrStatusValues),
@@ -100,7 +107,7 @@ QrSchema.set("toJSON", ToObject);
 var QrModel = models.Qr || model("Qr", QrSchema);
 var QrModel_default = QrModel;
 export {
-  QrContentType,
+  QrContentTypeValues,
   QrForeignSchema,
   QrStatusValues,
   QrModel_default as default

@@ -1,3 +1,6 @@
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 var transaction = async (operation) => {
@@ -64,7 +67,8 @@ import { model, models, Schema as Schema2 } from "mongoose";
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -208,11 +212,11 @@ var create = async (payload) => {
     ...payload,
     contents: contents.map((item) => item.id)
   });
-  const sync2 = contents.map((item) => {
+  const sync = contents.map((item) => {
     item.stage = { id: stage.id, name: stage.name };
     return item.save();
   });
-  await Promise.all(sync2);
+  await Promise.all(sync);
   return stage.toObject();
 };
 var detail = async (id) => {
@@ -259,88 +263,13 @@ var verify = async (id) => {
 var StageService = { list, create, detail, update, delete: _delete, verify };
 var StageService_default = StageService;
 
-// _src/models/TriviaModel/index.ts
-import { model as model3, models as models3, Schema as Schema4 } from "mongoose";
-var TriviaOptionSchema = new Schema4(
-  {
-    text: { type: String, required: true },
-    isCorrect: { type: Boolean, default: false },
-    point: { type: Number, default: 0 }
-  },
-  { _id: false, versionKey: false }
-);
-var TriviaForeignOptionSchema = new Schema4(
-  {
-    text: { type: String, required: true }
-  },
-  { _id: false }
-);
-var TriviaForeignSchema = new Schema4(
-  {
-    id: { type: String, required: true },
-    question: { type: String, required: true },
-    allowMultiple: { type: Boolean, required: true },
-    options: { type: [TriviaForeignOptionSchema], required: true }
-  },
-  { _id: false }
-);
-var TriviaSchema = new Schema4(
-  {
-    challenge: { type: IdNameSchema, default: null },
-    question: { type: String, required: true },
-    feedback: { type: FeedbackSchema, default: {} },
-    allowMultiple: { type: Boolean, default: false },
-    options: { type: [TriviaOptionSchema], required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-TriviaSchema.set("toObject", ToObject);
-TriviaSchema.set("toJSON", ToObject);
-var TriviaModel = models3.Trivia || model3("Trivia", TriviaSchema);
-var TriviaModel_default = TriviaModel;
-
-// _src/services/TriviaService/index.ts
-var sync = async (challenge, items) => {
-  const idName = { id: challenge.id, name: challenge.name };
-  const create3 = items.filter((item) => !item.id).map((item) => ({ ...item, challenge: idName }));
-  const update3 = items.filter((item) => item.id);
-  await TriviaModel_default.updateMany(
-    { "challenge.id": challenge.id },
-    { $set: { challenge: null } }
-  );
-  const actCreate = TriviaModel_default.insertMany(create3);
-  const actUpdate = update3.map(
-    (item) => TriviaModel_default.findOneAndUpdate({ _id: item.id }, { $set: item }, { new: true })
-  );
-  const [resCreate, ...resUpdate] = await Promise.all([
-    actCreate,
-    ...actUpdate
-  ]);
-  const content2 = resUpdate.map((item) => item?._id.toString()).concat(...resCreate.map((item) => item._id.toString())).filter((v) => v != void 0);
-  await ChallengeService_default.updateContent(challenge.id, content2);
-  return content2;
-};
-var content = async (challenge) => {
-  const items = await TriviaModel_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-var detail2 = async (id) => {
-  const item = await TriviaModel_default.findOne({ _id: id });
-  if (!item) throw new Error("trivia not found");
-  return item;
-};
-var verify2 = async (id) => {
-};
-var TriviaService = { sync, content, detail: detail2, verify: verify2 };
-var TriviaService_default = TriviaService;
-
 // _src/services/ChallengeService/index.ts
 var list2 = async (params) => {
   const skip = (params.page - 1) * params.limit;
   const filter = { deletedAt: null };
-  if (params.stageId == "null") filter.stage = null;
+  if (params.stageId === "null") filter["stage"] = null;
   else if (params.stageId) filter["stage.id"] = params.stageId;
+  if (params.type) filter["settings.type"] = params.type;
   const list3 = await ChallengeModel_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
   const totalItems = await ChallengeModel_default.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / params.limit);
@@ -352,44 +281,41 @@ var list2 = async (params) => {
   };
 };
 var create2 = async (payload) => {
-  const { stageId, ...value } = payload;
-  const stage = await StageService_default.detail(stageId).catch(() => null);
-  value.stage = stage ? { id: stage.id, name: stage.name } : null;
-  const item = await ChallengeModel_default.create(value);
-  if (stage) {
-    const contents = stage.contents || [];
-    contents.push(item.id);
-    item.order = contents.length;
-    await Promise.all([
-      StageModel_default.findOneAndUpdate({ _id: stageId }, { $set: { contents } }),
-      item.save()
-    ]);
-  }
-  return item.toObject();
+  return db_default.transaction(async (session) => {
+    const { stageId, ...value } = payload;
+    const stageData = stageId ? await StageService_default.detail(stageId) : null;
+    const stage = stageData ? { id: stageData.id, name: stageData.name } : null;
+    const [item] = await ChallengeModel_default.create([value], { session });
+    if (stage) {
+      const contents = stageData?.contents || [];
+      contents.push(item.id);
+      item.order = contents.length;
+      await Promise.all([
+        StageModel_default.findOneAndUpdate(
+          { _id: stageId },
+          { $set: { contents } },
+          { session }
+        ),
+        item.save({ session })
+      ]);
+    }
+    return item.toObject();
+  });
 };
-var detail3 = async (id) => {
+var detail2 = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
-};
-var detailContent = async (id) => {
-  const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("challenge not found");
-  const services = {
-    [ChallengeTypeValues.Trivia]: TriviaService_default
-  };
-  return await services[item.settings.type].content(item);
 };
 var update2 = async (id, payload) => {
   return await db_default.transaction(async (session) => {
     const { stageId, ...value } = payload;
     const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
     if (!item) throw new Error("challenge not found");
-    const newStage = await StageService_default.detail(stageId).catch(() => null);
-    const oldStage = item?.stage?.id && item.stage.id != stageId ? await StageService_default.detail(item.stage.id).catch(() => null) : null;
+    const newStage = stageId ? await StageService_default.detail(stageId) : null;
+    const oldStage = item.stage?.id ? await StageService_default.detail(item.stage.id) : null;
     const newContent = newStage?.contents || [];
     const oldContent = oldStage?.contents || [];
-    value.stage = newStage ? { id: newStage.id, name: newStage.name } : null;
     if (!newContent.includes(id)) newContent.push(id);
     if (oldContent.includes(id)) oldContent.splice(oldContent.indexOf(id), 1);
     await StageModel_default.findOneAndUpdate(
@@ -402,7 +328,8 @@ var update2 = async (id, payload) => {
       { $set: { contents: oldContent } },
       { session }
     );
-    Object.assign(item, value);
+    const stage = newStage ? { id: newStage.id, name: newStage.name } : null;
+    Object.assign(item, value, { stage });
     await item.save({ session });
     return item.toObject();
   });
@@ -425,7 +352,7 @@ var _delete2 = async (id) => {
   if (!item) throw new Error("challenge not found");
   return item.toObject();
 };
-var verify3 = async (id) => {
+var verify2 = async (id) => {
   const item = await ChallengeModel_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   if (item.status !== ChallengeStatusValues.Publish)
@@ -435,22 +362,21 @@ var verify3 = async (id) => {
 var ChallengeService = {
   list: list2,
   create: create2,
-  detail: detail3,
-  detailContent,
+  detail: detail2,
+  // detailContent,
   update: update2,
   updateContent,
   delete: _delete2,
-  verify: verify3
+  verify: verify2
 };
 var ChallengeService_default = ChallengeService;
 export {
   _delete2 as _delete,
   create2 as create,
   ChallengeService_default as default,
-  detail3 as detail,
-  detailContent,
+  detail2 as detail,
   list2 as list,
   update2 as update,
   updateContent,
-  verify3 as verify
+  verify2 as verify
 };

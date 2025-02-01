@@ -1,3 +1,8 @@
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+var common = { deepmerge };
+var common_default = common;
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 var transaction = async (operation) => {
@@ -107,10 +112,11 @@ var number = (option) => createValidator(Joi.number(), option);
 var boolean = (option) => createValidator(Joi.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    Joi.array().items(item),
-    options
+    Joi.array().items(item)
   );
   if (options?.required) v = v.min(1);
+  if (options?.defaultValue) v.default(options.defaultValue);
+  if (options?.allow) v.allow(options.allow);
   return v;
 };
 var generate = (fields) => Joi.object(fields);
@@ -151,10 +157,19 @@ var PublishingStatusValues = {
 };
 
 // _src/helpers/index.ts
-var helpers = { db: db_default, response: response_default, schema: schema_default, service: service_default, qrcode: qrcode_default, model: model_default };
+var helpers = {
+  common: common_default,
+  db: db_default,
+  model: model_default,
+  qrcode: qrcode_default,
+  response: response_default,
+  schema: schema_default,
+  service: service_default
+};
 var helpers_default = helpers;
 export {
   PublishingStatusValues,
+  common_default as common,
   db_default as db,
   helpers_default as default,
   model_default as model,

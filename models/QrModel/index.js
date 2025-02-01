@@ -30,7 +30,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // _src/models/QrModel/index.ts
 var QrModel_exports = {};
 __export(QrModel_exports, {
-  QrContentType: () => QrContentType,
+  QrContentTypeValues: () => QrContentTypeValues,
   QrForeignSchema: () => QrForeignSchema,
   QrStatusValues: () => QrStatusValues,
   default: () => QrModel_default
@@ -68,6 +68,9 @@ var ToObject = {
   }
 };
 
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
+
 // _src/helpers/db/index.ts
 var import_mongoose2 = require("mongoose");
 
@@ -85,12 +88,12 @@ var PublishingStatusValues = {
 
 // _src/models/QrModel/types.ts
 var QrStatusValues = PublishingStatusValues;
-var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
-  QrContentType2["Stage"] = "stage";
-  QrContentType2["Challenge"] = "challenge";
-  QrContentType2["Trivia"] = "trivia";
-  return QrContentType2;
-})(QrContentType || {});
+var QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 
 // _src/models/QrModel/index.ts
 var QrForeignSchema = new import_mongoose3.Schema(
@@ -102,7 +105,11 @@ var QrForeignSchema = new import_mongoose3.Schema(
 );
 var QrContentSchema = new import_mongoose3.Schema(
   {
-    type: { type: String, enum: Object.values(QrContentType), required: true },
+    type: {
+      type: String,
+      enum: Object.values(QrContentTypeValues),
+      required: true
+    },
     refId: { type: String, required: true }
   },
   { _id: false, versionKey: false }
@@ -117,7 +124,7 @@ var QrLocationSchema = new import_mongoose3.Schema(
 );
 var QrSchema = new import_mongoose3.Schema(
   {
-    code: { type: String, required: true, unique: true },
+    code: { type: String, required: true, unique: true, index: true },
     status: {
       type: String,
       enum: Object.values(QrStatusValues),
@@ -138,7 +145,7 @@ var QrModel = import_mongoose3.models.Qr || (0, import_mongoose3.model)("Qr", Qr
 var QrModel_default = QrModel;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  QrContentType,
+  QrContentTypeValues,
   QrForeignSchema,
   QrStatusValues
 });

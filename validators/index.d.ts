@@ -28,11 +28,9 @@ declare const validators: {
     };
     readonly TriviaValidator: {
         TriviaOptionValidator: import("joi").ObjectSchema<import("../models/TriviaModel").TriviaOption>;
-        TriviaOptionsValidator: import("joi").ArraySchema<import("../models/TriviaModel").TriviaOption>;
+        TriviaOptionsValidator: import("joi").ArraySchema<import("../models/TriviaModel").TriviaOption[]>;
         TriviaPayloadValidator: import("joi").ObjectSchema<import("../models/TriviaModel").TriviaPayload>;
-        TriviaItemsPayloadValidator: import("joi").ObjectSchema<{
-            items: import("../models/TriviaModel").TriviaPayload[];
-        }>;
+        TriviaItemsPayloadValidator: import("joi").ArraySchema<import("../models/TriviaModel").TriviaPayload[]>;
         TriviaForeignValidator: import("joi").ObjectSchema<import("../models/TriviaModel").TriviaForeign>;
     };
     readonly UserChallengeValidator: {

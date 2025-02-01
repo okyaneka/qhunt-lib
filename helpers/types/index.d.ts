@@ -1,8 +1,9 @@
+export type ValueOf<T> = T[keyof T];
 export declare const PublishingStatusValues: {
     readonly Draft: "draft";
     readonly Publish: "publish";
 };
-export type PublishingStatus = (typeof PublishingStatusValues)[keyof typeof PublishingStatusValues];
+export type PublishingStatus = ValueOf<typeof PublishingStatusValues>;
 export interface Timestamps {
     createdAt: Date;
     updatedAt: Date;
@@ -24,5 +25,10 @@ export interface DefaultListParams {
 export interface Feedback {
     positive: string;
     negative: string;
+}
+export interface ScoreSummary {
+    totalBaseScore: number;
+    totalBonus: number;
+    totalScore: number;
 }
 //# sourceMappingURL=index.d.ts.map

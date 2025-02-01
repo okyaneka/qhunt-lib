@@ -19,6 +19,9 @@ var db_default = db;
 // _src/models/ChallengeModel/index.ts
 import { model, models, Schema as Schema2 } from "mongoose";
 
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+
 // _src/helpers/model/index.ts
 import { Schema } from "mongoose";
 var IdNameSchema = new Schema(
@@ -64,7 +67,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts

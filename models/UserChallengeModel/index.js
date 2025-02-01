@@ -32,7 +32,7 @@ var UserChallengeModel_exports = {};
 __export(UserChallengeModel_exports, {
   UserChallengeForeignSchema: () => UserChallengeForeignSchema,
   UserChallengeResultSchema: () => UserChallengeResultSchema,
-  UserChallengeStatus: () => UserChallengeStatus,
+  UserChallengeStatusValues: () => UserChallengeStatusValues,
   default: () => UserChallengeModel_default
 });
 module.exports = __toCommonJS(UserChallengeModel_exports);
@@ -69,17 +69,19 @@ var ToObject = {
 };
 
 // _src/models/UserChallengeModel/types.ts
-var UserChallengeStatus = /* @__PURE__ */ ((UserChallengeStatus2) => {
-  UserChallengeStatus2["Undiscovered"] = "undiscovered";
-  UserChallengeStatus2["Discovered"] = "discovered";
-  UserChallengeStatus2["OnGoing"] = "ongoing";
-  UserChallengeStatus2["Completed"] = "completed";
-  UserChallengeStatus2["Failed"] = "failed";
-  return UserChallengeStatus2;
-})(UserChallengeStatus || {});
+var UserChallengeStatusValues = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
 
 // _src/models/ChallengeModel/index.ts
 var import_mongoose3 = require("mongoose");
+
+// _src/helpers/common/index.ts
+var import_deepmerge = __toESM(require("deepmerge"));
 
 // _src/helpers/db/index.ts
 var import_mongoose2 = require("mongoose");
@@ -99,7 +101,8 @@ var PublishingStatusValues = {
 // _src/models/ChallengeModel/types.ts
 var ChallengeStatusValues = PublishingStatusValues;
 var ChallengeTypeValues = {
-  Trivia: "trivia"
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
 };
 
 // _src/models/ChallengeModel/index.ts
@@ -346,8 +349,8 @@ var UserChallengeResultSchema = new import_mongoose8.Schema(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
-    correctBonus: { type: Number, required: true },
-    correctCount: { type: Number, required: true },
+    contentBonus: { type: Number, required: true },
+    totalCorrect: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -363,8 +366,8 @@ var UserChallengeSchema = new import_mongoose8.Schema(
     userPublic: { type: UserPublicForeignSchema, required: true },
     status: {
       type: String,
-      enum: Object.values(UserChallengeStatus),
-      default: "undiscovered" /* Undiscovered */
+      enum: Object.values(UserChallengeStatusValues),
+      default: UserChallengeStatusValues.Undiscovered
     },
     contents: { type: [String], default: [] },
     results: { type: UserChallengeResultSchema, default: null },
@@ -380,5 +383,5 @@ var UserChallengeModel_default = UserChallengeModel;
 0 && (module.exports = {
   UserChallengeForeignSchema,
   UserChallengeResultSchema,
-  UserChallengeStatus
+  UserChallengeStatusValues
 });

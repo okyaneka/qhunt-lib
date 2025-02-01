@@ -7,6 +7,7 @@ import UserChallengeModel from "./UserChallengeModel";
 import UserPublicModel from "./UserPublicModel";
 import UserStageModel from "./UserStageModel";
 import UserTriviaModel from "./UserTriviaModel";
+import PhotoHuntModel from "./PhotoHuntModel";
 declare const models: {
     readonly ChallengeModel: import("mongoose").Model<import("./ChallengeModel").Challenge, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./ChallengeModel").Challenge> & import("./ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
@@ -24,6 +25,11 @@ declare const models: {
         __v: number;
     }, any>;
     readonly TriviaModel: import("mongoose").Model<import("./TriviaModel").Trivia, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./TriviaModel").Trivia> & import("./TriviaModel").Trivia & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }, any>;
+    readonly PhotoHuntModel: import("mongoose").Model<import("./PhotoHuntModel").PhotoHunt, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./PhotoHuntModel").PhotoHunt> & import("./PhotoHuntModel").PhotoHunt & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
@@ -54,6 +60,6 @@ declare const models: {
         __v: number;
     }, any>;
 };
-export { ChallengeModel, QrModel, StageModel, TriviaModel, UserModel, UserChallengeModel, UserPublicModel, UserStageModel, UserTriviaModel, };
+export { ChallengeModel, QrModel, StageModel, TriviaModel, PhotoHuntModel, UserModel, UserChallengeModel, UserPublicModel, UserStageModel, UserTriviaModel, };
 export default models;
 //# sourceMappingURL=index.d.ts.map

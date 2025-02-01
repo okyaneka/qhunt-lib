@@ -13,9 +13,6 @@ export declare const create: (payload: ChallengePayload) => Promise<import("../.
 export declare const detail: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const detailContent: (id: string) => Promise<(import("../../models/TriviaModel").Trivia & {
-    _id: import("mongoose").Types.ObjectId;
-})[]>;
 export declare const update: (id: string, payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
@@ -43,9 +40,6 @@ declare const ChallengeService: {
     readonly detail: (id: string) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    readonly detailContent: (id: string) => Promise<(import("../../models/TriviaModel").Trivia & {
-        _id: import("mongoose").Types.ObjectId;
-    })[]>;
     readonly update: (id: string, payload: ChallengePayload) => Promise<import("../../models/ChallengeModel").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;

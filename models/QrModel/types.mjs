@@ -1,3 +1,6 @@
+// _src/helpers/common/index.ts
+import deepmerge from "deepmerge";
+
 // _src/helpers/db/index.ts
 import { startSession } from "mongoose";
 
@@ -39,13 +42,13 @@ var PublishingStatusValues = {
 
 // _src/models/QrModel/types.ts
 var QrStatusValues = PublishingStatusValues;
-var QrContentType = /* @__PURE__ */ ((QrContentType2) => {
-  QrContentType2["Stage"] = "stage";
-  QrContentType2["Challenge"] = "challenge";
-  QrContentType2["Trivia"] = "trivia";
-  return QrContentType2;
-})(QrContentType || {});
+var QrContentTypeValues = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 export {
-  QrContentType,
+  QrContentTypeValues,
   QrStatusValues
 };

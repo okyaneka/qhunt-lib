@@ -1,14 +1,16 @@
-import { DefaultListParams, PublishingStatus, Timestamps } from "../../helpers";
+import { DefaultListParams, PublishingStatus, Timestamps, ValueOf } from "../../helpers";
 export declare const QrStatusValues: {
     readonly Draft: "draft";
     readonly Publish: "publish";
 };
 export type QrStatus = PublishingStatus;
-export declare enum QrContentType {
-    Stage = "stage",
-    Challenge = "challenge",
-    Trivia = "trivia"
-}
+export declare const QrContentTypeValues: {
+    readonly Stage: "stage";
+    readonly Challenge: "challenge";
+    readonly Trivia: "trivia";
+    readonly PhotoHunt: "photohunt";
+};
+export type QrContentType = ValueOf<typeof QrContentTypeValues>;
 export interface QrContent {
     type: QrContentType;
     refId: string;
@@ -21,6 +23,7 @@ export interface QrLocation {
 export interface QrListParams extends DefaultListParams {
     code: string;
     status: QrStatus | null;
+    hasContent: boolean | null;
 }
 export interface QrPayload {
     code: string;
