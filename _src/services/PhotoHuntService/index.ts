@@ -1,61 +1,104 @@
 import ChallengeService from "../ChallengeService";
-import PhotoHuntModel, {
-  PhotoHunt,
-  PhotoHuntPayload,
-} from "~/models/PhotoHuntModel";
-import QrService from "../QrService";
+import PhotoHuntModel, { PhotoHuntPayload } from "~/models/PhotoHuntModel";
+import { db, IdName } from "~/helpers";
+import { ClientSession } from "mongoose";
+import { ChallengeTypeValues } from "~/models/ChallengeModel";
+import { list as QrServiceList } from "../QrService";
 import { QrListParamsValidator } from "~/validators/QrValidator";
-import { common } from "~/helpers";
+import { QrModel } from "~/models";
+import { QrContent } from "~/models/QrModel";
 
-const create = async (challengeId: string, payload: PhotoHuntPayload[]) => {
+const createMany = async (
+  challenge: IdName,
+  payload: PhotoHuntPayload[],
+  session: ClientSession
+) => {
   if (payload.length === 0) return [];
 
-  const challenge = await ChallengeService.detail(challengeId);
-  const challengeForeign = { id: challenge.id, name: challenge.name };
   const qrParams = await QrListParamsValidator.validateAsync({
     hasContent: false,
     limit: payload.length,
   });
-  const qrs = (await QrService.list(qrParams)).list.map(({ id, code }) => ({
+
+  const qrs = (await QrServiceList(qrParams)).list.map(({ id, code }) => ({
     id,
     code,
   }));
 
   if (qrs.length !== payload.length)
-    throw new Error("QR code data is not enough. please generate again.");
+    throw new Error("photohunt.sync.qr_not_enough_error");
 
-  const items = payload.map((item, i) => ({
-    ...item,
-    challenge: challengeForeign,
-    qr: qrs[i],
-  }));
-  return await PhotoHuntModel.insertMany(items);
+  const items = await PhotoHuntModel.insertMany(
+    payload.map((item, i) => ({
+      ...item,
+      challenge,
+      qr: qrs[i],
+    })),
+    { session }
+  );
+
+  const res = await QrModel.bulkWrite(
+    items.map((item) => {
+      const content: QrContent = {
+        type: "photohunt",
+        refId: item.id,
+      };
+      return {
+        updateOne: {
+          filter: { _id: item.qr?.id },
+          update: { $set: { content } },
+        },
+      };
+    }),
+    { session }
+  );
+
+  if (res.modifiedCount !== items.length)
+    throw new Error("photohunt.sync.qr_updating_error");
+
+  return items;
 };
 
-const update = async (payload: PhotoHuntPayload[]) => {
+const updateMany = async (
+  challenge: IdName,
+  payload: PhotoHuntPayload[],
+  session: ClientSession
+) => {
   if (payload.length === 0) return [];
   const ids = payload.map(({ id }) => id);
-  const existing = await PhotoHuntModel.find({ _id: { $in: ids } });
-  const newValue = existing.map((old) => {
-    const val = payload.find((val) => val.id == old.id);
-    return common.deepmerge<PhotoHunt>(old.toObject(), val || {});
-  });
 
-  await PhotoHuntModel.bulkWrite(
-    newValue.map((item) => {
+  const res = await PhotoHuntModel.bulkWrite(
+    payload.map((item) => {
       return {
         updateOne: {
           filter: { _id: item.id },
-          update: { $set: item },
+          update: { $set: { ...item, challenge } },
         },
       };
-    })
+    }),
+    { session }
   );
+
+  if (res.modifiedCount !== payload.length)
+    throw new Error("photohunt.sync.update_error");
+
   return await PhotoHuntModel.find({ _id: { $in: ids } });
 };
 
+export const detail = async (id: string) => {
+  const item = await PhotoHuntModel.findOne({ _id: id });
+  if (!item) throw new Error("photo hunt not found");
+
+  return item.toObject();
+};
+
 export const details = async (challengeId: string) => {
-  const items = await PhotoHuntModel.find({ "challenge.id": challengeId });
+  const challenge = await ChallengeService.detail(challengeId);
+
+  if (challenge.settings.type !== ChallengeTypeValues.PhotoHunt)
+    throw new Error("challenge.not_photohunt_type_error");
+
+  const items = await PhotoHuntModel.find({ _id: { $in: challenge.contents } });
   return items.map((item) => item.toObject());
 };
 
@@ -63,27 +106,58 @@ export const sync = async (
   challengeId: string,
   payload: PhotoHuntPayload[]
 ) => {
-  if (payload.length === 0) return [];
+  return db.transaction(async (session) => {
+    await PhotoHuntModel.updateMany(
+      { "challenge.id": challengeId },
+      { $set: { challenge: null } },
+      { session }
+    );
 
-  const { create: itemsCreate, update: itemsUpdate } = payload.reduce<{
-    create: PhotoHuntPayload[];
-    update: PhotoHuntPayload[];
-  }>(
-    (acc, cur) => {
-      acc[cur.id ? "update" : "create"].push(cur);
-      return acc;
-    },
-    { create: [], update: [] }
-  );
+    if (payload.length === 0) return [];
 
-  const itemsCreated = await create(challengeId, itemsCreate);
-  const itemsUpdated = await update(itemsUpdate);
+    const challenge = await ChallengeService.detail(challengeId);
 
-  return [...itemsCreated, ...itemsUpdated].map((item) => item.toObject());
+    if (challenge.settings.type !== ChallengeTypeValues.PhotoHunt)
+      throw new Error("challenge.not_photohunt_type_error");
+
+    const challengeForeign = { id: challenge.id, name: challenge.name };
+
+    const { create: itemsCreate, update: itemsUpdate } = payload.reduce<{
+      create: PhotoHuntPayload[];
+      update: PhotoHuntPayload[];
+    }>(
+      (acc, cur) => {
+        acc[cur.id ? "update" : "create"].push(cur);
+        return acc;
+      },
+      { create: [], update: [] }
+    );
+
+    const itemsCreated = await createMany(
+      challengeForeign,
+      itemsCreate,
+      session
+    );
+    const itemsUpdated = await updateMany(
+      challengeForeign,
+      itemsUpdate,
+      session
+    );
+    const items = [...itemsCreated, ...itemsUpdated].map((item) =>
+      item.toObject()
+    );
+
+    await ChallengeService.updateContent(
+      challengeId,
+      items.map(({ id }) => id)
+    );
+
+    return items;
+  });
 };
 
 export const verify = async (id: string) => {};
 
-const PhotoHuntService = { details, sync, verify };
+const PhotoHuntService = { detail, details, sync, verify };
 
 export default PhotoHuntService;
