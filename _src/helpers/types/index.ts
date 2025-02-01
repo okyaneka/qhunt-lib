@@ -1,10 +1,11 @@
+export type ValueOf<T> = T[keyof T];
+
 export const PublishingStatusValues = {
   Draft: "draft",
   Publish: "publish",
 } as const;
 
-export type PublishingStatus =
-  (typeof PublishingStatusValues)[keyof typeof PublishingStatusValues];
+export type PublishingStatus = ValueOf<typeof PublishingStatusValues>;
 
 export interface Timestamps {
   createdAt: Date;
@@ -31,4 +32,10 @@ export interface DefaultListParams {
 export interface Feedback {
   positive: string;
   negative: string;
+}
+
+export interface ScoreSummary {
+  totalBaseScore: number;
+  totalBonus: number;
+  totalScore: number;
 }
