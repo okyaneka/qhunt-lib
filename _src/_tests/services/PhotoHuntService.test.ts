@@ -1,12 +1,8 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import { ChallengeService, PhotoHuntService, QrService } from "~/services";
-import { QrModel } from "~/models";
-import ChallengeModel, { Challenge } from "~/models/ChallengeModel";
-import PhotoHuntModel, {
-  PhotoHunt,
-  PhotoHuntPayload,
-} from "~/models/PhotoHuntModel";
+import { Challenge } from "~/models/ChallengeModel";
+import { PhotoHunt, PhotoHuntPayload } from "~/models/PhotoHuntModel";
 
 describe("UserPublicService", () => {
   let mongoServer: MongoMemoryServer;
@@ -42,7 +38,7 @@ describe("UserPublicService", () => {
   it("Should create 5 PhotoHunt data", async () => {
     const data: PhotoHuntPayload[] = new Array(5)
       .fill(null)
-      .map((_, i) => ({ hint: `Hint ${i + 1}`, feedback: "Good" }));
+      .map((_, i) => ({ hint: `Hint ${i + 1}`, feedback: "Good", score: 100 }));
     const result = await PhotoHuntService.sync(challenge.id, data);
     updatedData = result;
     expect(result).toHaveLength(5);
@@ -59,9 +55,11 @@ describe("UserPublicService", () => {
   });
 
   it("Should error update data", async () => {
-    const create: PhotoHuntPayload[] = new Array(5)
-      .fill(null)
-      .map((_, i) => ({ hint: `Create ${i + 1}`, feedback: "Good" }));
+    const create: PhotoHuntPayload[] = new Array(5).fill(null).map((_, i) => ({
+      hint: `Create ${i + 1}`,
+      feedback: "Good",
+      score: 100,
+    }));
     const update = updatedData.map((item, i) => ({
       ...item,
       hint: `Update ${i}`,
@@ -78,7 +76,11 @@ describe("UserPublicService", () => {
   it("Should create and update data", async () => {
     const create: PhotoHuntPayload[] = new Array(3)
       .fill(null)
-      .map((_, i) => ({ hint: `Create ${i + 1}`, feedback: "Good" }));
+      .map((_, i) => ({
+        hint: `Create ${i + 1}`,
+        feedback: "Good",
+        score: 100,
+      }));
     const update = updatedData.map((item, i) => ({
       ...item,
       hint: `Update ${i}`,
