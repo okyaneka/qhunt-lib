@@ -1,14 +1,14 @@
-import ChallengeService from "./ChallengeService";
-import PhotoHuntService from "./PhotoHuntService";
-import QrService from "./QrService";
-import StageService from "./StageService";
-import TriviaService from "./TriviaService";
-import UserChallengeService from "./UserChallengeService";
-import UserPhotoHuntService from "./UserPhotoHuntService";
-import UserPublicService from "./UserPublicService";
-import UserService from "./UserService";
-import UserStageService from "./UserStageService";
-import UserTriviaService from "./UserTriviaService";
+import ChallengeService from "./challenge";
+import PhotoHuntService from "./photo-hunt";
+import QrService from "./qr";
+import StageService from "./stage";
+import TriviaService from "./trivia";
+import UserChallengeService from "./user-challenge";
+import UserPhotoHuntService from "./user-photo-hunt";
+import UserPublicService from "./user-public";
+import UserService from "./user";
+import UserStageService from "./user-stage";
+import UserTriviaService from "./user-trivia";
 
 const services = {
   ChallengeService,

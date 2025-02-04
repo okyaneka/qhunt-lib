@@ -1,11 +1,11 @@
-import ChallengeValidator from "./ChallengeValidator";
-import QrValidator from "./QrValidator";
-import StageValidator from "./StageValidator";
-import TriviaValidator from "./TriviaValidator";
-import UserChallengeValidator from "./UserChallengeValidator";
-import UserPublicValidator from "./UserPublicValidator";
-import UserStageValidator from "./UserStageValidator";
-import UserValidator from "./UserValidator";
+import ChallengeValidator from "./challenge";
+import QrValidator from "./qr";
+import StageValidator from "./stage";
+import TriviaValidator from "./trivia";
+import UserChallengeValidator from "./user-challenge";
+import UserPublicValidator from "./user-public";
+import UserStageValidator from "./user-stage";
+import UserValidator from "./user";
 
 const validators = {
   ChallengeValidator,

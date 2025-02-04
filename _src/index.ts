@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
-export { mongoose };
-
-export default { mongoose };
+export * from "~/helpers/types";
+export * from "~/types";
+export { default as mongoose } from "mongoose";
