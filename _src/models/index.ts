@@ -1,13 +1,13 @@
-import ChallengeModel from "./ChallengeModel";
-import QrModel from "./QrModel";
-import StageModel from "./StageModel";
-import TriviaModel from "./TriviaModel";
-import UserModel from "./UserModel";
-import UserChallengeModel from "./UserChallengeModel";
-import UserPublicModel from "./UserPublicModel";
-import UserStageModel from "./UserStageModel";
-import UserTriviaModel from "./UserTriviaModel";
-import PhotoHuntModel from "./PhotoHuntModel";
+import ChallengeModel from "./challenge";
+import QrModel from "./qr";
+import StageModel from "./stage";
+import TriviaModel from "./trivia";
+import UserModel from "./user";
+import UserChallengeModel from "./user-challenge";
+import UserPublicModel from "./user-public";
+import UserStageModel from "./user-stage";
+import UserTriviaModel from "./user-trivia";
+import PhotoHuntModel from "./photo-hunt";
 
 const models = {
   ChallengeModel,

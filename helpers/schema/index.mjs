@@ -1,10 +1,11 @@
+import Joi from 'joi';
+
 // _src/helpers/schema/index.ts
-import Joi from "joi";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
-  if (option?.allow !== void 0) v = v.allow(option.allow);
-  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
+  if (option?.allow !== undefined) v = v.allow(option.allow);
+  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
   return v;
 };
 var string = (option) => createValidator(Joi.string().trim(), option);
@@ -29,12 +30,5 @@ var schema = {
   generate
 };
 var schema_default = schema;
-export {
-  array,
-  boolean,
-  createValidator,
-  schema_default as default,
-  generate,
-  number,
-  string
-};
+
+export { array, boolean, createValidator, schema_default as default, generate, number, string };

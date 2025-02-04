@@ -1,8 +1,8 @@
+import deepmerge from 'deepmerge';
+export { default as deepmerge } from 'deepmerge';
+
 // _src/helpers/common/index.ts
-import deepmerge from "deepmerge";
 var common = { deepmerge };
 var common_default = common;
-export {
-  deepmerge,
-  common_default as default
-};
+
+export { common_default as default };

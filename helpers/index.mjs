@@ -1,10 +1,11 @@
+import deepmerge from 'deepmerge';
+import { Schema, startSession } from 'mongoose';
+import { BrowserQRCodeReader } from '@zxing/browser';
+import Joi from 'joi';
+
 // _src/helpers/common/index.ts
-import deepmerge from "deepmerge";
 var common = { deepmerge };
 var common_default = common;
-
-// _src/helpers/db/index.ts
-import { startSession } from "mongoose";
 var transaction = async (operation) => {
   const session = await startSession();
   session.startTransaction();
@@ -20,9 +21,6 @@ var transaction = async (operation) => {
 };
 var db = { transaction };
 var db_default = db;
-
-// _src/helpers/model/index.ts
-import { Schema } from "mongoose";
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -57,9 +55,6 @@ var model = {
   ToObject
 };
 var model_default = model;
-
-// _src/helpers/qrcode/index.ts
-import { BrowserQRCodeReader } from "@zxing/browser";
 var scanByStream = (stream, el) => {
   const reader = new BrowserQRCodeReader();
   return reader.decodeOnceFromStream(stream, el);
@@ -97,14 +92,11 @@ var errorValidation = (error2) => {
 };
 var response = { success, error, errorValidation };
 var response_default = response;
-
-// _src/helpers/schema/index.ts
-import Joi from "joi";
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
-  if (option?.allow !== void 0) v = v.allow(option.allow);
-  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
+  if (option?.allow !== undefined) v = v.allow(option.allow);
+  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
   return v;
 };
 var string = (option) => createValidator(Joi.string().trim(), option);
@@ -150,12 +142,6 @@ var list = async (model2, page, limit, filters = {}, sort) => {
 var service = { list };
 var service_default = service;
 
-// _src/helpers/types/index.ts
-var PublishingStatusValues = {
-  Draft: "draft",
-  Publish: "publish"
-};
-
 // _src/helpers/index.ts
 var helpers = {
   common: common_default,
@@ -167,14 +153,5 @@ var helpers = {
   service: service_default
 };
 var helpers_default = helpers;
-export {
-  PublishingStatusValues,
-  common_default as common,
-  db_default as db,
-  helpers_default as default,
-  model_default as model,
-  qrcode_default as qrcode,
-  response_default as response,
-  schema_default as schema,
-  service_default as service
-};
+
+export { common_default as common, db_default as db, helpers_default as default, model_default as model, qrcode_default as qrcode, response_default as response, schema_default as schema, service_default as service };

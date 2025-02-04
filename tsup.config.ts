@@ -12,4 +12,5 @@ export default defineConfig({
   splitting: false,
   target: "esnext",
   external: ["_src/_tests/**/*"],
+  treeshake: true,
 });

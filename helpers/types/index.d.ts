@@ -1,9 +1,9 @@
 export type ValueOf<T> = T[keyof T];
-export declare const PublishingStatusValues: {
+export declare const PUBLISHING_STATUS: {
     readonly Draft: "draft";
     readonly Publish: "publish";
 };
-export type PublishingStatus = ValueOf<typeof PublishingStatusValues>;
+export type PublishingStatus = ValueOf<typeof PUBLISHING_STATUS>;
 export interface Timestamps {
     createdAt: Date;
     updatedAt: Date;

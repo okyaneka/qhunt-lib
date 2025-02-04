@@ -1,52 +1,52 @@
-import ChallengeValidator from "./ChallengeValidator";
-import QrValidator from "./QrValidator";
-import StageValidator from "./StageValidator";
-import TriviaValidator from "./TriviaValidator";
-import UserChallengeValidator from "./UserChallengeValidator";
-import UserPublicValidator from "./UserPublicValidator";
-import UserStageValidator from "./UserStageValidator";
-import UserValidator from "./UserValidator";
+import ChallengeValidator from "./challenge";
+import QrValidator from "./qr";
+import StageValidator from "./stage";
+import TriviaValidator from "./trivia";
+import UserChallengeValidator from "./user-challenge";
+import UserPublicValidator from "./user-public";
+import UserStageValidator from "./user-stage";
+import UserValidator from "./user";
 declare const validators: {
     readonly ChallengeValidator: {
-        ChallengeForeignValidator: import("joi").ObjectSchema<import("../models/ChallengeModel").ChallengeForeign>;
-        ChallengeListParamsValidator: import("joi").ObjectSchema<import("../models/ChallengeModel").ChallengeListParams>;
-        ChallengePayloadValidator: import("joi").ObjectSchema<import("../models/ChallengeModel").ChallengePayload>;
-        ChallengeSettingsForeignValidator: import("joi").ObjectSchema<import("../models/ChallengeModel").ChallengeSettingsForeign>;
-        ChallengeSettingsValidator: import("joi").ObjectSchema<import("../models/ChallengeModel").ChallengeSettings>;
+        ChallengeForeignValidator: import("joi").ObjectSchema<import("..").ChallengeForeign>;
+        ChallengeListParamsValidator: import("joi").ObjectSchema<import("..").ChallengeListParams>;
+        ChallengePayloadValidator: import("joi").ObjectSchema<import("..").ChallengePayload>;
+        ChallengeSettingsForeignValidator: import("joi").ObjectSchema<import("..").ChallengeSettingsForeign>;
+        ChallengeSettingsValidator: import("joi").ObjectSchema<import("..").ChallengeSettings>;
     };
     readonly QrValidator: {
-        QrListParamsValidator: import("joi").ObjectSchema<import("../models/QrModel").QrListParams>;
-        QrGeneratePayloadValidator: import("joi").ObjectSchema<import("../models/QrModel").QrGeneratePayload>;
-        QrUpdatePayloadValidator: import("joi").ObjectSchema<import("../models/QrModel").QrUpdatePayload>;
-        QrDeleteBulkPayloadValidator: import("joi").ObjectSchema<import("../models/QrModel").QrDeleteBulkPayload>;
+        QrListParamsValidator: import("joi").ObjectSchema<import("..").QrListParams>;
+        QrGeneratePayloadValidator: import("joi").ObjectSchema<import("..").QrGeneratePayload>;
+        QrUpdatePayloadValidator: import("joi").ObjectSchema<import("..").QrUpdatePayload>;
+        QrDeleteBulkPayloadValidator: import("joi").ObjectSchema<import("..").QrDeleteBulkPayload>;
     };
     readonly StageValidator: {
-        StageSettingsValidator: import("joi").ObjectSchema<import("../models/StageModel").StageSettings>;
-        StageListParamsValidator: import("joi").ObjectSchema<import("../models/StageModel").StageListParams>;
-        StagePayloadValidator: import("joi").ObjectSchema<import("../models/StageModel").StagePayload>;
-        StageForeignValidator: import("joi").ObjectSchema<import("../models/StageModel").StageForeign>;
+        StageSettingsValidator: import("joi").ObjectSchema<import("..").StageSettings>;
+        StageListParamsValidator: import("joi").ObjectSchema<import("..").StageListParams>;
+        StagePayloadValidator: import("joi").ObjectSchema<import("..").StagePayload>;
+        StageForeignValidator: import("joi").ObjectSchema<import("..").StageForeign>;
     };
     readonly TriviaValidator: {
-        TriviaOptionValidator: import("joi").ObjectSchema<import("../models/TriviaModel").TriviaOption>;
-        TriviaOptionsValidator: import("joi").ArraySchema<import("../models/TriviaModel").TriviaOption[]>;
-        TriviaPayloadValidator: import("joi").ObjectSchema<import("../models/TriviaModel").TriviaPayload>;
-        TriviaItemsPayloadValidator: import("joi").ArraySchema<import("../models/TriviaModel").TriviaPayload[]>;
-        TriviaForeignValidator: import("joi").ObjectSchema<import("../models/TriviaModel").TriviaForeign>;
+        TriviaOptionValidator: import("joi").ObjectSchema<import("..").TriviaOption>;
+        TriviaOptionsValidator: import("joi").ArraySchema<import("..").TriviaOption[]>;
+        TriviaPayloadValidator: import("joi").ObjectSchema<import("..").TriviaPayload>;
+        TriviaItemsPayloadValidator: import("joi").ArraySchema<import("..").TriviaPayload[]>;
+        TriviaForeignValidator: import("joi").ObjectSchema<import("..").TriviaForeign>;
     };
     readonly UserChallengeValidator: {
-        UserChallengeForeignValidator: import("joi").ObjectSchema<import("../models/UserChallengeModel").UserChallengeForeign>;
-        UserChallengeParamsValidator: import("joi").ObjectSchema<import("../models/UserChallengeModel").UserChallengeParams>;
+        UserChallengeForeignValidator: import("joi").ObjectSchema<import("..").UserChallengeForeign>;
+        UserChallengeParamsValidator: import("joi").ObjectSchema<import("..").UserChallengeParams>;
     };
     readonly UserPublicValidator: {
-        UserPublicForeignValidator: import("joi").ObjectSchema<import("../models/UserPublicModel").UserPublicForeign>;
+        UserPublicForeignValidator: import("joi").ObjectSchema<import("..").UserPublicForeign>;
     };
     readonly UserStageValidator: {
-        UserStageForeignValidator: import("joi").ObjectSchema<import("../models/UserStageModel").UserStageForeign>;
-        UserStageListParamsValidator: import("joi").ObjectSchema<import("../models/UserStageModel").UserStageListParams>;
+        UserStageForeignValidator: import("joi").ObjectSchema<import("..").UserStageForeign>;
+        UserStageListParamsValidator: import("joi").ObjectSchema<import("..").UserStageListParams>;
     };
     readonly UserValidator: {
-        UserPayloadValidator: import("joi").ObjectSchema<import("../models/UserModel").UserPayload>;
-        UserListParamsValidator: import("joi").ObjectSchema<import("../models/UserModel").UserListParams>;
+        UserPayloadValidator: import("joi").ObjectSchema<import("..").UserPayload>;
+        UserListParamsValidator: import("joi").ObjectSchema<import("..").UserListParams>;
     };
 };
 export { ChallengeValidator, QrValidator, StageValidator, TriviaValidator, UserChallengeValidator, UserPublicValidator, UserStageValidator, UserValidator, };

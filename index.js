@@ -1,42 +1,84 @@
-"use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+'use strict';
 
-// _src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  default: () => index_default,
-  mongoose: () => import_mongoose.default
+var mongoose = require('mongoose');
+
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
+
+var mongoose__default = /*#__PURE__*/_interopDefault(mongoose);
+
+// _src/helpers/types/index.ts
+var PUBLISHING_STATUS = {
+  Draft: "draft",
+  Publish: "publish"
+};
+
+// _src/types/challenge/index.ts
+var CHALLENGE_STATUS = PUBLISHING_STATUS;
+var CHALLENGE_TYPES = {
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
+
+// _src/types/photo-hunt/index.ts
+var PHOTO_HUNT_STATUS = PUBLISHING_STATUS;
+
+// _src/types/qr/index.ts
+var QR_STATUS = PUBLISHING_STATUS;
+var QR_CONTENT_TYPES = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
+
+// _src/types/stage/index.ts
+var STAGE_STATUS = PUBLISHING_STATUS;
+
+// _src/types/user/index.ts
+var UserRole = /* @__PURE__ */ ((UserRole2) => {
+  UserRole2["Admin"] = "admin";
+  UserRole2["Private"] = "private";
+  UserRole2["Public"] = "public";
+  return UserRole2;
+})(UserRole || {});
+
+// _src/types/user-challenge/index.ts
+var USER_CHALLENGE_STATUS = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
+
+// _src/types/user-public/index.ts
+var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
+  UserPublicGender2["Male"] = "male";
+  UserPublicGender2["Female"] = "female";
+  UserPublicGender2["Panda"] = "panda";
+  return UserPublicGender2;
+})(UserPublicGender || {});
+
+// _src/types/user-stage/index.ts
+var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
+  UserStageStatus2["OnGoing"] = "ongoing";
+  UserStageStatus2["Completed"] = "completed";
+  UserStageStatus2["End"] = "end";
+  return UserStageStatus2;
+})(UserStageStatus || {});
+
+Object.defineProperty(exports, "mongoose", {
+  enumerable: true,
+  get: function () { return mongoose__default.default; }
 });
-module.exports = __toCommonJS(index_exports);
-var import_mongoose = __toESM(require("mongoose"));
-var index_default = { mongoose: import_mongoose.default };
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  mongoose
-});
+exports.CHALLENGE_STATUS = CHALLENGE_STATUS;
+exports.CHALLENGE_TYPES = CHALLENGE_TYPES;
+exports.PHOTO_HUNT_STATUS = PHOTO_HUNT_STATUS;
+exports.PUBLISHING_STATUS = PUBLISHING_STATUS;
+exports.QR_CONTENT_TYPES = QR_CONTENT_TYPES;
+exports.QR_STATUS = QR_STATUS;
+exports.STAGE_STATUS = STAGE_STATUS;
+exports.USER_CHALLENGE_STATUS = USER_CHALLENGE_STATUS;
+exports.UserPublicGender = UserPublicGender;
+exports.UserRole = UserRole;
+exports.UserStageStatus = UserStageStatus;

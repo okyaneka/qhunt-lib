@@ -1,13 +1,11 @@
-// _src/helpers/validator/index.ts
-import Joi2 from "joi";
+import Joi from 'joi';
 
-// _src/helpers/schema/index.ts
-import Joi from "joi";
+// _src/helpers/validator/index.ts
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
-  if (option?.allow !== void 0) v = v.allow(option.allow);
-  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
+  if (option?.allow !== undefined) v = v.allow(option.allow);
+  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
   return v;
 };
 var string = (option) => createValidator(Joi.string().trim(), option);
@@ -35,8 +33,8 @@ var schema_default = schema;
 
 // _src/helpers/validator/index.ts
 var PeriodeValidator = schema_default.generate({
-  startDate: Joi2.date().required(),
-  endDate: Joi2.date().required().greater(Joi2.ref("startDate"))
+  startDate: Joi.date().required(),
+  endDate: Joi.date().required().greater(Joi.ref("startDate"))
 });
 var DefaultListParamsFields = {
   page: schema_default.number({ defaultValue: 1 }),
@@ -53,9 +51,5 @@ var validator = {
   FeedbackValidator
 };
 var validator_default = validator;
-export {
-  DefaultListParamsFields,
-  FeedbackValidator,
-  PeriodeValidator,
-  validator_default as default
-};
+
+export { DefaultListParamsFields, FeedbackValidator, PeriodeValidator, validator_default as default };

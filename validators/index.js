@@ -1,72 +1,34 @@
-"use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+'use strict';
 
-// _src/validators/index.ts
-var validators_exports = {};
-__export(validators_exports, {
-  ChallengeValidator: () => ChallengeValidator_default,
-  QrValidator: () => QrValidator_default,
-  StageValidator: () => StageValidator_default,
-  TriviaValidator: () => TriviaValidator_default,
-  UserChallengeValidator: () => UserChallengeValidator_default,
-  UserPublicValidator: () => UserPublicValidator_default,
-  UserStageValidator: () => UserStageValidator_default,
-  UserValidator: () => UserValidator_default,
-  default: () => validators_default
-});
-module.exports = __toCommonJS(validators_exports);
+Object.defineProperty(exports, '__esModule', { value: true });
 
-// _src/validators/ChallengeValidator/index.ts
-var import_joi3 = __toESM(require("joi"));
+var Joi = require('joi');
 
-// _src/helpers/schema/index.ts
-var import_joi = __toESM(require("joi"));
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
+
+var Joi__default = /*#__PURE__*/_interopDefault(Joi);
+
+// _src/validators/challenge/index.ts
 var createValidator = (base, option) => {
   let v = base;
   if (option?.required) v = v.required();
-  if (option?.allow !== void 0) v = v.allow(option.allow);
-  if (option?.defaultValue !== void 0) v = v.default(option.defaultValue);
+  if (option?.allow !== undefined) v = v.allow(option.allow);
+  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
   return v;
 };
-var string = (option) => createValidator(import_joi.default.string().trim(), option);
-var number = (option) => createValidator(import_joi.default.number(), option);
-var boolean = (option) => createValidator(import_joi.default.boolean(), option);
+var string = (option) => createValidator(Joi__default.default.string().trim(), option);
+var number = (option) => createValidator(Joi__default.default.number(), option);
+var boolean = (option) => createValidator(Joi__default.default.boolean(), option);
 var array = (item, options) => {
   let v = createValidator(
-    import_joi.default.array().items(item)
+    Joi__default.default.array().items(item)
   );
   if (options?.required) v = v.min(1);
   if (options?.defaultValue) v.default(options.defaultValue);
   if (options?.allow) v.allow(options.allow);
   return v;
 };
-var generate = (fields) => import_joi.default.object(fields);
+var generate = (fields) => Joi__default.default.object(fields);
 var schema = {
   createValidator,
   string,
@@ -77,121 +39,58 @@ var schema = {
 };
 var schema_default = schema;
 
-// _src/models/ChallengeModel/index.ts
-var import_mongoose3 = require("mongoose");
-
-// _src/helpers/common/index.ts
-var import_deepmerge = __toESM(require("deepmerge"));
-
-// _src/helpers/db/index.ts
-var import_mongoose = require("mongoose");
-
-// _src/helpers/model/index.ts
-var import_mongoose2 = require("mongoose");
-var IdNameSchema = new import_mongoose2.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new import_mongoose2.Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
-var FeedbackSchema = new import_mongoose2.Schema(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" }
-  },
-  { _id: false }
-);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-
-// _src/helpers/qrcode/index.ts
-var import_browser = require("@zxing/browser");
-
 // _src/helpers/types/index.ts
-var PublishingStatusValues = {
+var PUBLISHING_STATUS = {
   Draft: "draft",
   Publish: "publish"
 };
 
-// _src/models/ChallengeModel/types.ts
-var ChallengeStatusValues = PublishingStatusValues;
-var ChallengeTypeValues = {
+// _src/types/challenge/index.ts
+var CHALLENGE_STATUS = PUBLISHING_STATUS;
+var CHALLENGE_TYPES = {
   Trivia: "trivia",
   PhotoHunt: "photohunt"
 };
 
-// _src/models/ChallengeModel/index.ts
-var ChallengeSettingsSchema = new import_mongoose3.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(ChallengeTypeValues),
-      required: true
-    },
-    duration: { type: Number },
-    clue: { type: String },
-    feedback: { type: FeedbackSchema }
-  },
-  { _id: false, versionKey: false }
-);
-var ChallengeSettingsForeignSchema = new import_mongoose3.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(ChallengeTypeValues),
-      required: true
-    },
-    duration: { type: Number }
-  },
-  { _id: false }
-);
-var ChallengeForeignSchema = new import_mongoose3.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true },
-    storyline: { type: [String], required: true },
-    order: { type: Number, default: null }
-  },
-  { _id: false }
-);
-var ChallengeSchema = new import_mongoose3.Schema(
-  {
-    name: { type: String, required: true },
-    stage: { type: IdNameSchema, default: null },
-    storyline: { type: [String] },
-    status: {
-      type: String,
-      enum: Object.values(ChallengeStatusValues),
-      default: ChallengeStatusValues.Draft
-    },
-    order: { type: Number, default: null },
-    settings: { type: ChallengeSettingsSchema, default: null },
-    contents: { type: [String] },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-ChallengeSchema.set("toJSON", ToObject);
-ChallengeSchema.set("toObject", ToObject);
-var ChallengeModel = import_mongoose3.models.Challenge || (0, import_mongoose3.model)("Challenge", ChallengeSchema);
+// _src/types/qr/index.ts
+var QR_STATUS = PUBLISHING_STATUS;
+var QR_CONTENT_TYPES = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
 
-// _src/helpers/validator/index.ts
-var import_joi2 = __toESM(require("joi"));
+// _src/types/stage/index.ts
+var STAGE_STATUS = PUBLISHING_STATUS;
+
+// _src/types/user/index.ts
+var UserRole = /* @__PURE__ */ ((UserRole2) => {
+  UserRole2["Admin"] = "admin";
+  UserRole2["Private"] = "private";
+  UserRole2["Public"] = "public";
+  return UserRole2;
+})(UserRole || {});
+
+// _src/types/user-challenge/index.ts
+var USER_CHALLENGE_STATUS = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
+
+// _src/types/user-stage/index.ts
+var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
+  UserStageStatus2["OnGoing"] = "ongoing";
+  UserStageStatus2["Completed"] = "completed";
+  UserStageStatus2["End"] = "end";
+  return UserStageStatus2;
+})(UserStageStatus || {});
 var PeriodeValidator = schema_default.generate({
-  startDate: import_joi2.default.date().required(),
-  endDate: import_joi2.default.date().required().greater(import_joi2.default.ref("startDate"))
+  startDate: Joi__default.default.date().required(),
+  endDate: Joi__default.default.date().required().greater(Joi__default.default.ref("startDate"))
 });
 var DefaultListParamsFields = {
   page: schema_default.number({ defaultValue: 1 }),
@@ -203,33 +102,33 @@ var FeedbackValidator = schema_default.generate({
   negative: schema_default.string({ allow: "", defaultValue: "" })
 }).default({ positive: "", negative: "" });
 
-// _src/validators/ChallengeValidator/index.ts
+// _src/validators/challenge/index.ts
 var ChallengeListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  type: schema_default.string().valid(...Object.values(ChallengeTypeValues)),
+  type: schema_default.string().valid(...Object.values(CHALLENGE_TYPES)),
   stageId: schema_default.string().allow(null, "")
 });
 var ChallengeSettingsValidator = schema_default.generate({
   clue: schema_default.string({ defaultValue: "" }),
   duration: schema_default.number({ defaultValue: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeTypeValues)),
+  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES)),
   feedback: FeedbackValidator
 });
 var ChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
   order: schema_default.number({ defaultValue: null }),
-  storyline: schema_default.array(import_joi3.default.string(), { defaultValue: [] })
+  storyline: schema_default.array(Joi__default.default.string(), { defaultValue: [] })
 });
 var ChallengeSettingsForeignValidator = schema_default.generate({
   duration: schema_default.number({ allow: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(ChallengeTypeValues))
+  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES))
 });
 var ChallengePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
   storyline: schema_default.array(schema_default.string()).default([]),
   stageId: schema_default.string().allow(null, ""),
-  status: schema_default.string({ required: true, defaultValue: ChallengeStatusValues.Draft }).valid(...Object.values(ChallengeStatusValues)),
+  status: schema_default.string({ required: true, defaultValue: CHALLENGE_STATUS.Draft }).valid(...Object.values(CHALLENGE_STATUS)),
   settings: ChallengeSettingsValidator.required()
 });
 var ChallengeValidator = {
@@ -239,76 +138,11 @@ var ChallengeValidator = {
   ChallengeSettingsForeignValidator,
   ChallengeSettingsValidator
 };
-var ChallengeValidator_default = ChallengeValidator;
-
-// _src/validators/QrValidator/index.ts
-var import_joi4 = __toESM(require("joi"));
-
-// _src/models/QrModel/index.ts
-var import_mongoose4 = require("mongoose");
-
-// _src/models/QrModel/types.ts
-var QrStatusValues = PublishingStatusValues;
-var QrContentTypeValues = {
-  Stage: "stage",
-  Challenge: "challenge",
-  Trivia: "trivia",
-  PhotoHunt: "photohunt"
-};
-
-// _src/models/QrModel/index.ts
-var QrForeignSchema = new import_mongoose4.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new import_mongoose4.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(QrContentTypeValues),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new import_mongoose4.Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new import_mongoose4.Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QrStatusValues),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-var QrModel = import_mongoose4.models.Qr || (0, import_mongoose4.model)("Qr", QrSchema);
-
-// _src/validators/QrValidator/index.ts
+var challenge_default = ChallengeValidator;
 var QrListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
   code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QrStatusValues)),
+  status: schema_default.string({ allow: "" }).valid(...Object.values(QR_STATUS)),
   hasContent: schema_default.boolean({ defaultValue: null })
 });
 var QrGeneratePayloadValidator = schema_default.generate({
@@ -316,7 +150,7 @@ var QrGeneratePayloadValidator = schema_default.generate({
 });
 var QrContentValidator = schema_default.generate({
   refId: schema_default.string({ required: true }),
-  type: schema_default.string({ required: true }).valid(...Object.values(QrContentTypeValues))
+  type: schema_default.string({ required: true }).valid(...Object.values(QR_CONTENT_TYPES))
 });
 var QrLocationValidator = schema_default.generate({
   label: schema_default.string({ required: true, allow: "" }),
@@ -324,12 +158,12 @@ var QrLocationValidator = schema_default.generate({
   latitude: schema_default.number({ required: true })
 });
 var QrUpdatePayloadValidator = schema_default.generate({
-  status: schema_default.string({ required: true }).valid(...Object.values(QrStatusValues)),
+  status: schema_default.string({ required: true }).valid(...Object.values(QR_STATUS)),
   content: QrContentValidator.allow(null).default(null),
   location: QrLocationValidator.allow(null).default(null)
 });
 var QrDeleteBulkPayloadValidator = schema_default.generate({
-  ids: schema_default.array(import_joi4.default.string(), { required: true })
+  ids: schema_default.array(Joi__default.default.string(), { required: true })
 });
 var QrValidator = {
   QrListParamsValidator,
@@ -337,59 +171,7 @@ var QrValidator = {
   QrUpdatePayloadValidator,
   QrDeleteBulkPayloadValidator
 };
-var QrValidator_default = QrValidator;
-
-// _src/validators/StageValidator/index.ts
-var import_joi5 = __toESM(require("joi"));
-
-// _src/models/StageModel/types.ts
-var StageStatusValues = PublishingStatusValues;
-
-// _src/models/StageModel/index.ts
-var import_mongoose5 = require("mongoose");
-var StageSettingsSchema = new import_mongoose5.Schema(
-  {
-    canDoRandomChallenges: { type: Boolean, default: false },
-    canStartFromChallenges: { type: Boolean, default: false },
-    periode: { type: PeriodSchema, default: null }
-  },
-  { _id: false }
-);
-var StageSettingsForeignSchema = new import_mongoose5.Schema(
-  {
-    periode: { type: PeriodSchema, required: true }
-  },
-  { _id: false }
-);
-var StageForeignSchema = new import_mongoose5.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true },
-    storyline: { type: [String], required: true },
-    settings: { type: StageSettingsForeignSchema, required: true }
-  },
-  { _id: false }
-);
-var StageSchema = new import_mongoose5.Schema(
-  {
-    name: { type: String, required: true },
-    storyline: { type: [String], default: [] },
-    status: {
-      type: String,
-      enum: Object.values(StageStatusValues),
-      default: StageStatusValues.Draft
-    },
-    settings: { type: StageSettingsSchema, required: true },
-    contents: { type: [String], default: [] },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-StageSchema.set("toObject", ToObject);
-StageSchema.set("toJSON", ToObject);
-var StageModel = import_mongoose5.models.Stage || (0, import_mongoose5.model)("Stage", StageSchema);
-
-// _src/validators/StageValidator/index.ts
+var qr_default = QrValidator;
 var StageSettingsValidator = schema_default.generate(
   {
     canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
@@ -399,19 +181,19 @@ var StageSettingsValidator = schema_default.generate(
 );
 var StageListParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(StageStatusValues))
+  status: schema_default.string({ allow: null }).valid(...Object.values(STAGE_STATUS))
 });
 var StagePayloadValidator = schema_default.generate({
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(import_joi5.default.string()).default([]),
-  contents: schema_default.array(import_joi5.default.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(StageStatusValues)),
+  storyline: schema_default.array(Joi__default.default.string()).default([]),
+  contents: schema_default.array(Joi__default.default.string()).default([]),
+  status: schema_default.string({ required: true }).valid(...Object.values(STAGE_STATUS)),
   settings: StageSettingsValidator.required()
 });
 var StageForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
-  storyline: schema_default.array(import_joi5.default.string(), { defaultValue: [] }),
+  storyline: schema_default.array(Joi__default.default.string(), { defaultValue: [] }),
   settings: schema_default.generate({
     periode: PeriodeValidator.allow(null)
   })
@@ -422,9 +204,9 @@ var StageValidator = {
   StagePayloadValidator,
   StageForeignValidator
 };
-var StageValidator_default = StageValidator;
+var stage_default = StageValidator;
 
-// _src/validators/TriviaValidator/index.ts
+// _src/validators/trivia/index.ts
 var TriviaOptionValidator = schema_default.generate({
   isCorrect: schema_default.boolean({ defaultValue: false }),
   point: schema_default.number({ defaultValue: 0 }),
@@ -467,193 +249,9 @@ var TriviaValidator = {
   TriviaItemsPayloadValidator,
   TriviaForeignValidator
 };
-var TriviaValidator_default = TriviaValidator;
+var trivia_default = TriviaValidator;
 
-// _src/models/UserChallengeModel/index.ts
-var import_mongoose9 = require("mongoose");
-
-// _src/models/UserChallengeModel/types.ts
-var UserChallengeStatusValues = {
-  Undiscovered: "undiscovered",
-  Discovered: "discovered",
-  OnGoing: "ongoing",
-  Completed: "completed",
-  Failed: "failed"
-};
-
-// _src/models/UserPublicModel/index.ts
-var import_mongoose7 = require("mongoose");
-
-// _src/models/UserPublicModel/types.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
-
-// _src/models/UserModel/index.ts
-var import_mongoose6 = require("mongoose");
-
-// _src/models/UserModel/types.ts
-var UserRole = /* @__PURE__ */ ((UserRole2) => {
-  UserRole2["Admin"] = "admin";
-  UserRole2["Private"] = "private";
-  UserRole2["Public"] = "public";
-  return UserRole2;
-})(UserRole || {});
-
-// _src/models/UserModel/index.ts
-var ToObject2 = {
-  transform: (doc, ret) => {
-    const { _id, __v, password, ...rest } = ret;
-    return { id: _id, ...rest };
-  }
-};
-var UserForeignSchema = new import_mongoose6.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, default: "" }
-  },
-  { _id: false }
-);
-var UserSchema = new import_mongoose6.Schema(
-  {
-    name: { type: String, default: "" },
-    role: { type: String, enum: Object.values(UserRole) },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-UserSchema.set("toJSON", ToObject2);
-UserSchema.set("toObject", ToObject2);
-var UserModel = import_mongoose6.models.User || (0, import_mongoose6.model)("User", UserSchema);
-
-// _src/models/UserPublicModel/index.ts
-var UserPublicForeignSchema = new import_mongoose7.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true },
-    name: { type: String }
-  },
-  { _id: false }
-);
-var UserPublicSchema = new import_mongoose7.Schema(
-  {
-    user: { type: UserForeignSchema, default: null },
-    code: { type: String, required: true },
-    name: { type: String, default: "" },
-    dob: { type: Date, default: null },
-    gender: {
-      type: String,
-      enum: Object.values(UserPublicGender),
-      default: null
-    },
-    phone: { type: String, default: "" },
-    lastAccessedAt: { type: Date, default: Date.now() },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-UserPublicSchema.set("toJSON", ToObject);
-UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = import_mongoose7.models.UserPublic || (0, import_mongoose7.model)("UserPublic", UserPublicSchema, "usersPublic");
-
-// _src/models/UserStageModel/index.ts
-var import_mongoose8 = require("mongoose");
-
-// _src/models/UserStageModel/types.ts
-var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
-  UserStageStatus2["OnGoing"] = "ongoing";
-  UserStageStatus2["Completed"] = "completed";
-  UserStageStatus2["End"] = "end";
-  return UserStageStatus2;
-})(UserStageStatus || {});
-
-// _src/models/UserStageModel/index.ts
-var UserStageForeignSchema = new import_mongoose8.Schema(
-  {
-    id: { type: String, required: true },
-    stageId: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false }
-);
-var UserStageResultSchema = new import_mongoose8.Schema(
-  {
-    baseScore: { type: Number, required: true },
-    challengeBonus: { type: Number, required: true },
-    bonus: { type: Number, required: true },
-    totalScore: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var UserStageSchema = new import_mongoose8.Schema(
-  {
-    stage: { type: StageForeignSchema, required: true },
-    userPublic: { type: UserPublicForeignSchema, required: true },
-    status: {
-      type: String,
-      enum: Object.values(UserStageStatus),
-      default: "ongoing" /* OnGoing */
-    },
-    results: { type: UserStageResultSchema, default: null },
-    contents: { type: [String], default: [] }
-  },
-  { timestamps: true }
-);
-UserStageSchema.set("toJSON", ToObject);
-UserStageSchema.set("toObject", ToObject);
-var UserStageModel = import_mongoose8.models.UserStage || (0, import_mongoose8.model)("UserStage", UserStageSchema, "usersStage");
-
-// _src/models/UserChallengeModel/index.ts
-var UserChallengeForeignSchema = new import_mongoose9.Schema(
-  {
-    id: { type: String, required: true },
-    challengeId: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false }
-);
-var UserChallengeResultSchema = new import_mongoose9.Schema(
-  {
-    baseScore: { type: Number, required: true },
-    bonus: { type: Number, required: true },
-    contentBonus: { type: Number, required: true },
-    totalCorrect: { type: Number, required: true },
-    totalScore: { type: Number, required: true },
-    startAt: { type: Date, default: Date.now() },
-    endAt: { type: Date, default: null },
-    timeUsed: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var UserChallengeSchema = new import_mongoose9.Schema(
-  {
-    userStage: { type: UserStageForeignSchema, default: null },
-    challenge: { type: ChallengeForeignSchema, required: true },
-    settings: { type: ChallengeSettingsForeignSchema, required: true },
-    userPublic: { type: UserPublicForeignSchema, required: true },
-    status: {
-      type: String,
-      enum: Object.values(UserChallengeStatusValues),
-      default: UserChallengeStatusValues.Undiscovered
-    },
-    contents: { type: [String], default: [] },
-    results: { type: UserChallengeResultSchema, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-UserChallengeSchema.set("toJSON", ToObject);
-UserChallengeSchema.set("toObject", ToObject);
-var UserChallengeModel = import_mongoose9.models.UserChallenge || (0, import_mongoose9.model)("UserChallenge", UserChallengeSchema, "usersChallenge");
-
-// _src/validators/UserChallengeValidator/index.ts
+// _src/validators/user-challenge/index.ts
 var UserChallengeForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   challengeId: schema_default.string({ required: true }),
@@ -662,24 +260,24 @@ var UserChallengeForeignValidator = schema_default.generate({
 var UserChallengeParamsValidator = schema_default.generate({
   ...DefaultListParamsFields,
   userStageId: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(UserChallengeStatusValues))
+  status: schema_default.string({ allow: "" }).valid(...Object.values(USER_CHALLENGE_STATUS))
 });
 var UserChallengeValidator = {
   UserChallengeForeignValidator,
   UserChallengeParamsValidator
 };
-var UserChallengeValidator_default = UserChallengeValidator;
+var user_challenge_default = UserChallengeValidator;
 
-// _src/validators/UserPublicValidator/index.ts
+// _src/validators/user-public/index.ts
 var UserPublicForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   code: schema_default.string({ required: true }),
   name: schema_default.string({ required: true, allow: "" })
 });
 var UserPublicValidator = { UserPublicForeignValidator };
-var UserPublicValidator_default = UserPublicValidator;
+var user_public_default = UserPublicValidator;
 
-// _src/validators/UserStageValidator/index.ts
+// _src/validators/user-stage/index.ts
 var UserStageForeignValidator = schema_default.generate({
   id: schema_default.string({ required: true }),
   stageId: schema_default.string({ required: true }),
@@ -693,9 +291,9 @@ var UserStageValidator = {
   UserStageForeignValidator,
   UserStageListParamsValidator
 };
-var UserStageValidator_default = UserStageValidator;
+var user_stage_default = UserStageValidator;
 
-// _src/validators/UserValidator/index.ts
+// _src/validators/user/index.ts
 var UserPayloadValidator = schema_default.generate({
   email: schema_default.string({ required: true }).email(),
   password: schema_default.string({ required: true })
@@ -708,28 +306,27 @@ var UserValidator = {
   UserPayloadValidator,
   UserListParamsValidator
 };
-var UserValidator_default = UserValidator;
+var user_default = UserValidator;
 
 // _src/validators/index.ts
 var validators = {
-  ChallengeValidator: ChallengeValidator_default,
-  QrValidator: QrValidator_default,
-  StageValidator: StageValidator_default,
-  TriviaValidator: TriviaValidator_default,
-  UserChallengeValidator: UserChallengeValidator_default,
-  UserPublicValidator: UserPublicValidator_default,
-  UserStageValidator: UserStageValidator_default,
-  UserValidator: UserValidator_default
+  ChallengeValidator: challenge_default,
+  QrValidator: qr_default,
+  StageValidator: stage_default,
+  TriviaValidator: trivia_default,
+  UserChallengeValidator: user_challenge_default,
+  UserPublicValidator: user_public_default,
+  UserStageValidator: user_stage_default,
+  UserValidator: user_default
 };
 var validators_default = validators;
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  ChallengeValidator,
-  QrValidator,
-  StageValidator,
-  TriviaValidator,
-  UserChallengeValidator,
-  UserPublicValidator,
-  UserStageValidator,
-  UserValidator
-});
+
+exports.ChallengeValidator = challenge_default;
+exports.QrValidator = qr_default;
+exports.StageValidator = stage_default;
+exports.TriviaValidator = trivia_default;
+exports.UserChallengeValidator = user_challenge_default;
+exports.UserPublicValidator = user_public_default;
+exports.UserStageValidator = user_stage_default;
+exports.UserValidator = user_default;
+exports.default = validators_default;

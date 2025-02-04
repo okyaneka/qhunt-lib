@@ -1,5 +1,6 @@
+import { startSession } from 'mongoose';
+
 // _src/helpers/db/index.ts
-import { startSession } from "mongoose";
 var transaction = async (operation) => {
   const session = await startSession();
   session.startTransaction();
@@ -15,7 +16,5 @@ var transaction = async (operation) => {
 };
 var db = { transaction };
 var db_default = db;
-export {
-  db_default as default,
-  transaction
-};
+
+export { db_default as default, transaction };
