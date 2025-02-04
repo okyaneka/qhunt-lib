@@ -1,8 +1,10 @@
 {
   "search.exclude": {
+    "index.*": true,
     "helpers/*": true,
     "models/*": true,
     "services/*": true,
+    "types/*": true,
     "validators/*": true
   }
 }

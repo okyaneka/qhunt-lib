@@ -5,7 +5,7 @@
     "dev": "nodemon",
     "build": "pnpm build:dts && pnpm build:js",
     "build:js": "tsup",
-    "build:dts": "tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
+    "build:dts": "rm -rf helpers models services types validators index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
     "test": "jest"
   },
   "keywords": [],
@@ -38,5 +38,6 @@
     "tsconfig-paths": "^4.2.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3"
-  }
+  },
+  "packageManager": "pnpm@8.9.0+sha512.ef8859938e1f0537b9fcf0309044311392f3b38b344176e6cd4fdee21b225524b0ac2a1b08ae2ae2ddd5b3ff4b8ca496d6778e950f3e7c9f555b81325982441c"
 }
