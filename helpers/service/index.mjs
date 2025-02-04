@@ -17,7 +17,5 @@ var list = async (model, page, limit, filters = {}, sort) => {
 };
 var service = { list };
 var service_default = service;
-export {
-  service_default as default,
-  list
-};
+
+export { service_default as default, list };

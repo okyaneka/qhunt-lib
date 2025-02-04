@@ -1,60 +1,60 @@
-import ChallengeModel from "./ChallengeModel";
-import QrModel from "./QrModel";
-import StageModel from "./StageModel";
-import TriviaModel from "./TriviaModel";
-import UserModel from "./UserModel";
-import UserChallengeModel from "./UserChallengeModel";
-import UserPublicModel from "./UserPublicModel";
-import UserStageModel from "./UserStageModel";
-import UserTriviaModel from "./UserTriviaModel";
-import PhotoHuntModel from "./PhotoHuntModel";
+import ChallengeModel from "./challenge";
+import QrModel from "./qr";
+import StageModel from "./stage";
+import TriviaModel from "./trivia";
+import UserModel from "./user";
+import UserChallengeModel from "./user-challenge";
+import UserPublicModel from "./user-public";
+import UserStageModel from "./user-stage";
+import UserTriviaModel from "./user-trivia";
+import PhotoHuntModel from "./photo-hunt";
 declare const models: {
-    readonly ChallengeModel: import("mongoose").Model<import("./ChallengeModel").Challenge, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./ChallengeModel").Challenge> & import("./ChallengeModel").Challenge & {
+    readonly ChallengeModel: import("mongoose").Model<import("..").Challenge, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").Challenge> & import("..").Challenge & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly QrModel: import("mongoose").Model<import("./QrModel").Qr, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./QrModel").Qr> & import("./QrModel").Qr & {
+    readonly QrModel: import("mongoose").Model<import("..").Qr, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").Qr> & import("..").Qr & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly StageModel: import("mongoose").Model<import("./StageModel").Stage, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./StageModel").Stage> & import("./StageModel").Stage & {
+    readonly StageModel: import("mongoose").Model<import("..").Stage, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").Stage> & import("..").Stage & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly TriviaModel: import("mongoose").Model<import("./TriviaModel").Trivia, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./TriviaModel").Trivia> & import("./TriviaModel").Trivia & {
+    readonly TriviaModel: import("mongoose").Model<import("..").Trivia, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").Trivia> & import("..").Trivia & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly PhotoHuntModel: import("mongoose").Model<import("./PhotoHuntModel").PhotoHunt, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./PhotoHuntModel").PhotoHunt> & import("./PhotoHuntModel").PhotoHunt & {
+    readonly PhotoHuntModel: import("mongoose").Model<import("..").PhotoHunt, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").PhotoHunt> & import("..").PhotoHunt & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly UserModel: import("mongoose").Model<import("./UserModel").User, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserModel").User> & import("./UserModel").User & {
+    readonly UserModel: import("mongoose").Model<import("..").User, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").User> & import("..").User & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly UserChallengeModel: import("mongoose").Model<import("./UserChallengeModel").UserChallenge, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserChallengeModel").UserChallenge> & import("./UserChallengeModel").UserChallenge & {
+    readonly UserChallengeModel: import("mongoose").Model<import("..").UserChallenge, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").UserChallenge> & import("..").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly UserPublicModel: import("mongoose").Model<import("./UserPublicModel").UserPublic, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserPublicModel").UserPublic> & import("./UserPublicModel").UserPublic & {
+    readonly UserPublicModel: import("mongoose").Model<import("..").UserPublic, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").UserPublic> & import("..").UserPublic & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly UserStageModel: import("mongoose").Model<import("./UserStageModel").UserStage, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserStageModel").UserStage> & import("./UserStageModel").UserStage & {
+    readonly UserStageModel: import("mongoose").Model<import("..").UserStage, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").UserStage> & import("..").UserStage & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }, any>;
-    readonly UserTriviaModel: import("mongoose").Model<import("./UserTriviaModel").UserTrivia, {}, {}, {}, import("mongoose").Document<unknown, {}, import("./UserTriviaModel").UserTrivia> & import("./UserTriviaModel").UserTrivia & {
+    readonly UserTriviaModel: import("mongoose").Model<import("..").UserTrivia, {}, {}, {}, import("mongoose").Document<unknown, {}, import("..").UserTrivia> & import("..").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;

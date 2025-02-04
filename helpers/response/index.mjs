@@ -23,9 +23,5 @@ var errorValidation = (error2) => {
 };
 var response = { success, error, errorValidation };
 var response_default = response;
-export {
-  response_default as default,
-  error,
-  errorValidation,
-  success
-};
+
+export { response_default as default, error, errorValidation, success };

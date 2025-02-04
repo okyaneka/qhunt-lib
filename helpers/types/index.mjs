@@ -1,8 +1,7 @@
 // _src/helpers/types/index.ts
-var PublishingStatusValues = {
+var PUBLISHING_STATUS = {
   Draft: "draft",
   Publish: "publish"
 };
-export {
-  PublishingStatusValues
-};
+
+export { PUBLISHING_STATUS };

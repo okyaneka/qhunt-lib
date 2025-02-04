@@ -1,5 +1,6 @@
+import { Schema } from 'mongoose';
+
 // _src/helpers/model/index.ts
-import { Schema } from "mongoose";
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -34,10 +35,5 @@ var model = {
   ToObject
 };
 var model_default = model;
-export {
-  FeedbackSchema,
-  IdNameSchema,
-  PeriodSchema,
-  ToObject,
-  model_default as default
-};
+
+export { FeedbackSchema, IdNameSchema, PeriodSchema, ToObject, model_default as default };
