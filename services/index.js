@@ -660,7 +660,9 @@ var create2 = async (payload) => {
     const { stageId, ...value } = payload;
     const stageData = stageId ? await detail(stageId) : null;
     const stage = stageData ? { id: stageData.id, name: stageData.name } : null;
-    const [item] = await challenge_default.create([value], { session });
+    const [item] = await challenge_default.create([{ ...value, stage }], {
+      session
+    });
     if (stage) {
       const contents = stageData?.contents || [];
       contents.push(item.id);
