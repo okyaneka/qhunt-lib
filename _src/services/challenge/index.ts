@@ -36,7 +36,9 @@ export const create = async (payload: ChallengePayload) => {
     const stageData = stageId ? await StageDetail(stageId) : null;
     const stage = stageData ? { id: stageData.id, name: stageData.name } : null;
 
-    const [item] = await ChallengeModel.create([value], { session });
+    const [item] = await ChallengeModel.create([{ ...value, stage }], {
+      session,
+    });
 
     if (stage) {
       const contents = stageData?.contents || [];
