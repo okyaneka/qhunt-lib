@@ -73,7 +73,7 @@ const verify = async (
     deletedAt: null,
   });
   if (!item) return null;
-  if (setDiscover)
+  if (item.status == USER_CHALLENGE_STATUS.Undiscovered && setDiscover)
     await UserChallengeModel.updateOne(
       { _id: item.id },
       { $set: { status: USER_CHALLENGE_STATUS.Discovered } }

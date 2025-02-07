@@ -1056,7 +1056,7 @@ var verify7 = async (challengeId, TID, setDiscover) => {
     deletedAt: null
   });
   if (!item) return null;
-  if (setDiscover)
+  if (item.status == USER_CHALLENGE_STATUS.Undiscovered && setDiscover)
     await user_challenge_default.updateOne(
       { _id: item.id },
       { $set: { status: USER_CHALLENGE_STATUS.Discovered } }
