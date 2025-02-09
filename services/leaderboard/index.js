@@ -2,13 +2,9 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var bcryptjs = require('bcryptjs');
-var jsonwebtoken = require('jsonwebtoken');
-require('deepmerge');
 var mongoose = require('mongoose');
-require('@zxing/browser');
-require('joi');
-var cryptoJs = require('crypto-js');
+
+// _src/models/challenge/index.ts
 
 // _src/helpers/types/index.ts
 var PUBLISHING_STATUS = {
@@ -70,21 +66,6 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   UserStageStatus2["End"] = "end";
   return UserStageStatus2;
 })(UserStageStatus || {});
-var transaction = async (operation) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  return await operation(session).then(async (res) => {
-    await session.commitTransaction();
-    return res;
-  }).catch(async (err) => {
-    await session.abortTransaction();
-    throw err;
-  }).finally(() => {
-    session.endSession();
-  });
-};
-var db = { transaction };
-var db_default = db;
 var IdNameSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -112,6 +93,8 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+
+// _src/models/challenge/index.ts
 var ChallengeSettingsSchema = new mongoose.Schema(
   {
     type: {
@@ -316,8 +299,7 @@ var UserSchema = new mongoose.Schema(
 );
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
-var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
-var user_default = UserModel;
+mongoose.models.User || mongoose.model("User", UserSchema);
 var UserPublicForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -345,8 +327,7 @@ var UserPublicSchema = new mongoose.Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
-var user_public_default = UserPublicModel;
+mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
 var UserStageForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -380,7 +361,8 @@ var UserStageSchema = new mongoose.Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-mongoose.models.UserStage || mongoose.model("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = mongoose.models.UserStage || mongoose.model("UserStage", UserStageSchema, "usersStage");
+var user_stage_default = UserStageModel;
 
 // _src/models/user-challenge/index.ts
 var UserChallengeForeignSchema = new mongoose.Schema(
@@ -477,116 +459,35 @@ var PhotoHuntSchema = new mongoose.Schema(
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var verify = async (value) => {
-  if (!value) throw new Error("token is required");
-  const userPublic = await user_public_default.findOneAndUpdate(
+
+// _src/services/leaderboard/index.ts
+var stage = async (stageId, TID, limit) => {
+  const filter = { "stage.id": stageId, results: { $ne: null } };
+  const pipelines = [
+    { $match: filter },
     {
-      $or: [{ "user.id": value }, { code: value }],
-      deletedAt: null
+      $setWindowFields: {
+        sortBy: { "results.totalScore": -1 },
+        output: { rank: { $rank: {} } }
+      }
     },
-    { lastAccessedAt: /* @__PURE__ */ new Date() }
-  );
-  if (!userPublic) throw new Error("invalid user");
-  return userPublic.toObject();
-};
-var setup = async (userId) => {
-  const timestamp = Date.now();
-  const salt = cryptoJs.lib.WordArray.random(4).toString(cryptoJs.enc.Hex);
-  const code = cryptoJs.SHA256(`${timestamp}${salt}`).toString(cryptoJs.enc.Hex);
-  const payload = { code };
-  if (userId) {
-    const userPublic = await user_public_default.findOne({
-      "user.id": userId,
-      deletedAt: null
-    });
-    if (userPublic) return userPublic.toObject();
-    const user2 = await user_default.findOne({ _id: userId, deletedAt: null });
-    if (user2) payload.user = { id: user2.id, name: user2.name };
-  }
-  const user = await user_public_default.create(payload);
-  return user.toObject();
-};
-
-// _src/services/user/index.ts
-var register = async (payload, code) => {
-  return await db_default.transaction(async (session) => {
-    const email = payload.email;
-    const userExists = await user_default.findOne({ email }).session(session);
-    if (userExists) throw new Error("email taken");
-    const password = await bcryptjs.hash(payload.password, 10);
-    const [user] = await user_default.create(
-      [
-        {
-          email,
-          password,
-          role: "public" /* Public */
-        }
-      ],
-      { session }
-    );
-    await user_public_default.findOneAndUpdate(
-      { code },
-      { $set: { user: { id: user._id, name: user.name } } },
-      { new: true, session }
-    );
-    return user;
-  });
-};
-var login = async (payload, secret) => {
-  const email = payload.email;
-  const user = await user_default.findOne({ email });
-  if (!user) throw new Error("user not found");
-  const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
-  if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await user_public_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  ) || await setup(user.id);
-  const token = jsonwebtoken.sign({ id: user._id }, secret, {
-    expiresIn: 30 * 24 * 60 * 60
-  });
-  const { _id: id, name } = user;
-  return { id, name, email, TID: userPublic.code, token };
-};
-var profile = async (bearer) => {
-};
-var list = async (params) => {
-};
-var create = async (payload) => {
-};
-var detail = async (id) => {
-  const user = await user_default.findOne({ _id: id, deletedAt: null }).catch(
-    () => {
+    {
+      $project: {
+        rank: 1,
+        userPublic: 1,
+        stage: 1,
+        totalScore: "$results.totalScore"
+      }
     }
-  );
-  if (!user) throw new Error("user not found");
-  const meta = await verify(user.id);
-  return {
-    ...user.toObject(),
-    meta
-  };
+  ];
+  if (limit) pipelines.splice(2, 0, { $limit: limit });
+  else if (TID) pipelines.splice(2, 0, { $match: { "userPublic.code": TID } });
+  const total = await user_stage_default.countDocuments(filter);
+  const ranks = await user_stage_default.aggregate(pipelines);
+  return { ranks, total };
 };
-var update = async (id, payload) => {
-};
-var _delete = async (id) => {
-};
-var UserService = {
-  register,
-  login,
-  profile,
-  list,
-  create,
-  detail,
-  update,
-  delete: _delete
-};
-var user_default2 = UserService;
+var LeaderboardService = { stage };
+var leaderboard_default = LeaderboardService;
 
-exports._delete = _delete;
-exports.create = create;
-exports.default = user_default2;
-exports.detail = detail;
-exports.list = list;
-exports.login = login;
-exports.profile = profile;
-exports.register = register;
-exports.update = update;
+exports.default = leaderboard_default;
+exports.stage = stage;

@@ -6,6 +6,7 @@ import UserChallengeValidator from "./user-challenge";
 import UserPublicValidator from "./user-public";
 import UserStageValidator from "./user-stage";
 import UserValidator from "./user";
+import LeaderboardValidator from "./leaderboard";
 declare const validators: {
     readonly ChallengeValidator: {
         ChallengeForeignValidator: import("joi").ObjectSchema<import("..").ChallengeForeign>;
@@ -48,7 +49,10 @@ declare const validators: {
         UserPayloadValidator: import("joi").ObjectSchema<import("..").UserPayload>;
         UserListParamsValidator: import("joi").ObjectSchema<import("..").UserListParams>;
     };
+    readonly LeaderboardValidator: {
+        readonly LeaderboardParamsValidator: import("joi").ObjectSchema<import("..").LeaderboardParams>;
+    };
 };
-export { ChallengeValidator, QrValidator, StageValidator, TriviaValidator, UserChallengeValidator, UserPublicValidator, UserStageValidator, UserValidator, };
+export { ChallengeValidator, QrValidator, StageValidator, TriviaValidator, UserChallengeValidator, UserPublicValidator, UserStageValidator, UserValidator, LeaderboardValidator, };
 export default validators;
 //# sourceMappingURL=index.d.ts.map

@@ -1,4 +1,7 @@
 import Joi from 'joi';
+import 'deepmerge';
+import { Schema } from 'mongoose';
+import '@zxing/browser';
 
 // _src/validators/challenge/index.ts
 var createValidator = (base, option) => {
@@ -80,6 +83,12 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   UserStageStatus2["End"] = "end";
   return UserStageStatus2;
 })(UserStageStatus || {});
+
+// _src/types/leaderboard/index.ts
+var LEADERBOARD_MODE = {
+  Ranks: "ranks",
+  Current: "current"
+};
 var PeriodeValidator = schema_default.generate({
   startDate: Joi.date().required(),
   endDate: Joi.date().required().greater(Joi.ref("startDate"))
@@ -299,6 +308,35 @@ var UserValidator = {
   UserListParamsValidator
 };
 var user_default = UserValidator;
+new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+new Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+new Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+
+// _src/validators/leaderboard/index.ts
+var LeaderboardParamsValidator = schema_default.generate({
+  stageId: schema_default.string({ required: true }),
+  mode: schema_default.string({ required: true }).valid(...Object.values(LEADERBOARD_MODE))
+});
+var LeaderboardValidator = { LeaderboardParamsValidator };
+var leaderboard_default = LeaderboardValidator;
 
 // _src/validators/index.ts
 var validators = {
@@ -309,8 +347,9 @@ var validators = {
   UserChallengeValidator: user_challenge_default,
   UserPublicValidator: user_public_default,
   UserStageValidator: user_stage_default,
-  UserValidator: user_default
+  UserValidator: user_default,
+  LeaderboardValidator: leaderboard_default
 };
 var validators_default = validators;
 
-export { challenge_default as ChallengeValidator, qr_default as QrValidator, stage_default as StageValidator, trivia_default as TriviaValidator, user_challenge_default as UserChallengeValidator, user_public_default as UserPublicValidator, user_stage_default as UserStageValidator, user_default as UserValidator, validators_default as default };
+export { challenge_default as ChallengeValidator, leaderboard_default as LeaderboardValidator, qr_default as QrValidator, stage_default as StageValidator, trivia_default as TriviaValidator, user_challenge_default as UserChallengeValidator, user_public_default as UserPublicValidator, user_stage_default as UserStageValidator, user_default as UserValidator, validators_default as default };

@@ -9,6 +9,7 @@ import UserPublicService from "./user-public";
 import UserService from "./user";
 import UserStageService from "./user-stage";
 import UserTriviaService from "./user-trivia";
+import LeaderboardService from "./leaderboard";
 declare const services: {
     readonly ChallengeService: {
         readonly list: (params: import("..").ChallengeListParams) => Promise<{
@@ -275,7 +276,10 @@ declare const services: {
         readonly submitEmpties: (userChallengeId: string, TID: string) => Promise<import("mongoose").UpdateWriteOpResult>;
         readonly summary: (userChallengeId: string, TID: string) => Promise<import("..").UserPhotoHuntSummary>;
     };
+    readonly LeaderboardService: {
+        readonly stage: (stageId: string, TID?: string, limit?: number) => Promise<import("..").LeaderboardData>;
+    };
 };
-export { ChallengeService, PhotoHuntService, QrService, StageService, TriviaService, UserChallengeService, UserPublicService, UserService, UserStageService, UserTriviaService, UserPhotoHuntService, };
+export { ChallengeService, PhotoHuntService, QrService, StageService, TriviaService, UserChallengeService, UserPublicService, UserService, UserStageService, UserTriviaService, UserPhotoHuntService, LeaderboardService, };
 export default services;
 //# sourceMappingURL=index.d.ts.map

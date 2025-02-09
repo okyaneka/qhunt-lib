@@ -460,6 +460,7 @@ models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 
 // _src/services/user-public/index.ts
 var verify = async (value) => {
+  if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],

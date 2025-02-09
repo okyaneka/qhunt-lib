@@ -464,6 +464,7 @@ mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photo
 
 // _src/services/user-public/index.ts
 var verify = async (value) => {
+  if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],

@@ -61,8 +61,15 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   return UserStageStatus2;
 })(UserStageStatus || {});
 
+// _src/types/leaderboard/index.ts
+var LEADERBOARD_MODE = {
+  Ranks: "ranks",
+  Current: "current"
+};
+
 exports.CHALLENGE_STATUS = CHALLENGE_STATUS;
 exports.CHALLENGE_TYPES = CHALLENGE_TYPES;
+exports.LEADERBOARD_MODE = LEADERBOARD_MODE;
 exports.PHOTO_HUNT_STATUS = PHOTO_HUNT_STATUS;
 exports.QR_CONTENT_TYPES = QR_CONTENT_TYPES;
 exports.QR_STATUS = QR_STATUS;

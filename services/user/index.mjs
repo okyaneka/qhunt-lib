@@ -474,6 +474,7 @@ PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var verify = async (value) => {
+  if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
