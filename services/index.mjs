@@ -571,16 +571,16 @@ var create = async (payload) => {
   const contents = await challenge_default.find({
     _id: { $in: payload.contents }
   });
-  const stage = await stage_default.create({
+  const stage2 = await stage_default.create({
     ...payload,
     contents: contents.map((item) => item.id)
   });
   const sync3 = contents.map((item) => {
-    item.stage = { id: stage.id, name: stage.name };
+    item.stage = { id: stage2.id, name: stage2.name };
     return item.save();
   });
   await Promise.all(sync3);
-  return stage.toObject();
+  return stage2.toObject();
 };
 var detail = async (id) => {
   const item = await stage_default.findOne({ _id: id, deletedAt: null });
@@ -590,25 +590,25 @@ var detail = async (id) => {
 var update = async (id, payload) => {
   return await transaction(async (session) => {
     await isUsed(payload.contents, id);
-    const stage = await stage_default.findOne({ _id: id, deletedAt: null });
-    if (!stage) throw new Error("stage not found");
+    const stage2 = await stage_default.findOne({ _id: id, deletedAt: null });
+    if (!stage2) throw new Error("stage not found");
     const contents = (await challenge_default.find({
       _id: { $in: payload.contents },
       deletedAt: null
     })).map((item) => item.id);
     await challenge_default.updateMany(
-      { "stage.id": stage.id },
+      { "stage.id": stage2.id },
       { $set: { stage: null } },
       { session }
     );
     await challenge_default.updateMany(
       { _id: { $in: contents } },
-      { $set: { stage: { id: stage.id, name: stage.name } } },
+      { $set: { stage: { id: stage2.id, name: stage2.name } } },
       { session }
     );
-    Object.assign(stage, { ...payload, contents });
-    await stage.save({ session });
-    return stage.toObject();
+    Object.assign(stage2, { ...payload, contents });
+    await stage2.save({ session });
+    return stage2.toObject();
   });
 };
 var _delete = async (id) => {
@@ -650,11 +650,11 @@ var create2 = async (payload) => {
   return db_default.transaction(async (session) => {
     const { stageId, ...value } = payload;
     const stageData = stageId ? await detail(stageId) : null;
-    const stage = stageData ? { id: stageData.id, name: stageData.name } : null;
-    const [item] = await challenge_default.create([{ ...value, stage }], {
+    const stage2 = stageData ? { id: stageData.id, name: stageData.name } : null;
+    const [item] = await challenge_default.create([{ ...value, stage: stage2 }], {
       session
     });
-    if (stage) {
+    if (stage2) {
       const contents = stageData?.contents || [];
       contents.push(item.id);
       item.order = contents.length;
@@ -696,8 +696,8 @@ var update2 = async (id, payload) => {
       { $set: { contents: oldContent } },
       { session }
     );
-    const stage = newStage ? { id: newStage.id, name: newStage.name } : null;
-    Object.assign(item, value, { stage });
+    const stage2 = newStage ? { id: newStage.id, name: newStage.name } : null;
+    Object.assign(item, value, { stage: stage2 });
     await item.save({ session });
     return item.toObject();
   });
@@ -868,6 +868,7 @@ var verify3 = async (id) => {
 var TriviaService = { detail: detail3, details, sync, verify: verify3 };
 var trivia_default2 = TriviaService;
 var verify4 = async (value) => {
+  if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
@@ -1185,9 +1186,9 @@ var verify5 = async (challengeId, TID, setDiscover) => {
     );
   return item.toObject();
 };
-var init = async (stage, userStage, session) => {
+var init = async (stage2, userStage, session) => {
   const challenges = await challenge_default.find({
-    _id: { $in: stage.contents }
+    _id: { $in: stage2.contents }
   });
   const userPublic = userStage.userPublic;
   const payload = challenges.map((item) => {
@@ -1442,13 +1443,13 @@ var setup5 = async (stageId, TID) => {
       userPublicData,
       { convert: true, abortEarly: false, stripUnknown: true }
     );
-    const stage = await StageForeignValidator.validateAsync(stageData, {
+    const stage2 = await StageForeignValidator.validateAsync(stageData, {
       convert: true,
       abortEarly: false,
       stripUnknown: true
     });
     const [userStageData] = await user_stage_default.create(
-      [{ userPublic, stage }],
+      [{ userPublic, stage: stage2 }],
       { session }
     );
     const contents = await init(stageData, userStageData, session);
@@ -1819,6 +1820,35 @@ var UserService = {
 };
 var user_default2 = UserService;
 
+// _src/services/leaderboard/index.ts
+var stage = async (stageId, TID, limit) => {
+  const filter = { "stage.id": stageId, results: { $ne: null } };
+  const pipelines = [
+    { $match: filter },
+    {
+      $setWindowFields: {
+        sortBy: { "results.totalScore": -1 },
+        output: { rank: { $rank: {} } }
+      }
+    },
+    {
+      $project: {
+        rank: 1,
+        userPublic: 1,
+        stage: 1,
+        totalScore: "$results.totalScore"
+      }
+    }
+  ];
+  if (limit) pipelines.splice(2, 0, { $limit: limit });
+  else if (TID) pipelines.splice(2, 0, { $match: { "userPublic.code": TID } });
+  const total = await user_stage_default.countDocuments(filter);
+  const ranks = await user_stage_default.aggregate(pipelines);
+  return { ranks, total };
+};
+var LeaderboardService = { stage };
+var leaderboard_default = LeaderboardService;
+
 // _src/services/index.ts
 var services3 = {
   ChallengeService: challenge_default2,
@@ -1831,8 +1861,9 @@ var services3 = {
   UserService: user_default2,
   UserStageService: user_stage_default2,
   UserTriviaService: user_trivia_default2,
-  UserPhotoHuntService: user_photo_hunt_default2
+  UserPhotoHuntService: user_photo_hunt_default2,
+  LeaderboardService: leaderboard_default
 };
 var services_default = services3;
 
-export { challenge_default2 as ChallengeService, photo_hunt_default2 as PhotoHuntService, qr_default2 as QrService, stage_default2 as StageService, trivia_default2 as TriviaService, user_challenge_default2 as UserChallengeService, user_photo_hunt_default2 as UserPhotoHuntService, user_public_default2 as UserPublicService, user_default2 as UserService, user_stage_default2 as UserStageService, user_trivia_default2 as UserTriviaService, services_default as default };
+export { challenge_default2 as ChallengeService, leaderboard_default as LeaderboardService, photo_hunt_default2 as PhotoHuntService, qr_default2 as QrService, stage_default2 as StageService, trivia_default2 as TriviaService, user_challenge_default2 as UserChallengeService, user_photo_hunt_default2 as UserPhotoHuntService, user_public_default2 as UserPublicService, user_default2 as UserService, user_stage_default2 as UserStageService, user_trivia_default2 as UserTriviaService, services_default as default };

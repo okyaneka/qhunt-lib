@@ -646,6 +646,7 @@ var verify2 = async (id) => {
   return item.toObject();
 };
 var verify3 = async (value) => {
+  if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],

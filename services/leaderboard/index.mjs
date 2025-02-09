@@ -1,14 +1,6 @@
-'use strict';
+import { Schema, models, model } from 'mongoose';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
-var bcryptjs = require('bcryptjs');
-var jsonwebtoken = require('jsonwebtoken');
-require('deepmerge');
-var mongoose = require('mongoose');
-require('@zxing/browser');
-require('joi');
-var cryptoJs = require('crypto-js');
+// _src/models/challenge/index.ts
 
 // _src/helpers/types/index.ts
 var PUBLISHING_STATUS = {
@@ -70,36 +62,21 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   UserStageStatus2["End"] = "end";
   return UserStageStatus2;
 })(UserStageStatus || {});
-var transaction = async (operation) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  return await operation(session).then(async (res) => {
-    await session.commitTransaction();
-    return res;
-  }).catch(async (err) => {
-    await session.abortTransaction();
-    throw err;
-  }).finally(() => {
-    session.endSession();
-  });
-};
-var db = { transaction };
-var db_default = db;
-var IdNameSchema = new mongoose.Schema(
+var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true }
   },
   { _id: false, versionKey: false }
 );
-var PeriodSchema = new mongoose.Schema(
+var PeriodSchema = new Schema(
   {
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true }
   },
   { _id: false }
 );
-var FeedbackSchema = new mongoose.Schema(
+var FeedbackSchema = new Schema(
   {
     positive: { type: String, default: "" },
     negative: { type: String, default: "" }
@@ -112,7 +89,9 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
-var ChallengeSettingsSchema = new mongoose.Schema(
+
+// _src/models/challenge/index.ts
+var ChallengeSettingsSchema = new Schema(
   {
     type: {
       type: String,
@@ -125,7 +104,7 @@ var ChallengeSettingsSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var ChallengeSettingsForeignSchema = new mongoose.Schema(
+var ChallengeSettingsForeignSchema = new Schema(
   {
     type: {
       type: String,
@@ -136,7 +115,7 @@ var ChallengeSettingsForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var ChallengeForeignSchema = new mongoose.Schema(
+var ChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -145,7 +124,7 @@ var ChallengeForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var ChallengeSchema = new mongoose.Schema(
+var ChallengeSchema = new Schema(
   {
     name: { type: String, required: true },
     stage: { type: IdNameSchema, default: null },
@@ -164,15 +143,15 @@ var ChallengeSchema = new mongoose.Schema(
 );
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
-mongoose.models.Challenge || mongoose.model("Challenge", ChallengeSchema);
-var QrForeignSchema = new mongoose.Schema(
+models.Challenge || model("Challenge", ChallengeSchema);
+var QrForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true }
   },
   { _id: false, versionKey: false }
 );
-var QrContentSchema = new mongoose.Schema(
+var QrContentSchema = new Schema(
   {
     type: {
       type: String,
@@ -183,7 +162,7 @@ var QrContentSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrLocationSchema = new mongoose.Schema(
+var QrLocationSchema = new Schema(
   {
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
@@ -191,7 +170,7 @@ var QrLocationSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrSchema = new mongoose.Schema(
+var QrSchema = new Schema(
   {
     code: { type: String, required: true, unique: true, index: true },
     status: {
@@ -210,8 +189,8 @@ var QrSchema = new mongoose.Schema(
 );
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
-mongoose.models.Qr || mongoose.model("Qr", QrSchema);
-var StageSettingsSchema = new mongoose.Schema(
+models.Qr || model("Qr", QrSchema);
+var StageSettingsSchema = new Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -219,13 +198,13 @@ var StageSettingsSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new mongoose.Schema(
+var StageSettingsForeignSchema = new Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new mongoose.Schema(
+var StageForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -234,7 +213,7 @@ var StageForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var StageSchema = new mongoose.Schema(
+var StageSchema = new Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
@@ -251,8 +230,8 @@ var StageSchema = new mongoose.Schema(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-mongoose.models.Stage || mongoose.model("Stage", StageSchema);
-var TriviaOptionSchema = new mongoose.Schema(
+models.Stage || model("Stage", StageSchema);
+var TriviaOptionSchema = new Schema(
   {
     text: { type: String, required: true },
     isCorrect: { type: Boolean, default: false },
@@ -260,13 +239,13 @@ var TriviaOptionSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var TriviaForeignOptionSchema = new mongoose.Schema(
+var TriviaForeignOptionSchema = new Schema(
   {
     text: { type: String, required: true }
   },
   { _id: false }
 );
-var TriviaForeignSchema = new mongoose.Schema(
+var TriviaForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     question: { type: String, required: true },
@@ -275,7 +254,7 @@ var TriviaForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var TriviaSchema = new mongoose.Schema(
+var TriviaSchema = new Schema(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
@@ -288,21 +267,21 @@ var TriviaSchema = new mongoose.Schema(
 );
 TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
-mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
+models.Trivia || model("Trivia", TriviaSchema);
 var ToObject2 = {
   transform: (doc, ret) => {
     const { _id, __v, password, ...rest } = ret;
     return { id: _id, ...rest };
   }
 };
-var UserForeignSchema = new mongoose.Schema(
+var UserForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" }
   },
   { _id: false }
 );
-var UserSchema = new mongoose.Schema(
+var UserSchema = new Schema(
   {
     name: { type: String, default: "" },
     role: { type: String, enum: Object.values(UserRole) },
@@ -316,9 +295,8 @@ var UserSchema = new mongoose.Schema(
 );
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
-var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
-var user_default = UserModel;
-var UserPublicForeignSchema = new mongoose.Schema(
+models.User || model("User", UserSchema);
+var UserPublicForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -326,7 +304,7 @@ var UserPublicForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserPublicSchema = new mongoose.Schema(
+var UserPublicSchema = new Schema(
   {
     user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
@@ -345,9 +323,8 @@ var UserPublicSchema = new mongoose.Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
-var user_public_default = UserPublicModel;
-var UserStageForeignSchema = new mongoose.Schema(
+models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
+var UserStageForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -355,7 +332,7 @@ var UserStageForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserStageResultSchema = new mongoose.Schema(
+var UserStageResultSchema = new Schema(
   {
     baseScore: { type: Number, required: true },
     challengeBonus: { type: Number, required: true },
@@ -364,7 +341,7 @@ var UserStageResultSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserStageSchema = new mongoose.Schema(
+var UserStageSchema = new Schema(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -380,10 +357,11 @@ var UserStageSchema = new mongoose.Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-mongoose.models.UserStage || mongoose.model("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = models.UserStage || model("UserStage", UserStageSchema, "usersStage");
+var user_stage_default = UserStageModel;
 
 // _src/models/user-challenge/index.ts
-var UserChallengeForeignSchema = new mongoose.Schema(
+var UserChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     challengeId: { type: String, required: true },
@@ -391,7 +369,7 @@ var UserChallengeForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserChallengeResultSchema = new mongoose.Schema(
+var UserChallengeResultSchema = new Schema(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
@@ -404,7 +382,7 @@ var UserChallengeResultSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserChallengeSchema = new mongoose.Schema(
+var UserChallengeSchema = new Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
@@ -423,14 +401,14 @@ var UserChallengeSchema = new mongoose.Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
+models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
     return { id: _id.toString(), ...rest };
   }
 };
-var UserTriviaResultSchema = new mongoose.Schema(
+var UserTriviaResultSchema = new Schema(
   {
     answer: { type: String, default: null },
     feedback: { type: String, default: null },
@@ -440,7 +418,7 @@ var UserTriviaResultSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserTriviaSchema = new mongoose.Schema(
+var UserTriviaSchema = new Schema(
   {
     userPublic: { type: UserPublicForeignSchema, required: true },
     userChallenge: { type: UserChallengeForeignSchema, required: true },
@@ -451,15 +429,15 @@ var UserTriviaSchema = new mongoose.Schema(
 );
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
-mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
-new mongoose.Schema(
+models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+new Schema(
   {
     id: { type: String, required: true },
     hint: { type: String, required: true }
   },
   { _id: false }
 );
-var PhotoHuntSchema = new mongoose.Schema(
+var PhotoHuntSchema = new Schema(
   {
     hint: { type: String, default: "" },
     score: { type: Number, default: 0 },
@@ -476,117 +454,35 @@ var PhotoHuntSchema = new mongoose.Schema(
 );
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
-mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var verify = async (value) => {
-  if (!value) throw new Error("token is required");
-  const userPublic = await user_public_default.findOneAndUpdate(
+models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+
+// _src/services/leaderboard/index.ts
+var stage = async (stageId, TID, limit) => {
+  const filter = { "stage.id": stageId, results: { $ne: null } };
+  const pipelines = [
+    { $match: filter },
     {
-      $or: [{ "user.id": value }, { code: value }],
-      deletedAt: null
+      $setWindowFields: {
+        sortBy: { "results.totalScore": -1 },
+        output: { rank: { $rank: {} } }
+      }
     },
-    { lastAccessedAt: /* @__PURE__ */ new Date() }
-  );
-  if (!userPublic) throw new Error("invalid user");
-  return userPublic.toObject();
-};
-var setup = async (userId) => {
-  const timestamp = Date.now();
-  const salt = cryptoJs.lib.WordArray.random(4).toString(cryptoJs.enc.Hex);
-  const code = cryptoJs.SHA256(`${timestamp}${salt}`).toString(cryptoJs.enc.Hex);
-  const payload = { code };
-  if (userId) {
-    const userPublic = await user_public_default.findOne({
-      "user.id": userId,
-      deletedAt: null
-    });
-    if (userPublic) return userPublic.toObject();
-    const user2 = await user_default.findOne({ _id: userId, deletedAt: null });
-    if (user2) payload.user = { id: user2.id, name: user2.name };
-  }
-  const user = await user_public_default.create(payload);
-  return user.toObject();
-};
-
-// _src/services/user/index.ts
-var register = async (payload, code) => {
-  return await db_default.transaction(async (session) => {
-    const email = payload.email;
-    const userExists = await user_default.findOne({ email }).session(session);
-    if (userExists) throw new Error("email taken");
-    const password = await bcryptjs.hash(payload.password, 10);
-    const [user] = await user_default.create(
-      [
-        {
-          email,
-          password,
-          role: "public" /* Public */
-        }
-      ],
-      { session }
-    );
-    await user_public_default.findOneAndUpdate(
-      { code },
-      { $set: { user: { id: user._id, name: user.name } } },
-      { new: true, session }
-    );
-    return user;
-  });
-};
-var login = async (payload, secret) => {
-  const email = payload.email;
-  const user = await user_default.findOne({ email });
-  if (!user) throw new Error("user not found");
-  const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
-  if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await user_public_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  ) || await setup(user.id);
-  const token = jsonwebtoken.sign({ id: user._id }, secret, {
-    expiresIn: 30 * 24 * 60 * 60
-  });
-  const { _id: id, name } = user;
-  return { id, name, email, TID: userPublic.code, token };
-};
-var profile = async (bearer) => {
-};
-var list = async (params) => {
-};
-var create = async (payload) => {
-};
-var detail = async (id) => {
-  const user = await user_default.findOne({ _id: id, deletedAt: null }).catch(
-    () => {
+    {
+      $project: {
+        rank: 1,
+        userPublic: 1,
+        stage: 1,
+        totalScore: "$results.totalScore"
+      }
     }
-  );
-  if (!user) throw new Error("user not found");
-  const meta = await verify(user.id);
-  return {
-    ...user.toObject(),
-    meta
-  };
+  ];
+  if (limit) pipelines.splice(2, 0, { $limit: limit });
+  else if (TID) pipelines.splice(2, 0, { $match: { "userPublic.code": TID } });
+  const total = await user_stage_default.countDocuments(filter);
+  const ranks = await user_stage_default.aggregate(pipelines);
+  return { ranks, total };
 };
-var update = async (id, payload) => {
-};
-var _delete = async (id) => {
-};
-var UserService = {
-  register,
-  login,
-  profile,
-  list,
-  create,
-  detail,
-  update,
-  delete: _delete
-};
-var user_default2 = UserService;
+var LeaderboardService = { stage };
+var leaderboard_default = LeaderboardService;
 
-exports._delete = _delete;
-exports.create = create;
-exports.default = user_default2;
-exports.detail = detail;
-exports.list = list;
-exports.login = login;
-exports.profile = profile;
-exports.register = register;
-exports.update = update;
+export { leaderboard_default as default, stage };

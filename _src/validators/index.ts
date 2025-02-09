@@ -6,6 +6,7 @@ import UserChallengeValidator from "./user-challenge";
 import UserPublicValidator from "./user-public";
 import UserStageValidator from "./user-stage";
 import UserValidator from "./user";
+import LeaderboardValidator from "./leaderboard";
 
 const validators = {
   ChallengeValidator,
@@ -16,6 +17,7 @@ const validators = {
   UserPublicValidator,
   UserStageValidator,
   UserValidator,
+  LeaderboardValidator,
 } as const;
 
 export {
@@ -27,6 +29,7 @@ export {
   UserPublicValidator,
   UserStageValidator,
   UserValidator,
+  LeaderboardValidator,
 };
 
 export default validators;

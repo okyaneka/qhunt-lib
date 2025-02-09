@@ -3,6 +3,9 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var Joi = require('joi');
+require('deepmerge');
+var mongoose = require('mongoose');
+require('@zxing/browser');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
@@ -88,6 +91,12 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   UserStageStatus2["End"] = "end";
   return UserStageStatus2;
 })(UserStageStatus || {});
+
+// _src/types/leaderboard/index.ts
+var LEADERBOARD_MODE = {
+  Ranks: "ranks",
+  Current: "current"
+};
 var PeriodeValidator = schema_default.generate({
   startDate: Joi__default.default.date().required(),
   endDate: Joi__default.default.date().required().greater(Joi__default.default.ref("startDate"))
@@ -307,6 +316,35 @@ var UserValidator = {
   UserListParamsValidator
 };
 var user_default = UserValidator;
+new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+new mongoose.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+new mongoose.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+
+// _src/validators/leaderboard/index.ts
+var LeaderboardParamsValidator = schema_default.generate({
+  stageId: schema_default.string({ required: true }),
+  mode: schema_default.string({ required: true }).valid(...Object.values(LEADERBOARD_MODE))
+});
+var LeaderboardValidator = { LeaderboardParamsValidator };
+var leaderboard_default = LeaderboardValidator;
 
 // _src/validators/index.ts
 var validators = {
@@ -317,11 +355,13 @@ var validators = {
   UserChallengeValidator: user_challenge_default,
   UserPublicValidator: user_public_default,
   UserStageValidator: user_stage_default,
-  UserValidator: user_default
+  UserValidator: user_default,
+  LeaderboardValidator: leaderboard_default
 };
 var validators_default = validators;
 
 exports.ChallengeValidator = challenge_default;
+exports.LeaderboardValidator = leaderboard_default;
 exports.QrValidator = qr_default;
 exports.StageValidator = stage_default;
 exports.TriviaValidator = trivia_default;

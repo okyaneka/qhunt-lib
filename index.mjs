@@ -61,4 +61,10 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   return UserStageStatus2;
 })(UserStageStatus || {});
 
-export { CHALLENGE_STATUS, CHALLENGE_TYPES, PHOTO_HUNT_STATUS, PUBLISHING_STATUS, QR_CONTENT_TYPES, QR_STATUS, STAGE_STATUS, USER_CHALLENGE_STATUS, UserPublicGender, UserRole, UserStageStatus };
+// _src/types/leaderboard/index.ts
+var LEADERBOARD_MODE = {
+  Ranks: "ranks",
+  Current: "current"
+};
+
+export { CHALLENGE_STATUS, CHALLENGE_TYPES, LEADERBOARD_MODE, PHOTO_HUNT_STATUS, PUBLISHING_STATUS, QR_CONTENT_TYPES, QR_STATUS, STAGE_STATUS, USER_CHALLENGE_STATUS, UserPublicGender, UserRole, UserStageStatus };
