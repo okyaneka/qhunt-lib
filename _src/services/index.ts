@@ -9,6 +9,7 @@ import UserPublicService from "./user-public";
 import UserService from "./user";
 import UserStageService from "./user-stage";
 import UserTriviaService from "./user-trivia";
+import LeaderboardService from "./leaderboard";
 
 const services = {
   ChallengeService,
@@ -22,6 +23,7 @@ const services = {
   UserStageService,
   UserTriviaService,
   UserPhotoHuntService,
+  LeaderboardService,
 } as const;
 
 export {
@@ -36,6 +38,7 @@ export {
   UserStageService,
   UserTriviaService,
   UserPhotoHuntService,
+  LeaderboardService,
 };
 
 export default services;

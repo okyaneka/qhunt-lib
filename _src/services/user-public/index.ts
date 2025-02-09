@@ -3,6 +3,8 @@ import { UserModel } from "~/models";
 import { UserPublicModel } from "~/models";
 
 export const verify = async (value: string) => {
+  if (!value) throw new Error("token is required");
+
   const userPublic = await UserPublicModel.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
