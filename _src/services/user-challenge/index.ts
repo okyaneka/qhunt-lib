@@ -277,7 +277,7 @@ export const submit = async (
   results.bonus = timeBonus(
     timeUsed,
     userChallenge.settings.duration,
-    userChallenge.contents.length * 100
+    (userChallenge.contents.length * 100) / 2
   );
   results.totalScore = results.baseScore + results.bonus + results.contentBonus;
   results.endAt = new Date();
@@ -330,7 +330,7 @@ export const submitState = async (
     const bonus = timeBonus(
       timeUsed,
       userChallenge.settings.duration,
-      userChallenge.contents.length * 100
+      (userChallenge.contents.length * 100) / 2
     );
 
     results.bonus = bonus;
