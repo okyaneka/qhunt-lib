@@ -955,39 +955,46 @@ var setup2 = async (userPublic, userChallenge, session) => {
   });
   return await user_trivia_default.insertMany(payload, { session });
 };
-var details2 = async (ids, TID, hasResult) => {
+var details2 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_trivia_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_trivia_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
-var submit = async (id, TID, answer = null, bonus) => {
-  const userTrivia = await user_trivia_default.findOne({
-    _id: id,
-    "userPublic.code": TID
+var submit2 = async (id, TID, answer = null, bonus) => {
+  return db_default.transaction(async (session) => {
+    const userTrivia = await user_trivia_default.findOne({
+      _id: id,
+      "userPublic.code": TID
+    });
+    if (!userTrivia) throw new Error("user trivia not found");
+    if (userTrivia.results) return userTrivia.toObject();
+    const trivia = await detail3(userTrivia.trivia.id);
+    const selectedAnswer = trivia.options.find((v) => v.text == answer);
+    const isCorrect = Boolean(selectedAnswer?.isCorrect);
+    const baseScore = selectedAnswer?.point || 0;
+    const results = {
+      answer,
+      feedback: trivia.feedback[isCorrect ? "positive" : "negative"],
+      isCorrect,
+      baseScore,
+      bonus: bonus || 0,
+      totalScore: baseScore + (bonus || 0)
+    };
+    userTrivia.results = results;
+    await userTrivia.save({ session });
+    await submit(userTrivia.userChallenge.id, TID, session);
+    return userTrivia.toObject();
   });
-  if (!userTrivia) throw new Error("user trivia not found");
-  if (userTrivia.results) return userTrivia.toObject();
-  const trivia = await detail3(userTrivia.trivia.id);
-  const selectedAnswer = trivia.options.find((v) => v.text == answer);
-  const isCorrect = Boolean(selectedAnswer?.isCorrect);
-  const baseScore = selectedAnswer?.point || 0;
-  const results = {
-    answer,
-    feedback: trivia.feedback[isCorrect ? "positive" : "negative"],
-    isCorrect,
-    baseScore,
-    bonus: bonus || 0,
-    totalScore: baseScore + (bonus || 0)
-  };
-  userTrivia.results = results;
-  await userTrivia.save();
-  return userTrivia.toObject();
 };
 var submitEmpties = async (userChallengeId, TID, session) => {
   const results = {
@@ -1038,7 +1045,7 @@ var summary = async (userChallengeId, TID, session) => {
 var UserTriviaService = {
   setup: setup2,
   details: details2,
-  submit,
+  submit: submit2,
   submitEmpties,
   summary
 };
@@ -1074,23 +1081,26 @@ var setup3 = async (userPublic, userChallenge, session) => {
   });
   return await user_photo_hunt_default.insertMany(payload, { session });
 };
-var details4 = async (ids, TID, hasResult) => {
+var details4 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_photo_hunt_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
-var submit2 = async (userChallengeId, TID, code, bonus) => {
+var submit3 = async (userChallengeId, TID, code, bonus) => {
   return db_default.transaction(async (session) => {
     const userChallenge = await detail4(userChallengeId, TID);
     const {
-      challenge: { id: challengeId },
-      contents
+      challenge: { id: challengeId }
     } = userChallenge;
     const photoHunt = await verifyCode(challengeId, code);
     const userPhotoHunt = await user_photo_hunt_default.findOne({
@@ -1105,20 +1115,7 @@ var submit2 = async (userChallengeId, TID, code, bonus) => {
       feedback: photoHunt.feedback
     };
     await userPhotoHunt.save({ session });
-    const length = await user_photo_hunt_default.countDocuments(
-      {
-        _id: { $in: contents },
-        results: { $ne: null }
-      },
-      { session }
-    );
-    const isFinish = contents.length === length;
-    await user_challenge_default2.submitState(
-      userChallengeId,
-      TID,
-      isFinish,
-      session
-    );
+    await submit(userChallengeId, TID, session);
     return userPhotoHunt.toObject();
   });
 };
@@ -1168,7 +1165,7 @@ var summary2 = async (userChallengeId, TID, session) => {
 var UserPhotoHuntService = {
   setup: setup3,
   details: details4,
-  submit: submit2,
+  submit: submit3,
   submitEmpties: submitEmpties2,
   summary: summary2
 };
@@ -1345,47 +1342,20 @@ var detail4 = async (id, TID) => {
     }
   });
 };
-var submit3 = async (id, TID, session) => {
-  const userChallenge = await detail4(id, TID);
-  if (!userChallenge) throw new Error("user challenge not found");
-  const {
-    settings: { type: challengeType }
-  } = userChallenge;
-  await services[challengeType].submitEmpties(id, TID, session);
-  const summary4 = await services[challengeType].summary(id, TID, session);
-  const results = userChallenge.results || initResult();
-  const timeUsed = Math.min(
-    dayjs().diff(dayjs(results.startAt), "seconds"),
-    userChallenge.settings.duration
-  );
-  results.totalItem = summary4.totalItem;
-  results.contentBonus = summary4.totalBonus || 0;
-  results.baseScore = summary4.totalBaseScore;
-  results.bonus = timeBonus(
-    timeUsed,
-    userChallenge.settings.duration,
-    userChallenge.contents.length * 100 / 2
-  );
-  results.totalScore = results.baseScore + results.bonus + results.contentBonus;
-  results.endAt = /* @__PURE__ */ new Date();
-  results.timeUsed = timeUsed;
-  const newUserChallenge = await user_challenge_default.findOneAndUpdate(
-    { _id: userChallenge.id },
-    { $set: { results, status: USER_CHALLENGE_STATUS.Completed } },
-    { new: true, session }
-  );
-  if (!newUserChallenge) throw new Error("");
-  if (userChallenge.userStage)
-    await user_stage_default2.submitState(userChallenge.userStage.id, TID);
-  return newUserChallenge.toObject();
-};
-var submitState = async (id, TID, finish, session) => {
+var submit = async (id, TID, session, forceFinish) => {
   const { OnGoing, Completed } = USER_CHALLENGE_STATUS;
   const userChallenge = await user_challenge_default.findOne({ _id: id }, null, {
     session
   });
   if (!userChallenge) throw new Error("user_challenge.not_found");
   if (userChallenge.status === Completed) return userChallenge.toObject();
+  const contents = forceFinish ? [] : await services[userChallenge.settings.type].details(
+    userChallenge.contents,
+    TID,
+    false,
+    session
+  );
+  const isFinish = !contents.length || forceFinish;
   const {
     settings: { type: challengeType }
   } = userChallenge;
@@ -1394,8 +1364,9 @@ var submitState = async (id, TID, finish, session) => {
   results.totalItem = summary4.totalItem;
   results.baseScore = summary4.totalBaseScore;
   results.contentBonus = summary4.totalBonus;
-  if (finish) {
-    await services[challengeType].submitEmpties(id, TID, session);
+  if (isFinish) {
+    if (contents.length)
+      await services[challengeType].submitEmpties(id, TID, session);
     const timeUsed = Math.min(
       dayjs().diff(dayjs(results.startAt), "seconds"),
       userChallenge.settings.duration
@@ -1411,9 +1382,9 @@ var submitState = async (id, TID, finish, session) => {
   }
   results.totalScore = results.baseScore + results.bonus + results.contentBonus;
   userChallenge.results = results;
-  userChallenge.status = finish ? Completed : OnGoing;
+  userChallenge.status = isFinish ? Completed : OnGoing;
   await userChallenge.save({ session });
-  if (userChallenge.userStage && finish)
+  if (userChallenge.userStage && isFinish)
     await user_stage_default2.submitState(
       userChallenge.userStage.id,
       TID,
@@ -1441,9 +1412,7 @@ var UserChallengeService = {
   setup: setup4,
   list: list4,
   detail: detail4,
-  // detailContent,
-  submit: submit3,
-  submitState,
+  submit,
   summary: summary3,
   init
 };
@@ -1555,7 +1524,7 @@ var detail5 = async (id, TID) => {
     }
   });
 };
-var submitState2 = async (id, TID, session) => {
+var submitState = async (id, TID, session) => {
   const item = await user_stage_default.findOne(
     {
       _id: id,
@@ -1575,7 +1544,7 @@ var submitState2 = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
-var UserStageService = { list: list5, detail: detail5, setup: setup5, verify: verify6, submitState: submitState2 };
+var UserStageService = { list: list5, detail: detail5, setup: setup5, verify: verify6, submitState };
 var user_stage_default2 = UserStageService;
 
 // _src/services/qr/index.ts

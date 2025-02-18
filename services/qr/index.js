@@ -764,15 +764,19 @@ var setup = async (userPublic, userChallenge, session) => {
   });
   return await user_trivia_default.insertMany(payload, { session });
 };
-var details3 = async (ids, TID, hasResult) => {
+var details3 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_trivia_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_trivia_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
 var submitEmpties = async (userChallengeId, TID, session) => {
@@ -852,15 +856,19 @@ var setup2 = async (userPublic, userChallenge, session) => {
   });
   return await user_photo_hunt_default.insertMany(payload, { session });
 };
-var details4 = async (ids, TID, hasResult) => {
+var details4 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_photo_hunt_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
 var submitEmpties2 = async (userChallengeId, TID, session) => {

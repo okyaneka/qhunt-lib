@@ -154,10 +154,7 @@ declare const services: {
         readonly detail: (id: string, TID: string) => Promise<import("..").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly submit: (id: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserChallenge & {
-            _id: import("mongoose").Types.ObjectId;
-        }>;
-        readonly submitState: (id: string, TID: string, finish?: boolean, session?: import("mongoose").ClientSession) => Promise<import("..").UserChallenge & {
+        readonly submit: (id: string, TID: string, session?: import("mongoose").ClientSession, forceFinish?: boolean) => Promise<import("..").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
         readonly summary: (userStageId: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserChallengeSummary[]>;
@@ -246,7 +243,7 @@ declare const services: {
             userChallenge: import("..").UserChallengeForeign;
             trivia: import("..").TriviaForeign;
         }[], "_id">>[]>;
-        readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("..").UserTrivia & {
+        readonly details: (ids: string[], TID: string, hasResult?: boolean, session?: import("mongoose").ClientSession) => Promise<(import("..").UserTrivia & {
             _id: import("mongoose").Types.ObjectId;
         })[]>;
         readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("..").UserTrivia & {
@@ -268,7 +265,7 @@ declare const services: {
                 hint: string;
             };
         }[], "_id">>[]>;
-        readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("..").UserPhotoHunt & {
+        readonly details: (ids: string[], TID: string, hasResult?: boolean, session?: import("mongoose").ClientSession) => Promise<(import("..").UserPhotoHunt & {
             _id: import("mongoose").Types.ObjectId;
         })[]>;
         readonly submit: (userChallengeId: string, TID: string, code: string, bonus?: number) => Promise<import("..").UserPhotoHunt & {

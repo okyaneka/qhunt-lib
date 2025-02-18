@@ -14,7 +14,7 @@ export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserC
     userChallenge: UserChallengeForeign;
     trivia: TriviaForeign;
 }[], "_id">>[]>;
-export declare const details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../types").UserTrivia & {
+export declare const details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../../types").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
 export declare const submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../../types").UserTrivia & {
@@ -32,7 +32,7 @@ declare const UserTriviaService: {
         userChallenge: UserChallengeForeign;
         trivia: TriviaForeign;
     }[], "_id">>[]>;
-    readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../types").UserTrivia & {
+    readonly details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../../types").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
     readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../../types").UserTrivia & {

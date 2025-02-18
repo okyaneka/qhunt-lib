@@ -29,10 +29,7 @@ export declare const list: (params: UserChallengeParams, TID: string) => Promise
 export declare const detail: (id: string, TID: string) => Promise<import("../../types").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const submit: (id: string, TID: string, session?: ClientSession) => Promise<import("../../types").UserChallenge & {
-    _id: import("mongoose").Types.ObjectId;
-}>;
-export declare const submitState: (id: string, TID: string, finish?: boolean, session?: ClientSession) => Promise<import("../../types").UserChallenge & {
+export declare const submit: (id: string, TID: string, session?: ClientSession, forceFinish?: boolean) => Promise<import("../../types").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
 }>;
 export declare const summary: (userStageId: string, TID: string, session?: ClientSession) => Promise<UserChallengeSummary[]>;
@@ -64,10 +61,7 @@ declare const UserChallengeService: {
     readonly detail: (id: string, TID: string) => Promise<import("../../types").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    readonly submit: (id: string, TID: string, session?: ClientSession) => Promise<import("../../types").UserChallenge & {
-        _id: import("mongoose").Types.ObjectId;
-    }>;
-    readonly submitState: (id: string, TID: string, finish?: boolean, session?: ClientSession) => Promise<import("../../types").UserChallenge & {
+    readonly submit: (id: string, TID: string, session?: ClientSession, forceFinish?: boolean) => Promise<import("../../types").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;
     }>;
     readonly summary: (userStageId: string, TID: string, session?: ClientSession) => Promise<UserChallengeSummary[]>;

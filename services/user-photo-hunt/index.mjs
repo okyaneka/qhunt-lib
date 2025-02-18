@@ -578,88 +578,6 @@ schema_default.generate({
 });
 
 // _src/services/stage/index.ts
-var isUsed = async (ids, id) => {
-  const filter = {
-    _id: { $in: ids },
-    deletedAt: null,
-    stage: { $ne: null }
-  };
-  if (id) filter["stage.id"] = { $ne: id };
-  const used = (await challenge_default.find(filter)).map((item) => item.id);
-  if (used.length)
-    throw new Error(
-      `challenge${used.length > 1 ? "s" : ""} ${used.join(", ")} ${used.length > 1 ? "are" : "is"} used`
-    );
-};
-var list = async (params) => {
-  const skip = (params.page - 1) * params.limit;
-  const filter = {
-    deletedAt: null,
-    name: { $regex: params.search, $options: "i" }
-  };
-  const items = await stage_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
-  const totalItems = await stage_default.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
-  return {
-    list: items.map((item) => item.toObject()),
-    page: params.page,
-    totalItems,
-    totalPages
-  };
-};
-var create = async (payload) => {
-  await isUsed(payload.contents);
-  const contents = await challenge_default.find({
-    _id: { $in: payload.contents }
-  });
-  const stage = await stage_default.create({
-    ...payload,
-    contents: contents.map((item) => item.id)
-  });
-  const sync = contents.map((item) => {
-    item.stage = { id: stage.id, name: stage.name };
-    return item.save();
-  });
-  await Promise.all(sync);
-  return stage.toObject();
-};
-var detail = async (id) => {
-  const item = await stage_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("stage not found");
-  return item.toObject();
-};
-var update = async (id, payload) => {
-  return await transaction(async (session) => {
-    await isUsed(payload.contents, id);
-    const stage = await stage_default.findOne({ _id: id, deletedAt: null });
-    if (!stage) throw new Error("stage not found");
-    const contents = (await challenge_default.find({
-      _id: { $in: payload.contents },
-      deletedAt: null
-    })).map((item) => item.id);
-    await challenge_default.updateMany(
-      { "stage.id": stage.id },
-      { $set: { stage: null } },
-      { session }
-    );
-    await challenge_default.updateMany(
-      { _id: { $in: contents } },
-      { $set: { stage: { id: stage.id, name: stage.name } } },
-      { session }
-    );
-    Object.assign(stage, { ...payload, contents });
-    await stage.save({ session });
-    return stage.toObject();
-  });
-};
-var _delete = async (id) => {
-  const item = await stage_default.findOneAndUpdate(
-    { _id: id, deletedAt: null },
-    { $set: { deletedAt: Date.now() } }
-  );
-  if (!item) throw new Error("stage not found");
-  return item;
-};
 var verify = async (id) => {
   const item = await stage_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("stage not found");
@@ -667,45 +585,16 @@ var verify = async (id) => {
     throw new Error("stage not published yet");
   return item.toObject();
 };
-var StageService = { list, create, detail, update, delete: _delete, verify };
-var stage_default2 = StageService;
 
 // _src/helpers/bonus/index.ts
 var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
   return Math.round(maxPoint * (1 - seconds / totalSeconds));
 };
 
-// _src/helpers/service/index.ts
-var list2 = async (model12, page, limit, filters = {}, sort) => {
-  const skip = (page - 1) * limit;
-  const filter = {
-    ...filters,
-    deletedAt: null
-  };
-  const items = await model12.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
-  const totalItems = await model12.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / limit);
-  return {
-    list: items.map((item) => item.toObject ? item.toObject() : item),
-    page,
-    totalItems,
-    totalPages
-  };
-};
-var service = { list: list2 };
-var service_default = service;
-
 // _src/services/challenge/index.ts
 var detail2 = async (id) => {
   const item = await challenge_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
-  return item.toObject();
-};
-var verify2 = async (id) => {
-  const item = await challenge_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("challenge not found");
-  if (item.status !== CHALLENGE_STATUS.Publish)
-    throw new Error("challenge not published yet");
   return item.toObject();
 };
 
@@ -717,7 +606,7 @@ var details = async (challengeId) => {
   const items = await trivia_default.find({ _id: { $in: challenge.contents } });
   return items.map((item) => item.toObject());
 };
-var verify3 = async (value) => {
+var verify2 = async (value) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
@@ -740,13 +629,13 @@ var ChallengeSettingsValidator = schema_default.generate({
   type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES)),
   feedback: FeedbackValidator
 });
-var ChallengeForeignValidator = schema_default.generate({
+schema_default.generate({
   id: schema_default.string({ required: true }),
   name: schema_default.string({ required: true }),
   order: schema_default.number({ defaultValue: null }),
   storyline: schema_default.array(Joi.string(), { defaultValue: [] })
 });
-var ChallengeSettingsForeignValidator = schema_default.generate({
+schema_default.generate({
   duration: schema_default.number({ allow: 0 }),
   type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES))
 });
@@ -783,15 +672,19 @@ var setup = async (userPublic, userChallenge, session) => {
   });
   return await user_trivia_default.insertMany(payload, { session });
 };
-var details2 = async (ids, TID, hasResult) => {
+var details2 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_trivia_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_trivia_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
 var submitEmpties = async (userChallengeId, TID, session) => {
@@ -868,20 +761,6 @@ var initResult = () => {
     endAt: null
   };
 };
-var verify4 = async (challengeId, TID, setDiscover) => {
-  const item = await user_challenge_default.findOne({
-    "userPublic.code": TID,
-    "challenge.id": challengeId,
-    deletedAt: null
-  });
-  if (!item) return null;
-  if (item.status == USER_CHALLENGE_STATUS.Undiscovered && setDiscover)
-    await user_challenge_default.updateOne(
-      { _id: item.id },
-      { $set: { status: USER_CHALLENGE_STATUS.Discovered } }
-    );
-  return item.toObject();
-};
 var init = async (stage, userStage, session) => {
   const challenges = await challenge_default.find({
     _id: { $in: stage.contents }
@@ -927,77 +806,6 @@ var init = async (stage, userStage, session) => {
     _id: { $in: contents.map((item) => item._id) }
   });
 };
-var setup3 = async (challengeId, TID, setDiscover) => {
-  const exist = await verify4(challengeId, TID, setDiscover);
-  if (exist) return exist;
-  const userPublicData = await verify3(TID);
-  const challengeData = await verify2(challengeId);
-  const stageId = challengeData.stage?.id;
-  const userStageData = stageId && await user_stage_default2.verify(stageId, TID);
-  if (stageId && !userStageData) {
-    const stageData = await stage_default2.detail(stageId);
-    if (!stageData.settings.canStartFromChallenges)
-      throw new Error("user stage has not been found yet");
-    await user_stage_default2.setup(stageId, TID);
-    const result = await verify4(challengeId, TID, setDiscover);
-    if (result) return result;
-    throw new Error("challenge setup error");
-  }
-  const userStage = userStageData && {
-    id: userStageData.id,
-    stageId: userStageData.stage.id,
-    name: userStageData.stage.name
-  };
-  const userPublic = await UserPublicForeignValidator.validateAsync(
-    userPublicData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const challenge = await ChallengeForeignValidator.validateAsync(
-    challengeData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const settings = await ChallengeSettingsForeignValidator.validateAsync(
-    challengeData.settings,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const userChallengeData = await user_challenge_default.create({
-    userStage,
-    challenge,
-    userPublic,
-    settings,
-    status: USER_CHALLENGE_STATUS[setDiscover ? "Discovered" : "Undiscovered"]
-  });
-  const userChallenge = {
-    id: userChallengeData.id,
-    challengeId: userChallengeData.challenge.id,
-    name: userChallengeData.challenge.name
-  };
-  const contents = await services[settings.type].setup(
-    userPublic,
-    userChallenge
-  );
-  userChallengeData.contents = contents.map((item) => item.id);
-  await userChallengeData.save();
-  return userChallengeData.toObject();
-};
-var list3 = async (params, TID) => {
-  const { search, status, userStageId } = params;
-  const filters = { "userPublic.code": TID };
-  if (search) filters["challenge.name"] = { $regex: search, $options: "i" };
-  if (status) filters.status = status;
-  if (userStageId) filters["userStage.id"] = userStageId;
-  const { list: list6, ...rest } = await service_default.list(
-    user_challenge_default,
-    params.page,
-    params.limit,
-    filters,
-    "challenge.order"
-  );
-  return {
-    list: list6.map(({ userPublic, ...item }) => item),
-    ...rest
-  };
-};
 var detail4 = async (id, TID) => {
   const data = await user_challenge_default.findOne({
     _id: id,
@@ -1012,47 +820,20 @@ var detail4 = async (id, TID) => {
     }
   });
 };
-var submit = async (id, TID, session) => {
-  const userChallenge = await detail4(id, TID);
-  if (!userChallenge) throw new Error("user challenge not found");
-  const {
-    settings: { type: challengeType }
-  } = userChallenge;
-  await services[challengeType].submitEmpties(id, TID, session);
-  const summary4 = await services[challengeType].summary(id, TID, session);
-  const results = userChallenge.results || initResult();
-  const timeUsed = Math.min(
-    dayjs().diff(dayjs(results.startAt), "seconds"),
-    userChallenge.settings.duration
-  );
-  results.totalItem = summary4.totalItem;
-  results.contentBonus = summary4.totalBonus || 0;
-  results.baseScore = summary4.totalBaseScore;
-  results.bonus = timeBonus(
-    timeUsed,
-    userChallenge.settings.duration,
-    userChallenge.contents.length * 100 / 2
-  );
-  results.totalScore = results.baseScore + results.bonus + results.contentBonus;
-  results.endAt = /* @__PURE__ */ new Date();
-  results.timeUsed = timeUsed;
-  const newUserChallenge = await user_challenge_default.findOneAndUpdate(
-    { _id: userChallenge.id },
-    { $set: { results, status: USER_CHALLENGE_STATUS.Completed } },
-    { new: true, session }
-  );
-  if (!newUserChallenge) throw new Error("");
-  if (userChallenge.userStage)
-    await user_stage_default2.submitState(userChallenge.userStage.id, TID);
-  return newUserChallenge.toObject();
-};
-var submitState = async (id, TID, finish, session) => {
+var submit = async (id, TID, session, forceFinish) => {
   const { OnGoing, Completed } = USER_CHALLENGE_STATUS;
   const userChallenge = await user_challenge_default.findOne({ _id: id }, null, {
     session
   });
   if (!userChallenge) throw new Error("user_challenge.not_found");
   if (userChallenge.status === Completed) return userChallenge.toObject();
+  const contents = await services[userChallenge.settings.type].details(
+    userChallenge.contents,
+    TID,
+    false,
+    session
+  );
+  const isFinish = !contents.length || forceFinish;
   const {
     settings: { type: challengeType }
   } = userChallenge;
@@ -1061,8 +842,9 @@ var submitState = async (id, TID, finish, session) => {
   results.totalItem = summary4.totalItem;
   results.baseScore = summary4.totalBaseScore;
   results.contentBonus = summary4.totalBonus;
-  if (finish) {
-    await services[challengeType].submitEmpties(id, TID, session);
+  if (isFinish) {
+    if (contents.length)
+      await services[challengeType].submitEmpties(id, TID, session);
     const timeUsed = Math.min(
       dayjs().diff(dayjs(results.startAt), "seconds"),
       userChallenge.settings.duration
@@ -1078,9 +860,9 @@ var submitState = async (id, TID, finish, session) => {
   }
   results.totalScore = results.baseScore + results.bonus + results.contentBonus;
   userChallenge.results = results;
-  userChallenge.status = finish ? Completed : OnGoing;
+  userChallenge.status = isFinish ? Completed : OnGoing;
   await userChallenge.save({ session });
-  if (userChallenge.userStage && finish)
+  if (userChallenge.userStage && isFinish)
     await user_stage_default2.submitState(
       userChallenge.userStage.id,
       TID,
@@ -1103,18 +885,6 @@ var summary3 = async (userStageId, TID, session) => {
     totalScore: { $sum: "$results.totalScore" }
   }).session(session || null);
 };
-var UserChallengeService = {
-  verify: verify4,
-  setup: setup3,
-  list: list3,
-  detail: detail4,
-  // detailContent,
-  submit,
-  submitState,
-  summary: summary3,
-  init
-};
-var user_challenge_default2 = UserChallengeService;
 var StageSettingsValidator = schema_default.generate(
   {
     canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
@@ -1149,18 +919,18 @@ var initResults = () => ({
   bonus: 0,
   totalScore: 0
 });
-var verify5 = async (stageId, TID) => {
+var verify4 = async (stageId, TID) => {
   return await user_stage_default.findOne({
     "userPublic.code": TID,
     "stage.id": stageId
   });
 };
-var setup4 = async (stageId, TID) => {
+var setup3 = async (stageId, TID) => {
   return transaction(async (session) => {
     console.time("queryTime");
-    const exist = await verify5(stageId, TID);
+    const exist = await verify4(stageId, TID);
     if (exist) return exist;
-    const userPublicData = await verify3(TID);
+    const userPublicData = await verify2(TID);
     const stageData = await verify(stageId);
     const userPublic = await UserPublicForeignValidator.validateAsync(
       userPublicData,
@@ -1183,7 +953,7 @@ var setup4 = async (stageId, TID) => {
     console.timeEnd("queryTime");
   });
 };
-var list4 = async (params, TID) => {
+var list = async (params, TID) => {
   const skip = (params.page - 1) * params.limit;
   const filter = {
     deletedAt: null,
@@ -1222,7 +992,7 @@ var detail5 = async (id, TID) => {
     }
   });
 };
-var submitState2 = async (id, TID, session) => {
+var submitState = async (id, TID, session) => {
   const item = await user_stage_default.findOne(
     {
       _id: id,
@@ -1242,7 +1012,7 @@ var submitState2 = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
-var UserStageService = { list: list4, detail: detail5, setup: setup4, verify: verify5, submitState: submitState2 };
+var UserStageService = { list, detail: detail5, setup: setup3, verify: verify4, submitState };
 var user_stage_default2 = UserStageService;
 
 // _src/services/photo-hunt/index.ts
@@ -1274,23 +1044,26 @@ var setup2 = async (userPublic, userChallenge, session) => {
   });
   return await user_photo_hunt_default.insertMany(payload, { session });
 };
-var details3 = async (ids, TID, hasResult) => {
+var details3 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_photo_hunt_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
 var submit2 = async (userChallengeId, TID, code, bonus) => {
   return db_default.transaction(async (session) => {
     const userChallenge = await detail4(userChallengeId, TID);
     const {
-      challenge: { id: challengeId },
-      contents
+      challenge: { id: challengeId }
     } = userChallenge;
     const photoHunt = await verifyCode(challengeId, code);
     const userPhotoHunt = await user_photo_hunt_default.findOne({
@@ -1305,20 +1078,7 @@ var submit2 = async (userChallengeId, TID, code, bonus) => {
       feedback: photoHunt.feedback
     };
     await userPhotoHunt.save({ session });
-    const length = await user_photo_hunt_default.countDocuments(
-      {
-        _id: { $in: contents },
-        results: { $ne: null }
-      },
-      { session }
-    );
-    const isFinish = contents.length === length;
-    await user_challenge_default2.submitState(
-      userChallengeId,
-      TID,
-      isFinish,
-      session
-    );
+    await submit(userChallengeId, TID, session);
     return userPhotoHunt.toObject();
   });
 };

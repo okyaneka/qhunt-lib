@@ -12,7 +12,7 @@ export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserC
         hint: string;
     };
 }[], "_id">>[]>;
-export declare const details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../types").UserPhotoHunt & {
+export declare const details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../../types").UserPhotoHunt & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
 export declare const submit: (userChallengeId: string, TID: string, code: string, bonus?: number) => Promise<import("../../types").UserPhotoHunt & {
@@ -33,7 +33,7 @@ declare const UserPhotoHuntService: {
             hint: string;
         };
     }[], "_id">>[]>;
-    readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("../../types").UserPhotoHunt & {
+    readonly details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../../types").UserPhotoHunt & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
     readonly submit: (userChallengeId: string, TID: string, code: string, bonus?: number) => Promise<import("../../types").UserPhotoHunt & {
