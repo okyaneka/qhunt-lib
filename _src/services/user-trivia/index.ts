@@ -96,7 +96,11 @@ export const submit = async (
   return userTrivia.toObject();
 };
 
-export const submitEmpties = async (userChallengeId: string, TID: string) => {
+export const submitEmpties = async (
+  userChallengeId: string,
+  TID: string,
+  session?: ClientSession
+) => {
   const results = {
     answer: null,
     feedback: null,
@@ -111,13 +115,15 @@ export const submitEmpties = async (userChallengeId: string, TID: string) => {
       "userPublic.code": TID,
       results: null,
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
 
 export const summary = async (
   userChallengeId: string,
-  TID: string
+  TID: string,
+  session?: ClientSession
 ): Promise<UserTriviaSummary> => {
   const [summary] = await UserTriviaModel.aggregate()
     .match({
@@ -129,10 +135,10 @@ export const summary = async (
         userChallenge: "$userChallenge.id",
         userPublic: "$userPublic.code",
       },
-
+      type: { $first: CHALLENGE_TYPES.Trivia },
       userPublic: { $first: "$userPublic" },
       userChallenge: { $first: "$userChallenge" },
-      totalCorrect: {
+      totalItem: {
         $sum: {
           $cond: {
             if: { $eq: ["$results.isCorrect", true] },
@@ -145,7 +151,7 @@ export const summary = async (
       totalBonus: { $sum: "$results.bonus" },
       totalScore: { $sum: "$results.totalScore" },
     })
-    .addFields({ type: CHALLENGE_TYPES.Trivia });
+    .session(session || null);
 
   return summary;
 };
