@@ -12,7 +12,7 @@ import {
 export const QrForeignSchema = new Schema<QrForeign>(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true },
+    code: { type: String, required: true, index: true },
   },
   { _id: false, versionKey: false }
 );
