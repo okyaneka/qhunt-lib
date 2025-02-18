@@ -252,55 +252,8 @@ export const detail = async (id: string, TID: string) => {
 export const submit = async (
   id: string,
   TID: string,
-  session?: ClientSession
-) => {
-  const userChallenge = await detail(id, TID);
-  if (!userChallenge) throw new Error("user challenge not found");
-
-  const {
-    settings: { type: challengeType },
-  } = userChallenge;
-
-  await services[challengeType].submitEmpties(id, TID, session);
-
-  const summary = await services[challengeType].summary(id, TID, session);
-
-  const results = userChallenge.results || initResult();
-  const timeUsed = Math.min(
-    dayjs().diff(dayjs(results.startAt), "seconds"),
-    userChallenge.settings.duration
-  );
-
-  results.totalItem = summary.totalItem;
-  results.contentBonus = summary.totalBonus || 0;
-  results.baseScore = summary.totalBaseScore;
-  results.bonus = timeBonus(
-    timeUsed,
-    userChallenge.settings.duration,
-    (userChallenge.contents.length * 100) / 2
-  );
-  results.totalScore = results.baseScore + results.bonus + results.contentBonus;
-  results.endAt = new Date();
-  results.timeUsed = timeUsed;
-
-  const newUserChallenge = await UserChallengeModel.findOneAndUpdate(
-    { _id: userChallenge.id },
-    { $set: { results, status: USER_CHALLENGE_STATUS.Completed } },
-    { new: true, session }
-  );
-  if (!newUserChallenge) throw new Error("");
-
-  if (userChallenge.userStage)
-    await UserStageService.submitState(userChallenge.userStage.id, TID);
-
-  return newUserChallenge.toObject();
-};
-
-export const submitState = async (
-  id: string,
-  TID: string,
-  finish?: boolean,
-  session?: ClientSession
+  session?: ClientSession,
+  forceFinish?: boolean
 ) => {
   const { OnGoing, Completed } = USER_CHALLENGE_STATUS;
 
@@ -309,6 +262,17 @@ export const submitState = async (
   });
   if (!userChallenge) throw new Error("user_challenge.not_found");
   if (userChallenge.status === Completed) return userChallenge.toObject();
+
+  const contents = forceFinish
+    ? []
+    : await services[userChallenge.settings.type].details(
+        userChallenge.contents,
+        TID,
+        false,
+        session
+      );
+
+  const isFinish = !contents.length || forceFinish;
 
   const {
     settings: { type: challengeType },
@@ -321,8 +285,9 @@ export const submitState = async (
   results.baseScore = summary.totalBaseScore;
   results.contentBonus = summary.totalBonus;
 
-  if (finish) {
-    await services[challengeType].submitEmpties(id, TID, session);
+  if (isFinish) {
+    if (contents.length)
+      await services[challengeType].submitEmpties(id, TID, session);
     const timeUsed = Math.min(
       dayjs().diff(dayjs(results.startAt), "seconds"),
       userChallenge.settings.duration
@@ -341,10 +306,10 @@ export const submitState = async (
   results.totalScore = results.baseScore + results.bonus + results.contentBonus;
 
   userChallenge.results = results;
-  userChallenge.status = finish ? Completed : OnGoing;
+  userChallenge.status = isFinish ? Completed : OnGoing;
   await userChallenge.save({ session });
 
-  if (userChallenge.userStage && finish)
+  if (userChallenge.userStage && isFinish)
     await UserStageService.submitState(
       userChallenge.userStage.id,
       TID,
@@ -382,9 +347,7 @@ const UserChallengeService = {
   setup,
   list,
   detail,
-  // detailContent,
   submit,
-  submitState,
   summary,
   init,
 } as const;
