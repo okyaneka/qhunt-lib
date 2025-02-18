@@ -1364,7 +1364,7 @@ var submit3 = async (id, TID, session) => {
   results.bonus = timeBonus(
     timeUsed,
     userChallenge.settings.duration,
-    userChallenge.contents.length * 100
+    userChallenge.contents.length * 100 / 2
   );
   results.totalScore = results.baseScore + results.bonus + results.contentBonus;
   results.endAt = /* @__PURE__ */ new Date();
@@ -1403,7 +1403,7 @@ var submitState = async (id, TID, finish, session) => {
     const bonus = timeBonus(
       timeUsed,
       userChallenge.settings.duration,
-      userChallenge.contents.length * 100
+      userChallenge.contents.length * 100 / 2
     );
     results.bonus = bonus;
     results.timeUsed = timeUsed;
