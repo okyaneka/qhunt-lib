@@ -7,17 +7,21 @@ import {
   CHALLENGE_TYPES,
 } from "~/types";
 import {
-  details as PhotoHuntServiceDetails,
-  detail as PhotoHuntServiceDetail,
+  details as PhotoHuntDetails,
+  verifyCode as PhotoHuntVerifyCode,
 } from "../photo-hunt";
 import { ClientSession } from "mongoose";
+import UserChallengeService, {
+  detail as UserChallengeDetail,
+} from "../user-challenge";
+import { db } from "~/helpers";
 
 export const setup = async (
   userPublic: UserPublicForeign,
   userChallenge: UserChallengeForeign,
   session?: ClientSession
 ) => {
-  const items = await PhotoHuntServiceDetails(userChallenge.challengeId);
+  const items = await PhotoHuntDetails(userChallenge.challengeId);
 
   const payload = items.map(({ id, hint }) => {
     return {
@@ -49,30 +53,59 @@ export const details = async (
 };
 
 export const submit = async (
-  id: string,
+  userChallengeId: string,
   TID: string,
-  isFound: boolean,
+  code: string,
   bonus?: number
 ) => {
-  const userPhotoHunt = await UserPhotoHuntModel.findOne({
-    _id: id,
-    "userPublic.code": TID,
-  });
-  if (!userPhotoHunt) throw new Error("user photo hunt not found");
-  if (userPhotoHunt.results) return userPhotoHunt.toObject();
+  return db.transaction(async (session) => {
+    const userChallenge = await UserChallengeDetail(userChallengeId, TID);
 
-  const photoHunt = await PhotoHuntServiceDetail(userPhotoHunt.photoHunt.id);
-  const results: UserPhotoHuntResult = {
-    score: isFound ? photoHunt.score : 0,
-    foundAt: new Date(),
-    feedback: isFound ? photoHunt.feedback : null,
-  };
-  userPhotoHunt.results = results;
-  await userPhotoHunt.save();
-  return userPhotoHunt.toObject();
+    const {
+      challenge: { id: challengeId },
+      contents,
+    } = userChallenge;
+
+    const photoHunt = await PhotoHuntVerifyCode(challengeId, code);
+    const userPhotoHunt = await UserPhotoHuntModel.findOne({
+      "photoHunt.id": photoHunt.id,
+      "userPublic.code": TID,
+    });
+    if (!userPhotoHunt) throw new Error("user_photohunt.not_found");
+    if (userPhotoHunt.results) throw new Error("user_photohunt.submitted");
+
+    userPhotoHunt.results = {
+      score: photoHunt.score,
+      foundAt: new Date(),
+      feedback: photoHunt.feedback,
+    };
+    await userPhotoHunt.save({ session });
+    const length = await UserPhotoHuntModel.countDocuments(
+      {
+        _id: { $in: contents },
+        results: { $ne: null },
+      },
+      { session }
+    );
+
+    const isFinish = contents.length === length;
+
+    await UserChallengeService.submitState(
+      userChallengeId,
+      TID,
+      isFinish,
+      session
+    );
+
+    return userPhotoHunt.toObject();
+  });
 };
 
-export const submitEmpties = async (userChallengeId: string, TID: string) => {
+export const submitEmpties = async (
+  userChallengeId: string,
+  TID: string,
+  session?: ClientSession
+) => {
   const results: UserPhotoHuntResult = {
     feedback: null,
     foundAt: null,
@@ -84,13 +117,15 @@ export const submitEmpties = async (userChallengeId: string, TID: string) => {
       "userPublic.code": TID,
       results: null,
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
 
 export const summary = async (
   userChallengeId: string,
-  TID: string
+  TID: string,
+  session?: ClientSession
 ): Promise<UserPhotoHuntSummary> => {
   const [summary] = await UserPhotoHuntModel.aggregate()
     .match({
@@ -102,20 +137,23 @@ export const summary = async (
         userChallenge: "$userChallenge.id",
         userPublic: "$userPublic.code",
       },
+      type: { $first: CHALLENGE_TYPES.PhotoHunt },
       userPublic: { $first: "$userPublic" },
       userChallenge: { $first: "$userChallenge" },
-      totalFound: {
+      totalItem: {
         $sum: {
           $cond: {
-            if: { $eq: ["$results.isCorrect", true] },
+            if: { $ne: ["$results.foundAt", null] },
             then: 1,
             else: 0,
           },
         },
       },
+      totalBaseScore: { $sum: "$results.score" },
+      totalBonus: { $first: 0 },
       totalScore: { $sum: "$results.score" },
     })
-    .addFields({ type: CHALLENGE_TYPES.PhotoHunt });
+    .session(session || null);
   return summary;
 };
 

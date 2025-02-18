@@ -8,7 +8,6 @@ export interface UserPhotoHuntSummary extends ScoreSummary {
   type: typeof CHALLENGE_TYPES.PhotoHunt;
   userPublic: UserPublicForeign;
   userChallenge: UserChallengeForeign;
-  totalFound: number;
 }
 
 export interface UserPhotoHuntResult {

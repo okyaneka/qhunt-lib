@@ -160,6 +160,15 @@ export const sync = async (
 
 export const verify = async (id: string) => {};
 
-const PhotoHuntService = { detail, details, sync, verify };
+export const verifyCode = async (challengeId: string, code: string) => {
+  const item = await PhotoHuntModel.findOne({
+    "challenge.id": challengeId,
+    "qr.code": code,
+  });
+  if (!item) throw new Error("photohunt.not_found");
+  return item.toObject();
+};
+
+const PhotoHuntService = { detail, details, sync, verify, verifyCode };
 
 export default PhotoHuntService;
