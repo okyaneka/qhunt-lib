@@ -11,7 +11,8 @@ import {
   verifyCode as PhotoHuntVerifyCode,
 } from "../photo-hunt";
 import { ClientSession } from "mongoose";
-import UserChallengeService, {
+import {
+  submit as UserChallengeSubmit,
   detail as UserChallengeDetail,
 } from "../user-challenge";
 import { db } from "~/helpers";
@@ -37,17 +38,22 @@ export const setup = async (
 export const details = async (
   ids: string[],
   TID: string,
-  hasResult?: boolean
+  hasResult?: boolean,
+  session?: ClientSession
 ) => {
   const filter: any = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
 
-  const data = await UserPhotoHuntModel.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID,
-  });
+  const data = await UserPhotoHuntModel.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID,
+    },
+    null,
+    { session }
+  );
 
   return data.map((item) => item.toObject());
 };
@@ -63,7 +69,6 @@ export const submit = async (
 
     const {
       challenge: { id: challengeId },
-      contents,
     } = userChallenge;
 
     const photoHunt = await PhotoHuntVerifyCode(challengeId, code);
@@ -80,22 +85,8 @@ export const submit = async (
       feedback: photoHunt.feedback,
     };
     await userPhotoHunt.save({ session });
-    const length = await UserPhotoHuntModel.countDocuments(
-      {
-        _id: { $in: contents },
-        results: { $ne: null },
-      },
-      { session }
-    );
 
-    const isFinish = contents.length === length;
-
-    await UserChallengeService.submitState(
-      userChallengeId,
-      TID,
-      isFinish,
-      session
-    );
+    await UserChallengeSubmit(userChallengeId, TID, session);
 
     return userPhotoHunt.toObject();
   });
