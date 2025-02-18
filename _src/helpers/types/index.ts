@@ -35,6 +35,7 @@ export interface Feedback {
 }
 
 export interface ScoreSummary {
+  totalItem: number;
   totalBaseScore: number;
   totalBonus: number;
   totalScore: number;
