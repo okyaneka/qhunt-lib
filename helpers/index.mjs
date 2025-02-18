@@ -3,7 +3,12 @@ import { Schema, startSession } from 'mongoose';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import Joi from 'joi';
 
-// _src/helpers/common/index.ts
+// _src/helpers/bonus/index.ts
+var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
+  return Math.round(maxPoint * (1 - seconds / totalSeconds));
+};
+var bonus = { timeBonus };
+var bonus_default = bonus;
 var common = { deepmerge };
 var common_default = common;
 var transaction = async (operation) => {
@@ -144,6 +149,7 @@ var service_default = service;
 
 // _src/helpers/index.ts
 var helpers = {
+  bonus: bonus_default,
   common: common_default,
   db: db_default,
   model: model_default,
@@ -154,4 +160,4 @@ var helpers = {
 };
 var helpers_default = helpers;
 
-export { common_default as common, db_default as db, helpers_default as default, model_default as model, qrcode_default as qrcode, response_default as response, schema_default as schema, service_default as service };
+export { bonus_default as bonus, common_default as common, db_default as db, helpers_default as default, model_default as model, qrcode_default as qrcode, response_default as response, schema_default as schema, service_default as service };

@@ -7,7 +7,6 @@ export interface UserTriviaSummary extends ScoreSummary {
     type: typeof CHALLENGE_TYPES.Trivia;
     userPublic: UserPublicForeign;
     userChallenge: UserChallengeForeign;
-    totalCorrect: number;
 }
 export interface UserTriviaResult {
     answer: string | null;

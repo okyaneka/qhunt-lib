@@ -1,4 +1,5 @@
 import { UserStageListParams } from "../../types";
+import { ClientSession } from "mongoose";
 export declare const verify: (stageId: string, TID: string) => Promise<(import("mongoose").Document<unknown, {}, import("../../types").UserStage> & import("../../types").UserStage & {
     _id: import("mongoose").Types.ObjectId;
 } & {
@@ -22,10 +23,8 @@ export declare const list: (params: UserStageListParams, TID: string) => Promise
 export declare const detail: (id: string, TID: string) => Promise<import("../../types").UserStage & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const submitState: (id: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../../types").UserStage> & import("../../types").UserStage & {
+export declare const submitState: (id: string, TID: string, session?: ClientSession) => Promise<import("../../types").UserStage & {
     _id: import("mongoose").Types.ObjectId;
-} & {
-    __v: number;
 }>;
 declare const UserStageService: {
     list: (params: UserStageListParams, TID: string) => Promise<{
@@ -51,10 +50,8 @@ declare const UserStageService: {
     } & {
         __v: number;
     }) | null>;
-    submitState: (id: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../../types").UserStage> & import("../../types").UserStage & {
+    submitState: (id: string, TID: string, session?: ClientSession) => Promise<import("../../types").UserStage & {
         _id: import("mongoose").Types.ObjectId;
-    } & {
-        __v: number;
     }>;
 };
 export default UserStageService;

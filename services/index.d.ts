@@ -50,6 +50,9 @@ declare const services: {
             _id: import("mongoose").Types.ObjectId;
         })[]>;
         verify: (id: string) => Promise<void>;
+        verifyCode: (challengeId: string, code: string) => Promise<import("..").PhotoHunt & {
+            _id: import("mongoose").Types.ObjectId;
+        }>;
     };
     readonly QrService: {
         generate: (count: number) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("..").Qr> & import("..").Qr & {
@@ -151,13 +154,13 @@ declare const services: {
         readonly detail: (id: string, TID: string) => Promise<import("..").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly submit: (id: string, TID: string, bonus?: number) => Promise<import("..").UserChallenge & {
+        readonly submit: (id: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly submitState: (id: string, TID: string) => Promise<import("..").UserChallenge & {
+        readonly submitState: (id: string, TID: string, finish?: boolean, session?: import("mongoose").ClientSession) => Promise<import("..").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly summary: (userStageId: string, TID: string) => Promise<import("..").UserChallengeSummary[]>;
+        readonly summary: (userStageId: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserChallengeSummary[]>;
         readonly init: (stage: import("..").Stage, userStage: import("..").UserStage, session?: import("mongoose").ClientSession) => Promise<(import("mongoose").Document<unknown, {}, import("..").UserChallenge> & import("..").UserChallenge & {
             _id: import("mongoose").Types.ObjectId;
         } & {
@@ -229,10 +232,8 @@ declare const services: {
         } & {
             __v: number;
         }) | null>;
-        submitState: (id: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("..").UserStage> & import("..").UserStage & {
+        submitState: (id: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserStage & {
             _id: import("mongoose").Types.ObjectId;
-        } & {
-            __v: number;
         }>;
     };
     readonly UserTriviaService: {
@@ -251,8 +252,8 @@ declare const services: {
         readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("..").UserTrivia & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly submitEmpties: (userChallengeId: string, TID: string) => Promise<import("mongoose").UpdateWriteOpResult>;
-        readonly summary: (userChallengeId: string, TID: string) => Promise<import("..").UserTriviaSummary>;
+        readonly submitEmpties: (userChallengeId: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("mongoose").UpdateWriteOpResult>;
+        readonly summary: (userChallengeId: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserTriviaSummary>;
     };
     readonly UserPhotoHuntService: {
         readonly setup: (userPublic: import("..").UserPublicForeign, userChallenge: import("..").UserChallengeForeign, session?: import("mongoose").ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("..").UserPhotoHunt> & import("..").UserPhotoHunt & {
@@ -270,11 +271,11 @@ declare const services: {
         readonly details: (ids: string[], TID: string, hasResult?: boolean) => Promise<(import("..").UserPhotoHunt & {
             _id: import("mongoose").Types.ObjectId;
         })[]>;
-        readonly submit: (id: string, TID: string, isFound: boolean, bonus?: number) => Promise<import("..").UserPhotoHunt & {
+        readonly submit: (userChallengeId: string, TID: string, code: string, bonus?: number) => Promise<import("..").UserPhotoHunt & {
             _id: import("mongoose").Types.ObjectId;
         }>;
-        readonly submitEmpties: (userChallengeId: string, TID: string) => Promise<import("mongoose").UpdateWriteOpResult>;
-        readonly summary: (userChallengeId: string, TID: string) => Promise<import("..").UserPhotoHuntSummary>;
+        readonly submitEmpties: (userChallengeId: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("mongoose").UpdateWriteOpResult>;
+        readonly summary: (userChallengeId: string, TID: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserPhotoHuntSummary>;
     };
     readonly LeaderboardService: {
         readonly stage: (stageId: string, TID?: string, limit?: number) => Promise<import("..").LeaderboardData>;

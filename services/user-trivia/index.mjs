@@ -147,7 +147,7 @@ var challenge_default = ChallengeModel;
 var QrForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true }
+    code: { type: String, required: true, index: true }
   },
   { _id: false, versionKey: false }
 );
@@ -374,7 +374,7 @@ var UserChallengeResultSchema = new Schema(
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
     contentBonus: { type: Number, required: true },
-    totalCorrect: { type: Number, required: true },
+    totalItem: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -539,7 +539,7 @@ var submit = async (id, TID, answer = null, bonus) => {
   await userTrivia.save();
   return userTrivia.toObject();
 };
-var submitEmpties = async (userChallengeId, TID) => {
+var submitEmpties = async (userChallengeId, TID, session) => {
   const results = {
     answer: null,
     feedback: null,
@@ -554,10 +554,11 @@ var submitEmpties = async (userChallengeId, TID) => {
       "userPublic.code": TID,
       results: null
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
-var summary = async (userChallengeId, TID) => {
+var summary = async (userChallengeId, TID, session) => {
   const [summary2] = await user_trivia_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
@@ -566,9 +567,10 @@ var summary = async (userChallengeId, TID) => {
       userChallenge: "$userChallenge.id",
       userPublic: "$userPublic.code"
     },
+    type: { $first: CHALLENGE_TYPES.Trivia },
     userPublic: { $first: "$userPublic" },
     userChallenge: { $first: "$userChallenge" },
-    totalCorrect: {
+    totalItem: {
       $sum: {
         $cond: {
           if: { $eq: ["$results.isCorrect", true] },
@@ -580,7 +582,7 @@ var summary = async (userChallengeId, TID) => {
     totalBaseScore: { $sum: "$results.baseScore" },
     totalBonus: { $sum: "$results.bonus" },
     totalScore: { $sum: "$results.totalScore" }
-  }).addFields({ type: CHALLENGE_TYPES.Trivia });
+  }).session(session || null);
   return summary2;
 };
 var UserTriviaService = {

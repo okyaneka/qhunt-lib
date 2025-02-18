@@ -164,7 +164,7 @@ models.Challenge || model("Challenge", ChallengeSchema);
 var QrForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true }
+    code: { type: String, required: true, index: true }
   },
   { _id: false, versionKey: false }
 );
@@ -392,7 +392,7 @@ var UserChallengeResultSchema = new Schema(
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
     contentBonus: { type: Number, required: true },
-    totalCorrect: { type: Number, required: true },
+    totalItem: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },

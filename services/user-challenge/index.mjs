@@ -6,6 +6,11 @@ import Joi from 'joi';
 import 'crypto-js';
 
 // _src/services/user-challenge/index.ts
+
+// _src/helpers/bonus/index.ts
+var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
+  return Math.round(maxPoint * (1 - seconds / totalSeconds));
+};
 var transaction = async (operation) => {
   const session = await startSession();
   session.startTransaction();
@@ -215,7 +220,7 @@ var challenge_default = ChallengeModel;
 var QrForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true }
+    code: { type: String, required: true, index: true }
   },
   { _id: false, versionKey: false }
 );
@@ -445,7 +450,7 @@ var UserChallengeResultSchema = new Schema(
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
     contentBonus: { type: Number, required: true },
-    totalCorrect: { type: Number, required: true },
+    totalItem: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -777,21 +782,25 @@ var detail3 = async (id, TID) => {
     }
   });
 };
-var submitState = async (id, TID) => {
-  const item = await user_stage_default.findOne({
-    _id: id,
-    "userPublic.code": TID
-  });
+var submitState = async (id, TID, session) => {
+  const item = await user_stage_default.findOne(
+    {
+      _id: id,
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   if (!item) throw new Error("user stage not found");
   const results = item?.results || initResults();
-  const [summary4] = await summary(id, TID);
+  const [summary4] = await summary(id, TID, session);
   results.baseScore = summary4.totalBaseScore;
   results.bonus = 0;
   results.challengeBonus = summary4.totalBonus;
   results.totalScore = summary4.totalScore;
   item.results = results;
-  await item.save();
-  return item;
+  await item.save({ session });
+  return item.toObject();
 };
 var UserStageService = { list: list3, detail: detail3, setup, verify: verify4, submitState };
 var user_stage_default2 = UserStageService;
@@ -862,7 +871,7 @@ var details2 = async (ids, TID, hasResult) => {
   });
   return data.map((item) => item.toObject());
 };
-var submitEmpties = async (userChallengeId, TID) => {
+var submitEmpties = async (userChallengeId, TID, session) => {
   const results = {
     answer: null,
     feedback: null,
@@ -877,10 +886,11 @@ var submitEmpties = async (userChallengeId, TID) => {
       "userPublic.code": TID,
       results: null
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
-var summary2 = async (userChallengeId, TID) => {
+var summary2 = async (userChallengeId, TID, session) => {
   const [summary4] = await user_trivia_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
@@ -889,9 +899,10 @@ var summary2 = async (userChallengeId, TID) => {
       userChallenge: "$userChallenge.id",
       userPublic: "$userPublic.code"
     },
+    type: { $first: CHALLENGE_TYPES.Trivia },
     userPublic: { $first: "$userPublic" },
     userChallenge: { $first: "$userChallenge" },
-    totalCorrect: {
+    totalItem: {
       $sum: {
         $cond: {
           if: { $eq: ["$results.isCorrect", true] },
@@ -903,7 +914,7 @@ var summary2 = async (userChallengeId, TID) => {
     totalBaseScore: { $sum: "$results.baseScore" },
     totalBonus: { $sum: "$results.bonus" },
     totalScore: { $sum: "$results.totalScore" }
-  }).addFields({ type: CHALLENGE_TYPES.Trivia });
+  }).session(session || null);
   return summary4;
 };
 var UserPhotoHuntResultSchema = new Schema(
@@ -983,7 +994,7 @@ var details4 = async (ids, TID, hasResult) => {
   });
   return data.map((item) => item.toObject());
 };
-var submitEmpties2 = async (userChallengeId, TID) => {
+var submitEmpties2 = async (userChallengeId, TID, session) => {
   const results = {
     feedback: null,
     foundAt: null,
@@ -995,10 +1006,11 @@ var submitEmpties2 = async (userChallengeId, TID) => {
       "userPublic.code": TID,
       results: null
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
-var summary3 = async (userChallengeId, TID) => {
+var summary3 = async (userChallengeId, TID, session) => {
   const [summary4] = await user_photo_hunt_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
@@ -1007,19 +1019,22 @@ var summary3 = async (userChallengeId, TID) => {
       userChallenge: "$userChallenge.id",
       userPublic: "$userPublic.code"
     },
+    type: { $first: CHALLENGE_TYPES.PhotoHunt },
     userPublic: { $first: "$userPublic" },
     userChallenge: { $first: "$userChallenge" },
-    totalFound: {
+    totalItem: {
       $sum: {
         $cond: {
-          if: { $eq: ["$results.isCorrect", true] },
+          if: { $ne: ["$results.foundAt", null] },
           then: 1,
           else: 0
         }
       }
     },
+    totalBaseScore: { $sum: "$results.score" },
+    totalBonus: { $first: 0 },
     totalScore: { $sum: "$results.score" }
-  }).addFields({ type: CHALLENGE_TYPES.PhotoHunt });
+  }).session(session || null);
   return summary4;
 };
 
@@ -1045,7 +1060,7 @@ var initResult = () => {
     timeUsed: 0,
     totalScore: 0,
     contentBonus: 0,
-    totalCorrect: 0,
+    totalItem: 0,
     startAt: /* @__PURE__ */ new Date(),
     endAt: null
   };
@@ -1194,56 +1209,83 @@ var detail6 = async (id, TID) => {
     }
   });
 };
-var submit = async (id, TID, bonus = 0) => {
+var submit = async (id, TID, session) => {
   const userChallenge = await detail6(id, TID);
   if (!userChallenge) throw new Error("user challenge not found");
   const {
     settings: { type: challengeType }
   } = userChallenge;
-  await services[challengeType].submitEmpties(id, TID);
-  const summary4 = await services[challengeType].summary(id, TID);
+  await services[challengeType].submitEmpties(id, TID, session);
+  const summary4 = await services[challengeType].summary(id, TID, session);
   const results = userChallenge.results || initResult();
-  const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
-  if (summary4.type === CHALLENGE_TYPES.Trivia)
-    results.totalCorrect = summary4.totalCorrect;
-  else results.totalCorrect = summary4.totalFound;
+  const timeUsed = Math.min(
+    dayjs().diff(dayjs(results.startAt), "seconds"),
+    userChallenge.settings.duration
+  );
+  results.totalItem = summary4.totalItem;
   results.contentBonus = summary4.totalBonus || 0;
   results.baseScore = summary4.totalBaseScore;
-  results.bonus = bonus;
-  results.totalScore = summary4.totalBaseScore + summary4.totalBonus + bonus;
+  results.bonus = timeBonus(
+    timeUsed,
+    userChallenge.settings.duration,
+    userChallenge.contents.length * 100
+  );
+  results.totalScore = results.baseScore + results.bonus + results.contentBonus;
   results.endAt = /* @__PURE__ */ new Date();
   results.timeUsed = timeUsed;
-  userChallenge.results = results;
-  userChallenge.status = USER_CHALLENGE_STATUS.Completed;
   const newUserChallenge = await user_challenge_default.findOneAndUpdate(
     { _id: userChallenge.id },
     { $set: { results, status: USER_CHALLENGE_STATUS.Completed } },
-    { new: true }
+    { new: true, session }
   );
   if (!newUserChallenge) throw new Error("");
   if (userChallenge.userStage)
     await user_stage_default2.submitState(userChallenge.userStage.id, TID);
   return newUserChallenge.toObject();
 };
-var submitState2 = async (id, TID) => {
-  const userChallenge = await user_challenge_default.findOne({ _id: id });
-  if (!userChallenge) throw new Error("user challenge not found");
-  if (userChallenge.status === USER_CHALLENGE_STATUS.Completed)
-    return userChallenge.toObject();
-  const results = userChallenge.results || initResult();
+var submitState2 = async (id, TID, finish, session) => {
+  const { OnGoing, Completed } = USER_CHALLENGE_STATUS;
+  const userChallenge = await user_challenge_default.findOne({ _id: id }, null, {
+    session
+  });
+  if (!userChallenge) throw new Error("user_challenge.not_found");
+  if (userChallenge.status === Completed) return userChallenge.toObject();
   const {
     settings: { type: challengeType }
   } = userChallenge;
-  const summary4 = await services[challengeType].summary(id, TID);
+  const summary4 = await services[challengeType].summary(id, TID, session);
+  const results = userChallenge.results || initResult();
+  results.totalItem = summary4.totalItem;
   results.baseScore = summary4.totalBaseScore;
   results.contentBonus = summary4.totalBonus;
-  results.totalScore = summary4.totalBaseScore + summary4.totalBonus;
+  if (finish) {
+    await services[challengeType].submitEmpties(id, TID, session);
+    const timeUsed = Math.min(
+      dayjs().diff(dayjs(results.startAt), "seconds"),
+      userChallenge.settings.duration
+    );
+    const bonus = timeBonus(
+      timeUsed,
+      userChallenge.settings.duration,
+      userChallenge.contents.length * 100
+    );
+    results.bonus = bonus;
+    results.timeUsed = timeUsed;
+    results.endAt = /* @__PURE__ */ new Date();
+  }
+  results.totalScore = results.baseScore + results.bonus + results.contentBonus;
   userChallenge.results = results;
-  userChallenge.status = USER_CHALLENGE_STATUS.OnGoing;
-  await userChallenge.save();
+  userChallenge.status = finish ? Completed : OnGoing;
+  await userChallenge.save({ session });
+  if (userChallenge.userStage && finish)
+    await user_stage_default2.submitState(
+      userChallenge.userStage.id,
+      TID,
+      session
+    );
   return userChallenge.toObject();
 };
-var summary = async (userStageId, TID) => {
+var summary = async (userStageId, TID, session) => {
   return user_challenge_default.aggregate().match({
     "userStage.id": userStageId,
     "userPublic.code": TID
@@ -1256,7 +1298,7 @@ var summary = async (userStageId, TID) => {
       $sum: { $add: ["$results.bonus", "$results.correctBonus"] }
     },
     totalScore: { $sum: "$results.totalScore" }
-  });
+  }).session(session || null);
 };
 var UserChallengeService = {
   verify: verify7,

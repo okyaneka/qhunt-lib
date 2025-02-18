@@ -12,7 +12,12 @@ function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 var deepmerge__default = /*#__PURE__*/_interopDefault(deepmerge);
 var Joi__default = /*#__PURE__*/_interopDefault(Joi);
 
-// _src/helpers/common/index.ts
+// _src/helpers/bonus/index.ts
+var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
+  return Math.round(maxPoint * (1 - seconds / totalSeconds));
+};
+var bonus = { timeBonus };
+var bonus_default = bonus;
 var common = { deepmerge: deepmerge__default.default };
 var common_default = common;
 var transaction = async (operation) => {
@@ -153,6 +158,7 @@ var service_default = service;
 
 // _src/helpers/index.ts
 var helpers = {
+  bonus: bonus_default,
   common: common_default,
   db: db_default,
   model: model_default,
@@ -163,6 +169,7 @@ var helpers = {
 };
 var helpers_default = helpers;
 
+exports.bonus = bonus_default;
 exports.common = common_default;
 exports.db = db_default;
 exports.default = helpers_default;

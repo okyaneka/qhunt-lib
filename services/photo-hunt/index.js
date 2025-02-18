@@ -161,7 +161,7 @@ var challenge_default = ChallengeModel;
 var QrForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true }
+    code: { type: String, required: true, index: true }
   },
   { _id: false, versionKey: false }
 );
@@ -388,7 +388,7 @@ var UserChallengeResultSchema = new mongoose.Schema(
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
     contentBonus: { type: Number, required: true },
-    totalCorrect: { type: Number, required: true },
+    totalItem: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -725,7 +725,7 @@ var updateMany = async (challenge, payload, session) => {
     throw new Error("photohunt.sync.update_error");
   return await photo_hunt_default.find({ _id: { $in: ids } });
 };
-var detail4 = async (id) => {
+var detail5 = async (id) => {
   const item = await photo_hunt_default.findOne({ _id: id });
   if (!item) throw new Error("photo hunt not found");
   return item.toObject();
@@ -778,11 +778,20 @@ var sync = async (challengeId, payload) => {
 };
 var verify4 = async (id) => {
 };
-var PhotoHuntService = { detail: detail4, details: details3, sync, verify: verify4 };
+var verifyCode = async (challengeId, code) => {
+  const item = await photo_hunt_default.findOne({
+    "challenge.id": challengeId,
+    "qr.code": code
+  });
+  if (!item) throw new Error("photohunt.not_found");
+  return item.toObject();
+};
+var PhotoHuntService = { detail: detail5, details: details3, sync, verify: verify4, verifyCode };
 var photo_hunt_default2 = PhotoHuntService;
 
 exports.default = photo_hunt_default2;
-exports.detail = detail4;
+exports.detail = detail5;
 exports.details = details3;
 exports.sync = sync;
 exports.verify = verify4;
+exports.verifyCode = verifyCode;
