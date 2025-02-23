@@ -10,14 +10,12 @@ import {
   UserChallengeSummary,
   UserStage,
   Stage,
+  UserPublicForeign,
+  ChallengeForeign,
+  ChallengeSettingsForeign,
 } from "~/types";
 import { verify as UserPublicVerivy } from "../user-public";
 import UserStageService from "../user-stage";
-import {
-  ChallengeForeignValidator,
-  ChallengeSettingsForeignValidator,
-} from "~/validators/challenge";
-import { UserPublicForeignValidator } from "~/validators/user-public";
 import StageService from "../stage";
 import service from "~/helpers/service";
 import {
@@ -172,20 +170,23 @@ export const setup = async (
     name: userStageData.stage.name,
   };
 
-  const userPublic = await UserPublicForeignValidator.validateAsync(
-    userPublicData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
+  const userPublic: UserPublicForeign = {
+    code: userPublicData.code,
+    id: userPublicData.id,
+    name: userPublicData.name,
+  };
 
-  const challenge = await ChallengeForeignValidator.validateAsync(
-    challengeData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
+  const challenge: ChallengeForeign = {
+    id: challengeData.id,
+    name: challengeData.name,
+    storyline: challengeData.storyline,
+    order: challengeData.order,
+  };
 
-  const settings = await ChallengeSettingsForeignValidator.validateAsync(
-    challengeData.settings,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
+  const settings: ChallengeSettingsForeign = {
+    duration: challengeData.settings.duration,
+    type: challengeData.settings.type,
+  };
 
   const userChallengeData = await UserChallengeModel.create({
     userStage,

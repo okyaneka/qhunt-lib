@@ -1,13 +1,16 @@
 import { UserStageModel } from "~/models";
-import { UserStageListParams, UserStageResult } from "~/types";
+import {
+  StageForeign,
+  UserPublicForeign,
+  UserStageListParams,
+  UserStageResult,
+} from "~/types";
 import { verify as StageVerify } from "../stage";
 import {
   init as UserChallengeInit,
   summary as UserChallengeServiceSummary,
 } from "../user-challenge";
 import { verify as UserPublicVerify } from "../user-public";
-import { StageForeignValidator } from "~/validators/stage";
-import { UserPublicForeignValidator } from "~/validators/user-public";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
 
@@ -35,16 +38,21 @@ export const setup = async (stageId: string, TID: string) => {
     const userPublicData = await UserPublicVerify(TID);
     const stageData = await StageVerify(stageId);
 
-    const userPublic = await UserPublicForeignValidator.validateAsync(
-      userPublicData,
-      { convert: true, abortEarly: false, stripUnknown: true }
-    );
+    const userPublic: UserPublicForeign = {
+      code: userPublicData.code,
+      id: userPublicData.id,
+      name: userPublicData.name,
+    };
 
-    const stage = await StageForeignValidator.validateAsync(stageData, {
-      convert: true,
-      abortEarly: false,
-      stripUnknown: true,
-    });
+    // ENHANCE ME: ubah setting ke masing masing user stage, bukan foreign dari stage. ref: sudah diterapkan di user challenge
+    const stage: StageForeign = {
+      id: stageData.id,
+      name: stageData.name,
+      settings: {
+        periode: stageData.settings.periode,
+      },
+      storyline: stageData.storyline,
+    };
 
     const [userStageData] = await UserStageModel.create(
       [{ userPublic, stage }],
