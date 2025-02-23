@@ -5,7 +5,7 @@
     "dev": "nodemon",
     "build": "pnpm build:dts && pnpm build:js",
     "build:js": "tsup",
-    "build:dts": "rm -rf helpers models services types validators index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
+    "build:dts": "rm -rf helpers models services types plugins index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
     "test": "jest"
   },
   "keywords": [],
@@ -19,6 +19,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "deepmerge": "^4.3.1",
+    "ioredis": "^5.5.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5"
