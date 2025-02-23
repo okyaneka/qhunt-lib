@@ -12,6 +12,8 @@ import {
 } from "../trivia";
 import { UserTriviaModel } from "~/models";
 import { ClientSession } from "mongoose";
+import { db } from "~/helpers";
+import { submit as UserChallengeSubmit } from "../user-challenge";
 
 export const verify = async (triviaId: string, TID: string) => {
   const item = await UserTriviaModel.findOne({
@@ -51,17 +53,22 @@ export const setup = async (
 export const details = async (
   ids: string[],
   TID: string,
-  hasResult?: boolean
+  hasResult?: boolean,
+  session?: ClientSession
 ) => {
   const filter: any = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
 
-  const data = await UserTriviaModel.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID,
-  });
+  const data = await UserTriviaModel.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID,
+    },
+    null,
+    { session }
+  );
 
   return data.map((item) => item.toObject());
 };
@@ -72,31 +79,40 @@ export const submit = async (
   answer: string | null = null,
   bonus?: number
 ) => {
-  const userTrivia = await UserTriviaModel.findOne({
-    _id: id,
-    "userPublic.code": TID,
-  });
-  if (!userTrivia) throw new Error("user trivia not found");
-  if (userTrivia.results) return userTrivia.toObject();
+  return db.transaction(async (session) => {
+    const userTrivia = await UserTriviaModel.findOne({
+      _id: id,
+      "userPublic.code": TID,
+    });
+    if (!userTrivia) throw new Error("user trivia not found");
+    if (userTrivia.results) return userTrivia.toObject();
 
-  const trivia = await TriviaServiceDetail(userTrivia.trivia.id);
-  const selectedAnswer = trivia.options.find((v) => v.text == answer);
-  const isCorrect = Boolean(selectedAnswer?.isCorrect);
-  const baseScore = selectedAnswer?.point || 0;
-  const results: UserTriviaResult = {
-    answer,
-    feedback: trivia.feedback[isCorrect ? "positive" : "negative"],
-    isCorrect,
-    baseScore,
-    bonus: bonus || 0,
-    totalScore: baseScore + (bonus || 0),
-  };
-  userTrivia.results = results;
-  await userTrivia.save();
-  return userTrivia.toObject();
+    const trivia = await TriviaServiceDetail(userTrivia.trivia.id);
+    const selectedAnswer = trivia.options.find((v) => v.text == answer);
+    const isCorrect = Boolean(selectedAnswer?.isCorrect);
+    const baseScore = selectedAnswer?.point || 0;
+    const results: UserTriviaResult = {
+      answer,
+      feedback: trivia.feedback[isCorrect ? "positive" : "negative"],
+      isCorrect,
+      baseScore,
+      bonus: bonus || 0,
+      totalScore: baseScore + (bonus || 0),
+    };
+    userTrivia.results = results;
+    await userTrivia.save({ session });
+
+    await UserChallengeSubmit(userTrivia.userChallenge.id, TID, session);
+
+    return userTrivia.toObject();
+  });
 };
 
-export const submitEmpties = async (userChallengeId: string, TID: string) => {
+export const submitEmpties = async (
+  userChallengeId: string,
+  TID: string,
+  session?: ClientSession
+) => {
   const results = {
     answer: null,
     feedback: null,
@@ -111,13 +127,15 @@ export const submitEmpties = async (userChallengeId: string, TID: string) => {
       "userPublic.code": TID,
       results: null,
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
 
 export const summary = async (
   userChallengeId: string,
-  TID: string
+  TID: string,
+  session?: ClientSession
 ): Promise<UserTriviaSummary> => {
   const [summary] = await UserTriviaModel.aggregate()
     .match({
@@ -129,10 +147,10 @@ export const summary = async (
         userChallenge: "$userChallenge.id",
         userPublic: "$userPublic.code",
       },
-
+      type: { $first: CHALLENGE_TYPES.Trivia },
       userPublic: { $first: "$userPublic" },
       userChallenge: { $first: "$userChallenge" },
-      totalCorrect: {
+      totalItem: {
         $sum: {
           $cond: {
             if: { $eq: ["$results.isCorrect", true] },
@@ -145,7 +163,7 @@ export const summary = async (
       totalBonus: { $sum: "$results.bonus" },
       totalScore: { $sum: "$results.totalScore" },
     })
-    .addFields({ type: CHALLENGE_TYPES.Trivia });
+    .session(session || null);
 
   return summary;
 };

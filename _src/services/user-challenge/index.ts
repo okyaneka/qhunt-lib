@@ -33,6 +33,7 @@ import {
   summary as UserPhotoHuntSummary,
 } from "~/services/user-photo-hunt";
 import { ClientSession } from "mongoose";
+import { timeBonus } from "~/helpers/bonus";
 
 const services = {
   [CHALLENGE_TYPES.Trivia]: {
@@ -56,7 +57,7 @@ const initResult = (): UserChallengeResult => {
     timeUsed: 0,
     totalScore: 0,
     contentBonus: 0,
-    totalCorrect: 0,
+    totalItem: 0,
     startAt: new Date(),
     endAt: null,
   };
@@ -248,74 +249,80 @@ export const detail = async (id: string, TID: string) => {
   });
 };
 
-export const submit = async (id: string, TID: string, bonus: number = 0) => {
-  const userChallenge = await detail(id, TID);
-  if (!userChallenge) throw new Error("user challenge not found");
+export const submit = async (
+  id: string,
+  TID: string,
+  session?: ClientSession,
+  forceFinish?: boolean
+) => {
+  const { OnGoing, Completed } = USER_CHALLENGE_STATUS;
+
+  const userChallenge = await UserChallengeModel.findOne({ _id: id }, null, {
+    session,
+  });
+  if (!userChallenge) throw new Error("user_challenge.not_found");
+  if (userChallenge.status === Completed) return userChallenge.toObject();
+
+  const contents = forceFinish
+    ? []
+    : await services[userChallenge.settings.type].details(
+        userChallenge.contents,
+        TID,
+        false,
+        session
+      );
+
+  const isFinish = !contents.length || forceFinish;
 
   const {
     settings: { type: challengeType },
   } = userChallenge;
 
-  await services[challengeType].submitEmpties(id, TID);
-
-  const summary = await services[challengeType].summary(id, TID);
-
+  const summary = await services[challengeType].summary(id, TID, session);
   const results = userChallenge.results || initResult();
-  const timeUsed = dayjs().diff(dayjs(results.startAt), "seconds");
 
-  if (summary.type === CHALLENGE_TYPES.Trivia)
-    results.totalCorrect = summary.totalCorrect;
-  else results.totalCorrect = summary.totalFound;
-
-  results.contentBonus = summary.totalBonus || 0;
-  results.baseScore = summary.totalBaseScore;
-  results.bonus = bonus;
-  results.totalScore = summary.totalBaseScore + summary.totalBonus + bonus;
-  results.endAt = new Date();
-  results.timeUsed = timeUsed;
-
-  userChallenge.results = results;
-  userChallenge.status = USER_CHALLENGE_STATUS.Completed;
-
-  const newUserChallenge = await UserChallengeModel.findOneAndUpdate(
-    { _id: userChallenge.id },
-    { $set: { results, status: USER_CHALLENGE_STATUS.Completed } },
-    { new: true }
-  );
-  if (!newUserChallenge) throw new Error("");
-
-  if (userChallenge.userStage)
-    await UserStageService.submitState(userChallenge.userStage.id, TID);
-
-  return newUserChallenge.toObject();
-};
-
-export const submitState = async (id: string, TID: string) => {
-  const userChallenge = await UserChallengeModel.findOne({ _id: id });
-  if (!userChallenge) throw new Error("user challenge not found");
-  if (userChallenge.status === USER_CHALLENGE_STATUS.Completed)
-    return userChallenge.toObject();
-
-  const results = userChallenge.results || initResult();
-  const {
-    settings: { type: challengeType },
-  } = userChallenge;
-
-  const summary = await services[challengeType].summary(id, TID);
-
+  results.totalItem = summary.totalItem;
   results.baseScore = summary.totalBaseScore;
   results.contentBonus = summary.totalBonus;
-  results.totalScore = summary.totalBaseScore + summary.totalBonus;
+
+  if (isFinish) {
+    if (contents.length)
+      await services[challengeType].submitEmpties(id, TID, session);
+    const timeUsed = Math.min(
+      dayjs().diff(dayjs(results.startAt), "seconds"),
+      userChallenge.settings.duration
+    );
+    const bonus = timeBonus(
+      timeUsed,
+      userChallenge.settings.duration,
+      (userChallenge.contents.length * 100) / 2
+    );
+
+    results.bonus = bonus;
+    results.timeUsed = timeUsed;
+    results.endAt = new Date();
+  }
+
+  results.totalScore = results.baseScore + results.bonus + results.contentBonus;
 
   userChallenge.results = results;
-  userChallenge.status = USER_CHALLENGE_STATUS.OnGoing;
-  await userChallenge.save();
+  userChallenge.status = isFinish ? Completed : OnGoing;
+  await userChallenge.save({ session });
+
+  if (userChallenge.userStage && isFinish)
+    await UserStageService.submitState(
+      userChallenge.userStage.id,
+      TID,
+      session
+    );
+
   return userChallenge.toObject();
 };
 
 export const summary = async (
   userStageId: string,
-  TID: string
+  TID: string,
+  session?: ClientSession
 ): Promise<UserChallengeSummary[]> => {
   return UserChallengeModel.aggregate()
     .match({
@@ -331,7 +338,8 @@ export const summary = async (
         $sum: { $add: ["$results.bonus", "$results.correctBonus"] },
       },
       totalScore: { $sum: "$results.totalScore" },
-    });
+    })
+    .session(session || null);
 };
 
 const UserChallengeService = {
@@ -339,9 +347,7 @@ const UserChallengeService = {
   setup,
   list,
   detail,
-  // detailContent,
   submit,
-  submitState,
   summary,
   init,
 } as const;

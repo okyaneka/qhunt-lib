@@ -27,6 +27,7 @@ export interface Feedback {
     negative: string;
 }
 export interface ScoreSummary {
+    totalItem: number;
     totalBaseScore: number;
     totalBonus: number;
     totalScore: number;

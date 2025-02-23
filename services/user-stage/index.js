@@ -161,7 +161,7 @@ var challenge_default = ChallengeModel;
 var QrForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true }
+    code: { type: String, required: true, index: true }
   },
   { _id: false, versionKey: false }
 );
@@ -391,7 +391,7 @@ var UserChallengeResultSchema = new mongoose.Schema(
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
     contentBonus: { type: Number, required: true },
-    totalCorrect: { type: Number, required: true },
+    totalItem: { type: Number, required: true },
     totalScore: { type: Number, required: true },
     startAt: { type: Date, default: Date.now() },
     endAt: { type: Date, default: null },
@@ -623,18 +623,22 @@ var setup = async (userPublic, userChallenge, session) => {
   });
   return await user_trivia_default.insertMany(payload, { session });
 };
-var details2 = async (ids, TID, hasResult) => {
+var details2 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_trivia_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_trivia_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
-var submitEmpties = async (userChallengeId, TID) => {
+var submitEmpties = async (userChallengeId, TID, session) => {
   const results = {
     answer: null,
     feedback: null,
@@ -649,10 +653,11 @@ var submitEmpties = async (userChallengeId, TID) => {
       "userPublic.code": TID,
       results: null
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
-var summary = async (userChallengeId, TID) => {
+var summary = async (userChallengeId, TID, session) => {
   const [summary4] = await user_trivia_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
@@ -661,9 +666,10 @@ var summary = async (userChallengeId, TID) => {
       userChallenge: "$userChallenge.id",
       userPublic: "$userPublic.code"
     },
+    type: { $first: CHALLENGE_TYPES.Trivia },
     userPublic: { $first: "$userPublic" },
     userChallenge: { $first: "$userChallenge" },
-    totalCorrect: {
+    totalItem: {
       $sum: {
         $cond: {
           if: { $eq: ["$results.isCorrect", true] },
@@ -675,7 +681,7 @@ var summary = async (userChallengeId, TID) => {
     totalBaseScore: { $sum: "$results.baseScore" },
     totalBonus: { $sum: "$results.bonus" },
     totalScore: { $sum: "$results.totalScore" }
-  }).addFields({ type: CHALLENGE_TYPES.Trivia });
+  }).session(session || null);
   return summary4;
 };
 var UserPhotoHuntResultSchema = new mongoose.Schema(
@@ -744,18 +750,22 @@ var setup4 = async (userPublic, userChallenge, session) => {
   });
   return await user_photo_hunt_default.insertMany(payload, { session });
 };
-var details4 = async (ids, TID, hasResult) => {
+var details4 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_default.find({
-    ...filter,
-    _id: { $in: ids },
-    "userPublic.code": TID
-  });
+  const data = await user_photo_hunt_default.find(
+    {
+      ...filter,
+      _id: { $in: ids },
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   return data.map((item) => item.toObject());
 };
-var submitEmpties2 = async (userChallengeId, TID) => {
+var submitEmpties2 = async (userChallengeId, TID, session) => {
   const results = {
     feedback: null,
     foundAt: null,
@@ -767,10 +777,11 @@ var submitEmpties2 = async (userChallengeId, TID) => {
       "userPublic.code": TID,
       results: null
     },
-    { $set: { results } }
+    { $set: { results } },
+    { session }
   );
 };
-var summary2 = async (userChallengeId, TID) => {
+var summary2 = async (userChallengeId, TID, session) => {
   const [summary4] = await user_photo_hunt_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
@@ -779,19 +790,22 @@ var summary2 = async (userChallengeId, TID) => {
       userChallenge: "$userChallenge.id",
       userPublic: "$userPublic.code"
     },
+    type: { $first: CHALLENGE_TYPES.PhotoHunt },
     userPublic: { $first: "$userPublic" },
     userChallenge: { $first: "$userChallenge" },
-    totalFound: {
+    totalItem: {
       $sum: {
         $cond: {
-          if: { $eq: ["$results.isCorrect", true] },
+          if: { $ne: ["$results.foundAt", null] },
           then: 1,
           else: 0
         }
       }
     },
+    totalBaseScore: { $sum: "$results.score" },
+    totalBonus: { $first: 0 },
     totalScore: { $sum: "$results.score" }
-  }).addFields({ type: CHALLENGE_TYPES.PhotoHunt });
+  }).session(session || null);
   return summary4;
 };
 
@@ -855,7 +869,7 @@ var init = async (stage, userStage, session) => {
     _id: { $in: contents.map((item) => item._id) }
   });
 };
-var summary3 = async (userStageId, TID) => {
+var summary3 = async (userStageId, TID, session) => {
   return user_challenge_default.aggregate().match({
     "userStage.id": userStageId,
     "userPublic.code": TID
@@ -868,7 +882,7 @@ var summary3 = async (userStageId, TID) => {
       $sum: { $add: ["$results.bonus", "$results.correctBonus"] }
     },
     totalScore: { $sum: "$results.totalScore" }
-  });
+  }).session(session || null);
 };
 var StageSettingsValidator = schema_default.generate(
   {
@@ -963,7 +977,7 @@ var list2 = async (params, TID) => {
     totalPages
   };
 };
-var detail5 = async (id, TID) => {
+var detail6 = async (id, TID) => {
   const item = await user_stage_default.findOne({
     _id: id,
     deletedAt: null,
@@ -977,27 +991,31 @@ var detail5 = async (id, TID) => {
     }
   });
 };
-var submitState = async (id, TID) => {
-  const item = await user_stage_default.findOne({
-    _id: id,
-    "userPublic.code": TID
-  });
+var submitState = async (id, TID, session) => {
+  const item = await user_stage_default.findOne(
+    {
+      _id: id,
+      "userPublic.code": TID
+    },
+    null,
+    { session }
+  );
   if (!item) throw new Error("user stage not found");
   const results = item?.results || initResults();
-  const [summary4] = await summary3(id, TID);
+  const [summary4] = await summary3(id, TID, session);
   results.baseScore = summary4.totalBaseScore;
   results.bonus = 0;
   results.challengeBonus = summary4.totalBonus;
   results.totalScore = summary4.totalScore;
   item.results = results;
-  await item.save();
-  return item;
+  await item.save({ session });
+  return item.toObject();
 };
-var UserStageService = { list: list2, detail: detail5, setup: setup2, verify: verify6, submitState };
+var UserStageService = { list: list2, detail: detail6, setup: setup2, verify: verify6, submitState };
 var user_stage_default2 = UserStageService;
 
 exports.default = user_stage_default2;
-exports.detail = detail5;
+exports.detail = detail6;
 exports.list = list2;
 exports.setup = setup2;
 exports.submitState = submitState;

@@ -1,4 +1,9 @@
-import { Timestamps, DefaultListParams, ValueOf } from "~/helpers/types";
+import {
+  Timestamps,
+  DefaultListParams,
+  ValueOf,
+  ScoreSummary,
+} from "~/helpers/types";
 import { ChallengeForeign, ChallengeSettingsForeign } from "../challenge";
 import { UserPublicForeign } from "../user-public";
 import { UserStageForeign } from "../user-stage";
@@ -32,20 +37,17 @@ export interface UserChallengeResult {
   startAt: Date;
   endAt: Date | null;
   timeUsed: number;
-  totalCorrect: number;
+  totalItem: number;
   baseScore: number;
   contentBonus: number;
   bonus: number;
   totalScore: number;
 }
 
-export interface UserChallengeSummary {
+export interface UserChallengeSummary extends ScoreSummary {
   code: string;
   userPublic: UserPublicForeign;
   userStage: UserStageForeign;
-  totalBaseScore: number;
-  totalBonus: number;
-  totalScore: number;
 }
 
 export interface UserChallenge extends Timestamps {

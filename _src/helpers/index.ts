@@ -1,3 +1,4 @@
+import bonus from "./bonus";
 import common from "./common";
 import db from "./db";
 import model from "./model";
@@ -6,9 +7,10 @@ import response from "./response";
 import schema from "./schema";
 import service from "./service";
 
-export { common, db, model, qrcode, response, schema, service };
+export { bonus, common, db, model, qrcode, response, schema, service };
 
 const helpers = {
+  bonus,
   common,
   db,
   model,

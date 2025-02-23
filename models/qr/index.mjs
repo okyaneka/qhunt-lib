@@ -48,7 +48,7 @@ var QR_CONTENT_TYPES = {
 var QrForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    code: { type: String, required: true }
+    code: { type: String, required: true, index: true }
   },
   { _id: false, versionKey: false }
 );

@@ -9,6 +9,7 @@ import { verify as UserPublicVerify } from "../user-public";
 import { StageForeignValidator } from "~/validators/stage";
 import { UserPublicForeignValidator } from "~/validators/user-public";
 import { transaction } from "~/helpers/db";
+import { ClientSession } from "mongoose";
 
 const initResults = (): UserStageResult => ({
   baseScore: 0,
@@ -107,16 +108,24 @@ export const detail = async (id: string, TID: string) => {
   });
 };
 
-export const submitState = async (id: string, TID: string) => {
-  const item = await UserStageModel.findOne({
-    _id: id,
-    "userPublic.code": TID,
-  });
+export const submitState = async (
+  id: string,
+  TID: string,
+  session?: ClientSession
+) => {
+  const item = await UserStageModel.findOne(
+    {
+      _id: id,
+      "userPublic.code": TID,
+    },
+    null,
+    { session }
+  );
   if (!item) throw new Error("user stage not found");
 
   const results = item?.results || initResults();
 
-  const [summary] = await UserChallengeServiceSummary(id, TID);
+  const [summary] = await UserChallengeServiceSummary(id, TID, session);
 
   results.baseScore = summary.totalBaseScore;
   results.bonus = 0; //summary.totalBonus
@@ -124,8 +133,8 @@ export const submitState = async (id: string, TID: string) => {
   results.totalScore = summary.totalScore;
 
   item.results = results;
-  await item.save();
-  return item;
+  await item.save({ session });
+  return item.toObject();
 };
 
 const UserStageService = { list, detail, setup, verify, submitState };
