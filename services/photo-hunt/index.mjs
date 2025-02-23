@@ -1,8 +1,8 @@
 import { Schema, models, model, startSession } from 'mongoose';
-import Joi from 'joi';
 import 'crypto-js';
 import 'deepmerge';
 import '@zxing/browser';
+import 'joi';
 import 'dayjs';
 
 // _src/models/challenge/index.ts
@@ -475,76 +475,6 @@ var transaction = async (operation) => {
     session.endSession();
   });
 };
-var createValidator = (base, option) => {
-  let v = base;
-  if (option?.required) v = v.required();
-  if (option?.allow !== undefined) v = v.allow(option.allow);
-  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
-  return v;
-};
-var string = (option) => createValidator(Joi.string().trim(), option);
-var number = (option) => createValidator(Joi.number(), option);
-var boolean = (option) => createValidator(Joi.boolean(), option);
-var array = (item, options) => {
-  let v = createValidator(
-    Joi.array().items(item)
-  );
-  if (options?.required) v = v.min(1);
-  if (options?.defaultValue) v.default(options.defaultValue);
-  if (options?.allow) v.allow(options.allow);
-  return v;
-};
-var generate = (fields) => Joi.object(fields);
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate
-};
-var schema_default = schema;
-var PeriodeValidator = schema_default.generate({
-  startDate: Joi.date().required(),
-  endDate: Joi.date().required().greater(Joi.ref("startDate"))
-});
-var DefaultListParamsFields = {
-  page: schema_default.number({ defaultValue: 1 }),
-  limit: schema_default.number({ defaultValue: 10 }),
-  search: schema_default.string({ allow: "", defaultValue: "" })
-};
-var FeedbackValidator = schema_default.generate({
-  positive: schema_default.string({ allow: "", defaultValue: "" }),
-  negative: schema_default.string({ allow: "", defaultValue: "" })
-}).default({ positive: "", negative: "" });
-
-// _src/validators/qr/index.ts
-var QrListParamsValidator = schema_default.generate({
-  ...DefaultListParamsFields,
-  code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QR_STATUS)),
-  hasContent: schema_default.boolean({ defaultValue: null })
-});
-schema_default.generate({
-  amount: schema_default.number({ required: true })
-});
-var QrContentValidator = schema_default.generate({
-  refId: schema_default.string({ required: true }),
-  type: schema_default.string({ required: true }).valid(...Object.values(QR_CONTENT_TYPES))
-});
-var QrLocationValidator = schema_default.generate({
-  label: schema_default.string({ required: true, allow: "" }),
-  longitude: schema_default.number({ required: true }),
-  latitude: schema_default.number({ required: true })
-});
-schema_default.generate({
-  status: schema_default.string({ required: true }).valid(...Object.values(QR_STATUS)),
-  content: QrContentValidator.allow(null).default(null),
-  location: QrLocationValidator.allow(null).default(null)
-});
-schema_default.generate({
-  ids: schema_default.array(Joi.string(), { required: true })
-});
 
 // _src/services/challenge/index.ts
 var detail2 = async (id) => {
@@ -561,41 +491,6 @@ var updateContent = async (id, contents) => {
   if (!item) throw new Error("challenge not found");
   return item.toObject();
 };
-schema_default.generate({
-  ...DefaultListParamsFields,
-  type: schema_default.string().valid(...Object.values(CHALLENGE_TYPES)),
-  stageId: schema_default.string().allow(null, "")
-});
-var ChallengeSettingsValidator = schema_default.generate({
-  clue: schema_default.string({ defaultValue: "" }),
-  duration: schema_default.number({ defaultValue: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES)),
-  feedback: FeedbackValidator
-});
-schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  order: schema_default.number({ defaultValue: null }),
-  storyline: schema_default.array(Joi.string(), { defaultValue: [] })
-});
-schema_default.generate({
-  duration: schema_default.number({ allow: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES))
-});
-schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string().allow(null, ""),
-  status: schema_default.string({ required: true, defaultValue: CHALLENGE_STATUS.Draft }).valid(...Object.values(CHALLENGE_STATUS)),
-  settings: ChallengeSettingsValidator.required()
-});
-
-// _src/validators/user-public/index.ts
-schema_default.generate({
-  id: schema_default.string({ required: true }),
-  code: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true, allow: "" })
-});
 var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
@@ -613,44 +508,19 @@ var UserPhotoHuntSchema = new Schema({
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var StageSettingsValidator = schema_default.generate(
-  {
-    canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
-    canStartFromChallenges: schema_default.boolean({ defaultValue: false }),
-    periode: PeriodeValidator.allow(null)
-  }
-);
-schema_default.generate({
-  ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(STAGE_STATUS))
-});
-schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi.string()).default([]),
-  contents: schema_default.array(Joi.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(STAGE_STATUS)),
-  settings: StageSettingsValidator.required()
-});
-schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    periode: PeriodeValidator.allow(null)
-  })
-});
 
 // _src/services/qr/index.ts
 var list = async (params) => {
-  const skip = (params.page - 1) * params.limit;
+  const { page = 1, limit = 10 } = params;
+  const skip = (page - 1) * limit;
   const filter = { deletedAt: null };
   if (params.status) filter.status = params.status;
   if (params.code) filter.code = params.code;
   if (params.hasContent != null)
     filter.content = params.hasContent ? { $ne: null } : null;
-  const items = await qr_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const items = await qr_default.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
   const totalItems = await qr_default.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
+  const totalPages = Math.ceil(totalItems / limit);
   return {
     list: items.map((item) => item.toObject()),
     page: params.page,
@@ -662,11 +532,7 @@ var list = async (params) => {
 // _src/services/photo-hunt/index.ts
 var createMany = async (challenge, payload, session) => {
   if (payload.length === 0) return [];
-  const qrParams = await QrListParamsValidator.validateAsync({
-    hasContent: false,
-    limit: payload.length
-  });
-  const qrs = (await list(qrParams)).list.map(({ id, code }) => ({
+  const qrs = (await list({ hasContent: false, limit: payload.length })).list.map(({ id, code }) => ({
     id,
     code
   }));

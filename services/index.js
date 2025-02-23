@@ -5,7 +5,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 require('deepmerge');
 var mongoose = require('mongoose');
 require('@zxing/browser');
-var Joi = require('joi');
+require('joi');
 var cryptoJs = require('crypto-js');
 var dayjs = require('dayjs');
 var bcryptjs = require('bcryptjs');
@@ -13,7 +13,6 @@ var jsonwebtoken = require('jsonwebtoken');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
-var Joi__default = /*#__PURE__*/_interopDefault(Joi);
 var dayjs__default = /*#__PURE__*/_interopDefault(dayjs);
 
 // _src/helpers/bonus/index.ts
@@ -62,35 +61,6 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
-var createValidator = (base, option) => {
-  let v = base;
-  if (option?.required) v = v.required();
-  if (option?.allow !== undefined) v = v.allow(option.allow);
-  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
-  return v;
-};
-var string = (option) => createValidator(Joi__default.default.string().trim(), option);
-var number = (option) => createValidator(Joi__default.default.number(), option);
-var boolean = (option) => createValidator(Joi__default.default.boolean(), option);
-var array = (item, options) => {
-  let v = createValidator(
-    Joi__default.default.array().items(item)
-  );
-  if (options?.required) v = v.min(1);
-  if (options?.defaultValue) v.default(options.defaultValue);
-  if (options?.allow) v.allow(options.allow);
-  return v;
-};
-var generate = (fields) => Joi__default.default.object(fields);
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate
-};
-var schema_default = schema;
 
 // _src/helpers/service/index.ts
 var list = async (model12, page, limit, filters = {}, sort) => {
@@ -750,47 +720,6 @@ var ChallengeService = {
   verify: verify2
 };
 var challenge_default2 = ChallengeService;
-var PeriodeValidator = schema_default.generate({
-  startDate: Joi__default.default.date().required(),
-  endDate: Joi__default.default.date().required().greater(Joi__default.default.ref("startDate"))
-});
-var DefaultListParamsFields = {
-  page: schema_default.number({ defaultValue: 1 }),
-  limit: schema_default.number({ defaultValue: 10 }),
-  search: schema_default.string({ allow: "", defaultValue: "" })
-};
-var FeedbackValidator = schema_default.generate({
-  positive: schema_default.string({ allow: "", defaultValue: "" }),
-  negative: schema_default.string({ allow: "", defaultValue: "" })
-}).default({ positive: "", negative: "" });
-
-// _src/validators/qr/index.ts
-var QrListParamsValidator = schema_default.generate({
-  ...DefaultListParamsFields,
-  code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QR_STATUS)),
-  hasContent: schema_default.boolean({ defaultValue: null })
-});
-schema_default.generate({
-  amount: schema_default.number({ required: true })
-});
-var QrContentValidator = schema_default.generate({
-  refId: schema_default.string({ required: true }),
-  type: schema_default.string({ required: true }).valid(...Object.values(QR_CONTENT_TYPES))
-});
-var QrLocationValidator = schema_default.generate({
-  label: schema_default.string({ required: true, allow: "" }),
-  longitude: schema_default.number({ required: true }),
-  latitude: schema_default.number({ required: true })
-});
-schema_default.generate({
-  status: schema_default.string({ required: true }).valid(...Object.values(QR_STATUS)),
-  content: QrContentValidator.allow(null).default(null),
-  location: QrLocationValidator.allow(null).default(null)
-});
-schema_default.generate({
-  ids: schema_default.array(Joi__default.default.string(), { required: true })
-});
 
 // _src/services/trivia/index.ts
 var createMany = async (challenge, payload, session) => {
@@ -910,41 +839,6 @@ var setup = async (userId) => {
 };
 var UserPublicService = { verify: verify4, setup };
 var user_public_default2 = UserPublicService;
-schema_default.generate({
-  ...DefaultListParamsFields,
-  type: schema_default.string().valid(...Object.values(CHALLENGE_TYPES)),
-  stageId: schema_default.string().allow(null, "")
-});
-var ChallengeSettingsValidator = schema_default.generate({
-  clue: schema_default.string({ defaultValue: "" }),
-  duration: schema_default.number({ defaultValue: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES)),
-  feedback: FeedbackValidator
-});
-var ChallengeForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  order: schema_default.number({ defaultValue: null }),
-  storyline: schema_default.array(Joi__default.default.string(), { defaultValue: [] })
-});
-var ChallengeSettingsForeignValidator = schema_default.generate({
-  duration: schema_default.number({ allow: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES))
-});
-schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string().allow(null, ""),
-  status: schema_default.string({ required: true, defaultValue: CHALLENGE_STATUS.Draft }).valid(...Object.values(CHALLENGE_STATUS)),
-  settings: ChallengeSettingsValidator.required()
-});
-
-// _src/validators/user-public/index.ts
-var UserPublicForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  code: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true, allow: "" })
-});
 
 // _src/services/user-trivia/index.ts
 var setup2 = async (userPublic, userChallenge, session) => {
@@ -1287,18 +1181,21 @@ var setup4 = async (challengeId, TID, setDiscover) => {
     stageId: userStageData.stage.id,
     name: userStageData.stage.name
   };
-  const userPublic = await UserPublicForeignValidator.validateAsync(
-    userPublicData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const challenge = await ChallengeForeignValidator.validateAsync(
-    challengeData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const settings = await ChallengeSettingsForeignValidator.validateAsync(
-    challengeData.settings,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
+  const userPublic = {
+    code: userPublicData.code,
+    id: userPublicData.id,
+    name: userPublicData.name
+  };
+  const challenge = {
+    id: challengeData.id,
+    name: challengeData.name,
+    storyline: challengeData.storyline,
+    order: challengeData.order
+  };
+  const settings = {
+    duration: challengeData.settings.duration,
+    type: challengeData.settings.type
+  };
   const userChallengeData = await user_challenge_default.create({
     userStage,
     challenge,
@@ -1426,32 +1323,6 @@ var UserChallengeService = {
   init
 };
 var user_challenge_default2 = UserChallengeService;
-var StageSettingsValidator = schema_default.generate(
-  {
-    canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
-    canStartFromChallenges: schema_default.boolean({ defaultValue: false }),
-    periode: PeriodeValidator.allow(null)
-  }
-);
-schema_default.generate({
-  ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(STAGE_STATUS))
-});
-schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi__default.default.string()).default([]),
-  contents: schema_default.array(Joi__default.default.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(STAGE_STATUS)),
-  settings: StageSettingsValidator.required()
-});
-var StageForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi__default.default.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    periode: PeriodeValidator.allow(null)
-  })
-});
 
 // _src/services/user-stage/index.ts
 var initResults = () => ({
@@ -1473,15 +1344,19 @@ var setup5 = async (stageId, TID) => {
     if (exist) return exist;
     const userPublicData = await verify4(TID);
     const stageData = await verify(stageId);
-    const userPublic = await UserPublicForeignValidator.validateAsync(
-      userPublicData,
-      { convert: true, abortEarly: false, stripUnknown: true }
-    );
-    const stage2 = await StageForeignValidator.validateAsync(stageData, {
-      convert: true,
-      abortEarly: false,
-      stripUnknown: true
-    });
+    const userPublic = {
+      code: userPublicData.code,
+      id: userPublicData.id,
+      name: userPublicData.name
+    };
+    const stage2 = {
+      id: stageData.id,
+      name: stageData.name,
+      settings: {
+        periode: stageData.settings.periode
+      },
+      storyline: stageData.storyline
+    };
     const [userStageData] = await user_stage_default.create(
       [{ userPublic, stage: stage2 }],
       { session }
@@ -1573,15 +1448,16 @@ var servicesSetup = {
   photohunt: null
 };
 var list6 = async (params) => {
-  const skip = (params.page - 1) * params.limit;
+  const { page = 1, limit = 10 } = params;
+  const skip = (page - 1) * limit;
   const filter = { deletedAt: null };
   if (params.status) filter.status = params.status;
   if (params.code) filter.code = params.code;
   if (params.hasContent != null)
     filter.content = params.hasContent ? { $ne: null } : null;
-  const items = await qr_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
+  const items = await qr_default.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
   const totalItems = await qr_default.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
+  const totalPages = Math.ceil(totalItems / limit);
   return {
     list: items.map((item) => item.toObject()),
     page: params.page,
@@ -1589,7 +1465,7 @@ var list6 = async (params) => {
     totalPages
   };
 };
-var generate2 = async (count) => {
+var generate = async (count) => {
   const items = new Array(count).fill({}).map(() => {
     const salt = Math.floor(Math.random() * Math.pow(16, 8)).toString(16).padStart(8, "0");
     return {
@@ -1661,7 +1537,7 @@ var verify8 = async (code, TID) => {
   return content;
 };
 var QrService = {
-  generate: generate2,
+  generate,
   list: list6,
   detail: detail7,
   details: details5,
@@ -1675,11 +1551,7 @@ var qr_default2 = QrService;
 // _src/services/photo-hunt/index.ts
 var createMany2 = async (challenge, payload, session) => {
   if (payload.length === 0) return [];
-  const qrParams = await QrListParamsValidator.validateAsync({
-    hasContent: false,
-    limit: payload.length
-  });
-  const qrs = (await list6(qrParams)).list.map(({ id, code }) => ({
+  const qrs = (await list6({ hasContent: false, limit: payload.length })).list.map(({ id, code }) => ({
     id,
     code
   }));

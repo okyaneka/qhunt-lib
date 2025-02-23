@@ -60,11 +60,11 @@ declare const services: {
         } & {
             __v: number;
         }, Omit<import("..").QrPayload, "_id">>[]>;
-        list: (params: import("..").QrListParams) => Promise<{
+        list: (params: Partial<import("..").QrListParams>) => Promise<{
             list: (import("..").Qr & {
                 _id: import("mongoose").Types.ObjectId;
             })[];
-            page: number;
+            page: number | undefined;
             totalItems: number;
             totalPages: number;
         }>;
