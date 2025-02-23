@@ -5,6 +5,6 @@
     "models/*": true,
     "services/*": true,
     "types/*": true,
-    "validators/*": true
+    "plugins/*": true
   }
 }

@@ -5,7 +5,7 @@
     "dev": "nodemon",
     "build": "pnpm build:dts && pnpm build:js",
     "build:js": "tsup",
-    "build:dts": "rm -rf helpers models services types validators index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
+    "build:dts": "rm -rf helpers models services types plugins index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
     "test": "jest"
   },
   "keywords": [],
