@@ -1,4 +1,4 @@
-import { UserChallengeParams, UserChallengeResult, UserChallengeSummary, UserStage, Stage } from "../../types";
+import { UserChallengeParams, UserChallengeResult, UserChallengeSummary, UserStage, Stage, ChallengeForeign, ChallengeSettingsForeign } from "../../types";
 import { ClientSession } from "mongoose";
 export declare const init: (stage: Stage, userStage: UserStage, session?: ClientSession) => Promise<(import("mongoose").Document<unknown, {}, import("../../types").UserChallenge> & import("../../types").UserChallenge & {
     _id: import("mongoose").Types.ObjectId;
@@ -14,8 +14,8 @@ export declare const list: (params: UserChallengeParams, TID: string) => Promise
     totalPages: number;
     list: {
         id: string;
-        challenge: import("../../types").ChallengeForeign;
-        settings: import("../../types").ChallengeSettingsForeign;
+        challenge: ChallengeForeign;
+        settings: ChallengeSettingsForeign;
         userStage: import("../../types").UserStageForeign | null;
         status: import("../../types").UserChallengeStatus;
         results: UserChallengeResult | null;
@@ -46,8 +46,8 @@ declare const UserChallengeService: {
         totalPages: number;
         list: {
             id: string;
-            challenge: import("../../types").ChallengeForeign;
-            settings: import("../../types").ChallengeSettingsForeign;
+            challenge: ChallengeForeign;
+            settings: ChallengeSettingsForeign;
             userStage: import("../../types").UserStageForeign | null;
             status: import("../../types").UserChallengeStatus;
             results: UserChallengeResult | null;

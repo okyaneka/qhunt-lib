@@ -1,9 +1,9 @@
 import { QrListParams, QrPayload, QrUpdatePayload } from "../../types";
-export declare const list: (params: QrListParams) => Promise<{
+export declare const list: (params: Partial<QrListParams>) => Promise<{
     list: (import("../../types").Qr & {
         _id: import("mongoose").Types.ObjectId;
     })[];
-    page: number;
+    page: number | undefined;
     totalItems: number;
     totalPages: number;
 }>;
@@ -34,11 +34,11 @@ declare const QrService: {
     } & {
         __v: number;
     }, Omit<QrPayload, "_id">>[]>;
-    list: (params: QrListParams) => Promise<{
+    list: (params: Partial<QrListParams>) => Promise<{
         list: (import("../../types").Qr & {
             _id: import("mongoose").Types.ObjectId;
         })[];
-        page: number;
+        page: number | undefined;
         totalItems: number;
         totalPages: number;
     }>;

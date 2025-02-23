@@ -31,8 +31,10 @@ const servicesSetup = {
   photohunt: null,
 } as const;
 
-export const list = async (params: QrListParams) => {
-  const skip = (params.page - 1) * params.limit;
+export const list = async (params: Partial<QrListParams>) => {
+  const { page = 1, limit = 10 } = params;
+
+  const skip = (page - 1) * limit;
   const filter: any = { deletedAt: null };
   if (params.status) filter.status = params.status;
   if (params.code) filter.code = params.code;
@@ -40,11 +42,11 @@ export const list = async (params: QrListParams) => {
     filter.content = params.hasContent ? { $ne: null } : null;
   const items = await QrModel.find(filter)
     .skip(skip)
-    .limit(params.limit)
+    .limit(limit)
     .sort({ createdAt: -1 });
 
   const totalItems = await QrModel.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
+  const totalPages = Math.ceil(totalItems / limit);
 
   return {
     list: items.map((item) => item.toObject()),

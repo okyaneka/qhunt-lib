@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import 'deepmerge';
 import { Schema, models, model, startSession } from 'mongoose';
 import '@zxing/browser';
-import Joi from 'joi';
+import 'joi';
 import 'crypto-js';
 
 // _src/services/user-challenge/index.ts
@@ -51,35 +51,6 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
-var createValidator = (base, option) => {
-  let v = base;
-  if (option?.required) v = v.required();
-  if (option?.allow !== undefined) v = v.allow(option.allow);
-  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
-  return v;
-};
-var string = (option) => createValidator(Joi.string().trim(), option);
-var number = (option) => createValidator(Joi.number(), option);
-var boolean = (option) => createValidator(Joi.boolean(), option);
-var array = (item, options) => {
-  let v = createValidator(
-    Joi.array().items(item)
-  );
-  if (options?.required) v = v.min(1);
-  if (options?.defaultValue) v.default(options.defaultValue);
-  if (options?.allow) v.allow(options.allow);
-  return v;
-};
-var generate = (fields) => Joi.object(fields);
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate
-};
-var schema_default = schema;
 
 // _src/helpers/service/index.ts
 var list = async (model12, page, limit, filters = {}, sort) => {
@@ -653,54 +624,6 @@ var verify3 = async (value) => {
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
 };
-var PeriodeValidator = schema_default.generate({
-  startDate: Joi.date().required(),
-  endDate: Joi.date().required().greater(Joi.ref("startDate"))
-});
-var DefaultListParamsFields = {
-  page: schema_default.number({ defaultValue: 1 }),
-  limit: schema_default.number({ defaultValue: 10 }),
-  search: schema_default.string({ allow: "", defaultValue: "" })
-};
-var FeedbackValidator = schema_default.generate({
-  positive: schema_default.string({ allow: "", defaultValue: "" }),
-  negative: schema_default.string({ allow: "", defaultValue: "" })
-}).default({ positive: "", negative: "" });
-
-// _src/validators/stage/index.ts
-var StageSettingsValidator = schema_default.generate(
-  {
-    canDoRandomChallenges: schema_default.boolean({ defaultValue: false }),
-    canStartFromChallenges: schema_default.boolean({ defaultValue: false }),
-    periode: PeriodeValidator.allow(null)
-  }
-);
-schema_default.generate({
-  ...DefaultListParamsFields,
-  status: schema_default.string({ allow: null }).valid(...Object.values(STAGE_STATUS))
-});
-schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi.string()).default([]),
-  contents: schema_default.array(Joi.string()).default([]),
-  status: schema_default.string({ required: true }).valid(...Object.values(STAGE_STATUS)),
-  settings: StageSettingsValidator.required()
-});
-var StageForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(Joi.string(), { defaultValue: [] }),
-  settings: schema_default.generate({
-    periode: PeriodeValidator.allow(null)
-  })
-});
-
-// _src/validators/user-public/index.ts
-var UserPublicForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  code: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true, allow: "" })
-});
 
 // _src/services/user-stage/index.ts
 var initResults = () => ({
@@ -722,15 +645,19 @@ var setup = async (stageId, TID) => {
     if (exist) return exist;
     const userPublicData = await verify3(TID);
     const stageData = await verify(stageId);
-    const userPublic = await UserPublicForeignValidator.validateAsync(
-      userPublicData,
-      { convert: true, abortEarly: false, stripUnknown: true }
-    );
-    const stage = await StageForeignValidator.validateAsync(stageData, {
-      convert: true,
-      abortEarly: false,
-      stripUnknown: true
-    });
+    const userPublic = {
+      code: userPublicData.code,
+      id: userPublicData.id,
+      name: userPublicData.name
+    };
+    const stage = {
+      id: stageData.id,
+      name: stageData.name,
+      settings: {
+        periode: stageData.settings.periode
+      },
+      storyline: stageData.storyline
+    };
     const [userStageData] = await user_stage_default.create(
       [{ userPublic, stage }],
       { session }
@@ -804,34 +731,6 @@ var submitState = async (id, TID, session) => {
 };
 var UserStageService = { list: list3, detail: detail3, setup, verify: verify4, submitState };
 var user_stage_default2 = UserStageService;
-schema_default.generate({
-  ...DefaultListParamsFields,
-  type: schema_default.string().valid(...Object.values(CHALLENGE_TYPES)),
-  stageId: schema_default.string().allow(null, "")
-});
-var ChallengeSettingsValidator = schema_default.generate({
-  clue: schema_default.string({ defaultValue: "" }),
-  duration: schema_default.number({ defaultValue: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES)),
-  feedback: FeedbackValidator
-});
-var ChallengeForeignValidator = schema_default.generate({
-  id: schema_default.string({ required: true }),
-  name: schema_default.string({ required: true }),
-  order: schema_default.number({ defaultValue: null }),
-  storyline: schema_default.array(Joi.string(), { defaultValue: [] })
-});
-var ChallengeSettingsForeignValidator = schema_default.generate({
-  duration: schema_default.number({ allow: 0 }),
-  type: schema_default.string({ required: true }).valid(...Object.values(CHALLENGE_TYPES))
-});
-schema_default.generate({
-  name: schema_default.string({ required: true }),
-  storyline: schema_default.array(schema_default.string()).default([]),
-  stageId: schema_default.string().allow(null, ""),
-  status: schema_default.string({ required: true, defaultValue: CHALLENGE_STATUS.Draft }).valid(...Object.values(CHALLENGE_STATUS)),
-  settings: ChallengeSettingsValidator.required()
-});
 
 // _src/services/trivia/index.ts
 var details = async (challengeId) => {
@@ -939,32 +838,6 @@ UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 var user_photo_hunt_default = UserPhotoHuntModel;
-schema_default.generate({
-  ...DefaultListParamsFields,
-  code: schema_default.string({ allow: "" }),
-  status: schema_default.string({ allow: "" }).valid(...Object.values(QR_STATUS)),
-  hasContent: schema_default.boolean({ defaultValue: null })
-});
-schema_default.generate({
-  amount: schema_default.number({ required: true })
-});
-var QrContentValidator = schema_default.generate({
-  refId: schema_default.string({ required: true }),
-  type: schema_default.string({ required: true }).valid(...Object.values(QR_CONTENT_TYPES))
-});
-var QrLocationValidator = schema_default.generate({
-  label: schema_default.string({ required: true, allow: "" }),
-  longitude: schema_default.number({ required: true }),
-  latitude: schema_default.number({ required: true })
-});
-schema_default.generate({
-  status: schema_default.string({ required: true }).valid(...Object.values(QR_STATUS)),
-  content: QrContentValidator.allow(null).default(null),
-  location: QrLocationValidator.allow(null).default(null)
-});
-schema_default.generate({
-  ids: schema_default.array(Joi.string(), { required: true })
-});
 
 // _src/services/photo-hunt/index.ts
 var details3 = async (challengeId) => {
@@ -1153,18 +1026,21 @@ var setup3 = async (challengeId, TID, setDiscover) => {
     stageId: userStageData.stage.id,
     name: userStageData.stage.name
   };
-  const userPublic = await UserPublicForeignValidator.validateAsync(
-    userPublicData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const challenge = await ChallengeForeignValidator.validateAsync(
-    challengeData,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
-  const settings = await ChallengeSettingsForeignValidator.validateAsync(
-    challengeData.settings,
-    { abortEarly: false, stripUnknown: true, convert: true }
-  );
+  const userPublic = {
+    code: userPublicData.code,
+    id: userPublicData.id,
+    name: userPublicData.name
+  };
+  const challenge = {
+    id: challengeData.id,
+    name: challengeData.name,
+    storyline: challengeData.storyline,
+    order: challengeData.order
+  };
+  const settings = {
+    duration: challengeData.settings.duration,
+    type: challengeData.settings.type
+  };
   const userChallengeData = await user_challenge_default.create({
     userStage,
     challenge,

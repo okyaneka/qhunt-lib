@@ -2,7 +2,6 @@ import { QrModel, PhotoHuntModel } from "~/models";
 import { IdName } from "~/helpers/types";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
-import { QrListParamsValidator } from "~/validators/qr";
 import { QrContent, CHALLENGE_TYPES, PhotoHuntPayload } from "~/types";
 import { list as QrServiceList } from "../qr";
 import {
@@ -17,12 +16,9 @@ const createMany = async (
 ) => {
   if (payload.length === 0) return [];
 
-  const qrParams = await QrListParamsValidator.validateAsync({
-    hasContent: false,
-    limit: payload.length,
-  });
-
-  const qrs = (await QrServiceList(qrParams)).list.map(({ id, code }) => ({
+  const qrs = (
+    await QrServiceList({ hasContent: false, limit: payload.length })
+  ).list.map(({ id, code }) => ({
     id,
     code,
   }));
