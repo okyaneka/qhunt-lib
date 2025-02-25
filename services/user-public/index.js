@@ -53,12 +53,11 @@ var USER_CHALLENGE_STATUS = {
 };
 
 // _src/types/user-public/index.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
 
 // _src/types/user-stage/index.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -282,7 +281,8 @@ var ToObject2 = {
 var UserForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
-    name: { type: String, default: "" }
+    name: { type: String, default: "" },
+    email: { type: String, required: true }
   },
   { _id: false }
 );
@@ -302,6 +302,29 @@ UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
 var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 var user_default = UserModel;
+var S3ForeignSchema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    user: { type: UserForeignSchema, required: true }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+mongoose.models.S3 || mongoose.model("S3", S3Schema);
+
+// _src/models/user-public/index.ts
 var UserPublicForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -318,10 +341,11 @@ var UserPublicSchema = new mongoose.Schema(
     dob: { type: Date, default: null },
     gender: {
       type: String,
-      enum: Object.values(UserPublicGender),
+      enum: Object.values(USER_PUBLIC_GENDER),
       default: null
     },
     phone: { type: String, default: "" },
+    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },
@@ -463,14 +487,15 @@ PhotoHuntSchema.set("toJSON", ToObject);
 mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 
 // _src/services/user-public/index.ts
-var verify = async (value) => {
+var verify = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
       deletedAt: null
     },
-    { lastAccessedAt: /* @__PURE__ */ new Date() }
+    { lastAccessedAt: /* @__PURE__ */ new Date() },
+    { new: true, session }
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();

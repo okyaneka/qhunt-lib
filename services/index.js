@@ -8,12 +8,53 @@ require('@zxing/browser');
 require('joi');
 var cryptoJs = require('crypto-js');
 var dayjs = require('dayjs');
+var Redis = require('ioredis');
+var crypto = require('crypto');
+var client_s3_star = require('@aws-sdk/client-s3');
 var bcryptjs = require('bcryptjs');
 var jsonwebtoken = require('jsonwebtoken');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
+function _interopNamespace(e) {
+  if (e && e.__esModule) return e;
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+
 var dayjs__default = /*#__PURE__*/_interopDefault(dayjs);
+var Redis__namespace = /*#__PURE__*/_interopNamespace(Redis);
+var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
 
 // _src/helpers/bonus/index.ts
 var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
@@ -63,14 +104,14 @@ var ToObject = {
 };
 
 // _src/helpers/service/index.ts
-var list = async (model12, page, limit, filters = {}, sort) => {
+var list = async (model13, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;
   const filter = {
     ...filters,
     deletedAt: null
   };
-  const items = await model12.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
-  const totalItems = await model12.countDocuments(filter);
+  const items = await model13.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
+  const totalItems = await model13.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);
   return {
     list: items.map((item) => item.toObject ? item.toObject() : item),
@@ -128,12 +169,11 @@ var USER_CHALLENGE_STATUS = {
 };
 
 // _src/types/user-public/index.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
 
 // _src/types/user-stage/index.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -334,7 +374,8 @@ var ToObject2 = {
 var UserForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
-    name: { type: String, default: "" }
+    name: { type: String, default: "" },
+    email: { type: String, required: true }
   },
   { _id: false }
 );
@@ -354,6 +395,30 @@ UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
 var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 var user_default = UserModel;
+var S3ForeignSchema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    user: { type: UserForeignSchema, required: true }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+var S3Model = mongoose.models.S3 || mongoose.model("S3", S3Schema);
+var s3_default = S3Model;
+
+// _src/models/user-public/index.ts
 var UserPublicForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -370,10 +435,11 @@ var UserPublicSchema = new mongoose.Schema(
     dob: { type: Date, default: null },
     gender: {
       type: String,
-      enum: Object.values(UserPublicGender),
+      enum: Object.values(USER_PUBLIC_GENDER),
       default: null
     },
     phone: { type: String, default: "" },
+    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },
@@ -808,14 +874,15 @@ var verify3 = async (id) => {
 };
 var TriviaService = { detail: detail3, details, sync, verify: verify3 };
 var trivia_default2 = TriviaService;
-var verify4 = async (value) => {
+var verify4 = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
       deletedAt: null
     },
-    { lastAccessedAt: /* @__PURE__ */ new Date() }
+    { lastAccessedAt: /* @__PURE__ */ new Date() },
+    { new: true, session }
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
@@ -1074,6 +1141,157 @@ var UserPhotoHuntService = {
 };
 var user_photo_hunt_default2 = UserPhotoHuntService;
 
+// _src/plugins/redis/index.ts
+var redis_exports = {};
+__export(redis_exports, {
+  RedisHelper: () => RedisHelper,
+  default: () => redis_default
+});
+__reExport(redis_exports, Redis__namespace);
+var prefix = "\x1B[35mREDIS:\x1B[0m";
+var RedisHelper = class {
+  status = 0;
+  client = null;
+  subscr = null;
+  messageHandlers = [];
+  constructor() {
+  }
+  init(options) {
+    this.client = new Redis__namespace.default(options);
+    this.subscr = new Redis__namespace.default(options);
+    this.initiate();
+  }
+  initiate() {
+    if (!(this.client && this.subscr)) return;
+    this.status = 1;
+    this.client.on(
+      "connect",
+      () => console.log(prefix, "Redis connected successfully!")
+    );
+    this.client.on("error", (err) => console.error("\u274C Redis Error:", err));
+    this.subscr.on("message", async (channel, message) => {
+      const handlers = this.messageHandlers.filter(
+        (v) => v.channel === channel
+      );
+      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
+      handlers.forEach((handler) => {
+        console.log(
+          prefix,
+          `message received from ${channel} to id ${handler.id}`
+        );
+        handler.callback(data);
+      });
+    });
+  }
+  async get(key) {
+  }
+  async set(key) {
+  }
+  async del(key) {
+  }
+  async pub(channel, data) {
+    if (!this.client) return;
+    const message = typeof data == "string" ? data : JSON.stringify(data);
+    console.log(prefix, `message published to ${channel}`);
+    await this.client.publish(channel, message);
+  }
+  async sub(channel, callback) {
+    if (!this.subscr) return;
+    await this.subscr.subscribe(channel);
+    const handler = {
+      id: crypto.randomUUID(),
+      channel,
+      callback
+    };
+    this.messageHandlers.push(handler);
+    console.log(prefix, `channel ${channel} subscribed with id ${handler.id}`);
+    return () => {
+      const index = this.messageHandlers.findIndex(
+        ({ id }) => id === handler.id
+      );
+      if (index !== -1) this.messageHandlers.splice(index, 1);
+      console.log(
+        prefix,
+        `channel ${channel} with id ${handler.id} unsubscribed`
+      );
+    };
+  }
+};
+var globalInstance = globalThis;
+if (!globalInstance.__REDIS_HELPER__) {
+  globalInstance.__REDIS_HELPER__ = new RedisHelper();
+}
+var redis_default = globalInstance.__REDIS_HELPER__;
+
+// _src/plugins/s3/index.ts
+var s3_exports = {};
+__export(s3_exports, {
+  S3Helper: () => S3Helper,
+  default: () => s3_default2
+});
+__reExport(s3_exports, client_s3_star__namespace);
+var prefix2 = "\x1B[0;92mS3:\x1B[0m";
+var S3Helper = class {
+  status = 0;
+  bucket;
+  client;
+  constructor() {
+    this.bucket = null;
+    this.client = null;
+  }
+  init({ bucket, ...config }) {
+    this.bucket = bucket;
+    this.client = new client_s3_star.S3Client(config);
+    this.initiate();
+  }
+  async initiate() {
+    if (!(this.client && this.bucket)) return;
+    this.status = 1;
+    this.client.send(new client_s3_star.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+      console.log(prefix2, "Aws S3 connected successfully!");
+    }).catch((err) => {
+      console.log(prefix2, "\u274C Aws S3 Error:", err.message);
+    });
+  }
+  async put(payload) {
+    if (!(this.client && this.bucket)) return;
+    const { buffer, filename, mimetype } = payload;
+    const names = filename.split(".");
+    const ext = names.pop();
+    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const config = {
+      Bucket: this.bucket,
+      Key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: "public-read"
+    };
+    const command = new client_s3_star.PutObjectCommand(config);
+    const region = await this.client.config.region();
+    const res = await this.client.send(command);
+    return {
+      fileName: Key,
+      size: res.Size,
+      fileUrl: `https://${this.bucket}.s3.${region}.amazonaws.com/${Key}`
+    };
+  }
+  async delete(key) {
+    if (!(this.client && this.bucket)) return;
+    const config = {
+      Bucket: this.bucket,
+      Key: key
+    };
+    const command = new client_s3_star.DeleteObjectCommand(config);
+    const res = await this.client.send(command);
+    return res;
+  }
+};
+var globalInstance2 = globalThis;
+if (!globalInstance2.__S3_HELPER__) {
+  globalInstance2.__S3_HELPER__ = new S3Helper();
+}
+var s3_default2 = globalInstance2.__S3_HELPER__;
+
 // _src/services/user-challenge/index.ts
 var services = {
   [CHALLENGE_TYPES.Trivia]: {
@@ -1290,12 +1508,14 @@ var submit = async (id, TID, session, forceFinish) => {
   userChallenge.results = results;
   userChallenge.status = isFinish ? Completed : OnGoing;
   await userChallenge.save({ session });
-  if (userChallenge.userStage && isFinish)
+  if (userChallenge.userStage && isFinish) {
     await user_stage_default2.submitState(
       userChallenge.userStage.id,
       TID,
       session
     );
+    redis_default.pub("leaderboard", userChallenge.userStage.stageId);
+  }
   return userChallenge.toObject();
 };
 var summary3 = async (userStageId, TID, session) => {
@@ -1312,6 +1532,18 @@ var summary3 = async (userStageId, TID, session) => {
     },
     totalScore: { $sum: "$results.totalScore" }
   }).session(session || null);
+};
+var userSync = async (TID, session) => {
+  const userPublicData = await verify4(TID, session);
+  const userPublic = {
+    code: userPublicData.code,
+    id: userPublicData.id,
+    name: userPublicData.name
+  };
+  await user_challenge_default.updateMany(
+    { "userPublic.code": TID },
+    { userPublic }
+  );
 };
 var UserChallengeService = {
   verify: verify5,
@@ -1427,6 +1659,15 @@ var submitState = async (id, TID, session) => {
   item.results = results;
   await item.save({ session });
   return item.toObject();
+};
+var userSync2 = async (TID, session) => {
+  const userPublicData = await verify4(TID, session);
+  const userPublic = {
+    id: userPublicData.id,
+    code: userPublicData.code,
+    name: userPublicData.name
+  };
+  await user_stage_default.updateMany({ "userPublic.code": TID }, { userPublic });
 };
 var UserStageService = { list: list5, detail: detail5, setup: setup5, verify: verify6, submitState };
 var user_stage_default2 = UserStageService;
@@ -1665,15 +1906,51 @@ var verifyCode = async (challengeId, code) => {
 };
 var PhotoHuntService = { detail: detail6, details: details3, sync: sync2, verify: verify7, verifyCode };
 var photo_hunt_default2 = PhotoHuntService;
-var register = async (payload, code) => {
+
+// _src/services/s3/index.ts
+var set = async (payload, userId, session) => {
+  const resS3 = await s3_default2.put(payload);
+  if (!resS3) throw new Error("s3.failed_upload");
+  const userData = await detail8(userId, session);
+  const user = {
+    id: userData.id,
+    name: userData.name,
+    email: userData.email
+  };
+  const item = await s3_default.create({
+    fileName: resS3.fileName,
+    fileUrl: resS3.fileUrl,
+    fileSize: payload.buffer.length,
+    fileType: payload.mimetype,
+    user
+  });
+  return item.toObject();
+};
+var get = async (path) => {
+};
+var _delete4 = async (key) => {
+  const res = await s3_default2.delete(key);
+  await s3_default.deleteOne({ fileName: key });
+  return res;
+};
+var S3Service = { set, get, delete: _delete4 };
+var s3_default3 = S3Service;
+
+// _src/services/user/index.ts
+var register = async (payload, TID) => {
   return await db_default.transaction(async (session) => {
-    const email = payload.email;
-    const userExists = await user_default.findOne({ email }).session(session);
+    const { email, name, password: rawPassword } = payload;
+    const userPublic = await verify4(TID, session);
+    if (userPublic.user?.id) throw new Error("user already exists");
+    const userExists = await user_default.findOne({ email }, { _id: 1 }).session(
+      session
+    );
     if (userExists) throw new Error("email taken");
-    const password = await bcryptjs.hash(payload.password, 10);
+    const password = await bcryptjs.hash(rawPassword, 10);
     const [user] = await user_default.create(
       [
         {
+          name,
           email,
           password,
           role: "public" /* Public */
@@ -1681,12 +1958,13 @@ var register = async (payload, code) => {
       ],
       { session }
     );
-    await user_public_default.findOneAndUpdate(
-      { code },
-      { $set: { user: { id: user._id, name: user.name } } },
-      { new: true, session }
-    );
-    return user;
+    const data = {
+      name: user.name,
+      user: { id: user._id, name: user.name, email: user.email }
+    };
+    await user_public_default.updateOne({ code: TID }, { $set: data }, { session });
+    await dataSync(TID, session);
+    return user.toObject();
   });
 };
 var login = async (payload, secret) => {
@@ -1710,21 +1988,58 @@ var list7 = async (params) => {
 };
 var create3 = async (payload) => {
 };
-var detail8 = async (id) => {
-  const user = await user_default.findOne({ _id: id, deletedAt: null }).catch(
-    () => {
-    }
-  );
+var detail8 = async (id, session) => {
+  const user = await user_default.findOne({ _id: id, deletedAt: null }, null, {
+    session
+  });
   if (!user) throw new Error("user not found");
-  const meta = await verify4(user.id);
+  const meta = await verify4(user.id, session);
   return {
     ...user.toObject(),
     meta
   };
 };
 var update4 = async (id, payload) => {
+  return db_default.transaction(async (session) => {
+    await user_default.updateOne(
+      { _id: id },
+      { $set: { name: payload.name } },
+      { session, new: true }
+    );
+    const userPublic = await user_public_default.findOneAndUpdate(
+      { "user.id": id },
+      { $set: { ...payload, "user.name": payload.name } },
+      { session, new: true }
+    );
+    if (!userPublic) throw new Error("user.not_found");
+    await dataSync(userPublic.code, session);
+    redis_default.pub("update-user", userPublic);
+    return userPublic.toObject();
+  });
 };
-var _delete4 = async (id) => {
+var updatePhoto = async (payload, userId) => {
+  return db_default.transaction(async (session) => {
+    const userPublic = await user_public_default.findOne({ "user.id": userId });
+    if (!userPublic) throw new Error("user.not_found");
+    if (userPublic.photo?.fileName)
+      await s3_default3.delete(userPublic.photo.fileName);
+    const res = await s3_default3.set(payload, userId, session);
+    const photo = {
+      fileName: res.fileName,
+      fileSize: res.fileSize,
+      fileUrl: res.fileUrl
+    };
+    userPublic.photo = photo;
+    await userPublic?.save({ session });
+    redis_default.pub("update-user", userPublic);
+    return userPublic;
+  });
+};
+var _delete5 = async (id) => {
+};
+var dataSync = async (TID, session) => {
+  await userSync2(TID, session);
+  await userSync(TID, session);
 };
 var UserService = {
   register,
@@ -1734,7 +2049,8 @@ var UserService = {
   create: create3,
   detail: detail8,
   update: update4,
-  delete: _delete4
+  updatePhoto,
+  delete: _delete5
 };
 var user_default2 = UserService;
 

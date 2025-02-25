@@ -165,7 +165,7 @@ declare const services: {
         })[]>;
     };
     readonly UserPublicService: {
-        verify: (value: string) => Promise<import("..").UserPublic & {
+        verify: (value: string, session?: import("mongoose").ClientSession) => Promise<import("..").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
         }>;
         setup: (userId?: string) => Promise<import("..").UserPublic & {
@@ -173,12 +173,10 @@ declare const services: {
         }>;
     };
     readonly UserService: {
-        register: (payload: import("..").UserPayload, code?: string) => Promise<import("mongoose").Document<unknown, {}, import("..").User> & import("..").User & {
+        register: (payload: import("..").UserPayload, TID: string) => Promise<import("..").User & {
             _id: import("mongoose").Types.ObjectId;
-        } & {
-            __v: number;
         }>;
-        login: (payload: import("..").UserPayload, secret: string) => Promise<{
+        login: (payload: Omit<import("..").UserPayload, "name">, secret: string) => Promise<{
             id: import("mongoose").Types.ObjectId;
             name: string;
             email: string;
@@ -188,7 +186,7 @@ declare const services: {
         profile: (bearer: string) => Promise<void>;
         list: (params: import("..").UserListParams) => Promise<void>;
         create: (payload: import("..").UserPayload) => Promise<void>;
-        detail: (id: string) => Promise<{
+        detail: (id: string, session?: import("mongoose").ClientSession) => Promise<{
             meta: import("..").UserPublic & {
                 _id: import("mongoose").Types.ObjectId;
             };
@@ -202,7 +200,14 @@ declare const services: {
             deletedAt: Date | null;
             _id: import("mongoose").Types.ObjectId;
         }>;
-        update: (id: string, payload: import("..").UserPayload) => Promise<void>;
+        update: (id: string, payload: import("..").UserPublicPayload) => Promise<import("..").UserPublic & {
+            _id: import("mongoose").Types.ObjectId;
+        }>;
+        updatePhoto: (payload: import("..").S3Payload, userId: string) => Promise<import("mongoose").Document<unknown, {}, import("..").UserPublic> & import("..").UserPublic & {
+            _id: import("mongoose").Types.ObjectId;
+        } & {
+            __v: number;
+        }>;
         delete: (id: string) => Promise<void>;
     };
     readonly UserStageService: {

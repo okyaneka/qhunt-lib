@@ -1,10 +1,9 @@
-import { UserListParams, UserPayload, UserRole } from "../../types";
-export declare const register: (payload: UserPayload, code?: string) => Promise<import("mongoose").Document<unknown, {}, import("../../types").User> & import("../../types").User & {
+import { UserListParams, UserPayload, UserPublicPayload, UserRole, S3Payload } from "../../types";
+import { ClientSession } from "mongoose";
+export declare const register: (payload: UserPayload, TID: string) => Promise<import("../../types").User & {
     _id: import("mongoose").Types.ObjectId;
-} & {
-    __v: number;
 }>;
-export declare const login: (payload: UserPayload, secret: string) => Promise<{
+export declare const login: (payload: Omit<UserPayload, "name">, secret: string) => Promise<{
     id: import("mongoose").Types.ObjectId;
     name: string;
     email: string;
@@ -14,7 +13,7 @@ export declare const login: (payload: UserPayload, secret: string) => Promise<{
 export declare const profile: (bearer: string) => Promise<void>;
 export declare const list: (params: UserListParams) => Promise<void>;
 export declare const create: (payload: UserPayload) => Promise<void>;
-export declare const detail: (id: string) => Promise<{
+export declare const detail: (id: string, session?: ClientSession) => Promise<{
     meta: import("../../types").UserPublic & {
         _id: import("mongoose").Types.ObjectId;
     };
@@ -28,15 +27,21 @@ export declare const detail: (id: string) => Promise<{
     deletedAt: Date | null;
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const update: (id: string, payload: UserPayload) => Promise<void>;
+export declare const update: (id: string, payload: UserPublicPayload) => Promise<import("../../types").UserPublic & {
+    _id: import("mongoose").Types.ObjectId;
+}>;
+export declare const updatePhoto: (payload: S3Payload, userId: string) => Promise<import("mongoose").Document<unknown, {}, import("../../types").UserPublic> & import("../../types").UserPublic & {
+    _id: import("mongoose").Types.ObjectId;
+} & {
+    __v: number;
+}>;
 export declare const _delete: (id: string) => Promise<void>;
+export declare const dataSync: (TID: string, session?: ClientSession) => Promise<void>;
 declare const UserService: {
-    register: (payload: UserPayload, code?: string) => Promise<import("mongoose").Document<unknown, {}, import("../../types").User> & import("../../types").User & {
+    register: (payload: UserPayload, TID: string) => Promise<import("../../types").User & {
         _id: import("mongoose").Types.ObjectId;
-    } & {
-        __v: number;
     }>;
-    login: (payload: UserPayload, secret: string) => Promise<{
+    login: (payload: Omit<UserPayload, "name">, secret: string) => Promise<{
         id: import("mongoose").Types.ObjectId;
         name: string;
         email: string;
@@ -46,7 +51,7 @@ declare const UserService: {
     profile: (bearer: string) => Promise<void>;
     list: (params: UserListParams) => Promise<void>;
     create: (payload: UserPayload) => Promise<void>;
-    detail: (id: string) => Promise<{
+    detail: (id: string, session?: ClientSession) => Promise<{
         meta: import("../../types").UserPublic & {
             _id: import("mongoose").Types.ObjectId;
         };
@@ -60,7 +65,14 @@ declare const UserService: {
         deletedAt: Date | null;
         _id: import("mongoose").Types.ObjectId;
     }>;
-    update: (id: string, payload: UserPayload) => Promise<void>;
+    update: (id: string, payload: UserPublicPayload) => Promise<import("../../types").UserPublic & {
+        _id: import("mongoose").Types.ObjectId;
+    }>;
+    updatePhoto: (payload: S3Payload, userId: string) => Promise<import("mongoose").Document<unknown, {}, import("../../types").UserPublic> & import("../../types").UserPublic & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }>;
     delete: (id: string) => Promise<void>;
 };
 export default UserService;

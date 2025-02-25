@@ -8,8 +8,48 @@ require('deepmerge');
 require('@zxing/browser');
 require('joi');
 require('crypto-js');
+var Redis = require('ioredis');
+var crypto = require('crypto');
+var client_s3_star = require('@aws-sdk/client-s3');
 
-// _src/models/challenge/index.ts
+function _interopNamespace(e) {
+  if (e && e.__esModule) return e;
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+
+var Redis__namespace = /*#__PURE__*/_interopNamespace(Redis);
+var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
 
 // _src/helpers/types/index.ts
 var PUBLISHING_STATUS = {
@@ -57,12 +97,11 @@ var USER_CHALLENGE_STATUS = {
 };
 
 // _src/types/user-public/index.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
 
 // _src/types/user-stage/index.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -289,7 +328,8 @@ var ToObject2 = {
 var UserForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
-    name: { type: String, default: "" }
+    name: { type: String, default: "" },
+    email: { type: String, required: true }
   },
   { _id: false }
 );
@@ -308,6 +348,29 @@ var UserSchema = new mongoose.Schema(
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
 mongoose.models.User || mongoose.model("User", UserSchema);
+var S3ForeignSchema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    user: { type: UserForeignSchema, required: true }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+mongoose.models.S3 || mongoose.model("S3", S3Schema);
+
+// _src/models/user-public/index.ts
 var UserPublicForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -324,10 +387,11 @@ var UserPublicSchema = new mongoose.Schema(
     dob: { type: Date, default: null },
     gender: {
       type: String,
-      enum: Object.values(UserPublicGender),
+      enum: Object.values(USER_PUBLIC_GENDER),
       default: null
     },
     phone: { type: String, default: "" },
+    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },
@@ -500,14 +564,15 @@ var detail2 = async (id) => {
   if (!item) throw new Error("challenge not found");
   return item.toObject();
 };
-var verify2 = async (value) => {
+var verify2 = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
       deletedAt: null
     },
-    { lastAccessedAt: /* @__PURE__ */ new Date() }
+    { lastAccessedAt: /* @__PURE__ */ new Date() },
+    { new: true, session }
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
@@ -700,6 +765,157 @@ var summary2 = async (userChallengeId, TID, session) => {
   return summary4;
 };
 
+// _src/plugins/redis/index.ts
+var redis_exports = {};
+__export(redis_exports, {
+  RedisHelper: () => RedisHelper,
+  default: () => redis_default
+});
+__reExport(redis_exports, Redis__namespace);
+var prefix = "\x1B[35mREDIS:\x1B[0m";
+var RedisHelper = class {
+  status = 0;
+  client = null;
+  subscr = null;
+  messageHandlers = [];
+  constructor() {
+  }
+  init(options) {
+    this.client = new Redis__namespace.default(options);
+    this.subscr = new Redis__namespace.default(options);
+    this.initiate();
+  }
+  initiate() {
+    if (!(this.client && this.subscr)) return;
+    this.status = 1;
+    this.client.on(
+      "connect",
+      () => console.log(prefix, "Redis connected successfully!")
+    );
+    this.client.on("error", (err) => console.error("\u274C Redis Error:", err));
+    this.subscr.on("message", async (channel, message) => {
+      const handlers = this.messageHandlers.filter(
+        (v) => v.channel === channel
+      );
+      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
+      handlers.forEach((handler) => {
+        console.log(
+          prefix,
+          `message received from ${channel} to id ${handler.id}`
+        );
+        handler.callback(data);
+      });
+    });
+  }
+  async get(key) {
+  }
+  async set(key) {
+  }
+  async del(key) {
+  }
+  async pub(channel, data) {
+    if (!this.client) return;
+    const message = typeof data == "string" ? data : JSON.stringify(data);
+    console.log(prefix, `message published to ${channel}`);
+    await this.client.publish(channel, message);
+  }
+  async sub(channel, callback) {
+    if (!this.subscr) return;
+    await this.subscr.subscribe(channel);
+    const handler = {
+      id: crypto.randomUUID(),
+      channel,
+      callback
+    };
+    this.messageHandlers.push(handler);
+    console.log(prefix, `channel ${channel} subscribed with id ${handler.id}`);
+    return () => {
+      const index = this.messageHandlers.findIndex(
+        ({ id }) => id === handler.id
+      );
+      if (index !== -1) this.messageHandlers.splice(index, 1);
+      console.log(
+        prefix,
+        `channel ${channel} with id ${handler.id} unsubscribed`
+      );
+    };
+  }
+};
+var globalInstance = globalThis;
+if (!globalInstance.__REDIS_HELPER__) {
+  globalInstance.__REDIS_HELPER__ = new RedisHelper();
+}
+var redis_default = globalInstance.__REDIS_HELPER__;
+
+// _src/plugins/s3/index.ts
+var s3_exports = {};
+__export(s3_exports, {
+  S3Helper: () => S3Helper,
+  default: () => s3_default
+});
+__reExport(s3_exports, client_s3_star__namespace);
+var prefix2 = "\x1B[0;92mS3:\x1B[0m";
+var S3Helper = class {
+  status = 0;
+  bucket;
+  client;
+  constructor() {
+    this.bucket = null;
+    this.client = null;
+  }
+  init({ bucket, ...config }) {
+    this.bucket = bucket;
+    this.client = new client_s3_star.S3Client(config);
+    this.initiate();
+  }
+  async initiate() {
+    if (!(this.client && this.bucket)) return;
+    this.status = 1;
+    this.client.send(new client_s3_star.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+      console.log(prefix2, "Aws S3 connected successfully!");
+    }).catch((err) => {
+      console.log(prefix2, "\u274C Aws S3 Error:", err.message);
+    });
+  }
+  async put(payload) {
+    if (!(this.client && this.bucket)) return;
+    const { buffer, filename, mimetype } = payload;
+    const names = filename.split(".");
+    const ext = names.pop();
+    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const config = {
+      Bucket: this.bucket,
+      Key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: "public-read"
+    };
+    const command = new client_s3_star.PutObjectCommand(config);
+    const region = await this.client.config.region();
+    const res = await this.client.send(command);
+    return {
+      fileName: Key,
+      size: res.Size,
+      fileUrl: `https://${this.bucket}.s3.${region}.amazonaws.com/${Key}`
+    };
+  }
+  async delete(key) {
+    if (!(this.client && this.bucket)) return;
+    const config = {
+      Bucket: this.bucket,
+      Key: key
+    };
+    const command = new client_s3_star.DeleteObjectCommand(config);
+    const res = await this.client.send(command);
+    return res;
+  }
+};
+var globalInstance2 = globalThis;
+if (!globalInstance2.__S3_HELPER__) {
+  globalInstance2.__S3_HELPER__ = new S3Helper();
+}
+var s3_default = globalInstance2.__S3_HELPER__;
+
 // _src/services/user-challenge/index.ts
 var services = {
   [CHALLENGE_TYPES.Trivia]: {
@@ -880,6 +1096,15 @@ var submitState = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
+var userSync = async (TID, session) => {
+  const userPublicData = await verify2(TID, session);
+  const userPublic = {
+    id: userPublicData.id,
+    code: userPublicData.code,
+    name: userPublicData.name
+  };
+  await user_stage_default.updateMany({ "userPublic.code": TID }, { userPublic });
+};
 var UserStageService = { list: list2, detail: detail6, setup: setup2, verify: verify6, submitState };
 var user_stage_default2 = UserStageService;
 
@@ -888,4 +1113,5 @@ exports.detail = detail6;
 exports.list = list2;
 exports.setup = setup2;
 exports.submitState = submitState;
+exports.userSync = userSync;
 exports.verify = verify6;

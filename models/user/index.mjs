@@ -20,7 +20,8 @@ var ToObject = {
 var UserForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    name: { type: String, default: "" }
+    name: { type: String, default: "" },
+    email: { type: String, required: true }
   },
   { _id: false }
 );
