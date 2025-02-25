@@ -14,7 +14,7 @@ import {
   ChallengeForeign,
   ChallengeSettingsForeign,
 } from "~/types";
-import { verify as UserPublicVerivy } from "../user-public";
+import { verify as UserPublicVerify } from "../user-public";
 import UserStageService from "../user-stage";
 import StageService from "../stage";
 import service from "~/helpers/service";
@@ -32,6 +32,7 @@ import {
 } from "~/services/user-photo-hunt";
 import { ClientSession } from "mongoose";
 import { timeBonus } from "~/helpers/bonus";
+import { RedisHelper } from "~/plugins";
 
 const services = {
   [CHALLENGE_TYPES.Trivia]: {
@@ -142,7 +143,7 @@ export const setup = async (
   const exist = await verify(challengeId, TID, setDiscover);
   if (exist) return exist;
 
-  const userPublicData = await UserPublicVerivy(TID);
+  const userPublicData = await UserPublicVerify(TID);
   const challengeData = await ChallengeVerify(challengeId);
 
   const stageId = challengeData.stage?.id;
@@ -310,12 +311,15 @@ export const submit = async (
   userChallenge.status = isFinish ? Completed : OnGoing;
   await userChallenge.save({ session });
 
-  if (userChallenge.userStage && isFinish)
+  if (userChallenge.userStage && isFinish) {
     await UserStageService.submitState(
       userChallenge.userStage.id,
       TID,
       session
     );
+
+    RedisHelper.pub("leaderboard", userChallenge.userStage.stageId);
+  }
 
   return userChallenge.toObject();
 };
@@ -341,6 +345,21 @@ export const summary = async (
       totalScore: { $sum: "$results.totalScore" },
     })
     .session(session || null);
+};
+
+export const userSync = async (TID: string, session?: ClientSession) => {
+  const userPublicData = await UserPublicVerify(TID, session);
+
+  const userPublic: UserPublicForeign = {
+    code: userPublicData.code,
+    id: userPublicData.id,
+    name: userPublicData.name,
+  };
+
+  await UserChallengeModel.updateMany(
+    { "userPublic.code": TID },
+    { userPublic }
+  );
 };
 
 const UserChallengeService = {

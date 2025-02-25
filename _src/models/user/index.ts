@@ -12,6 +12,7 @@ export const UserForeignSchema = new Schema<UserForeign>(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" },
+    email: { type: String, required: true },
   },
   { _id: false }
 );
