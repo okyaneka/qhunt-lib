@@ -1,14 +1,13 @@
 import Redis, { RedisOptions } from "ioredis";
-import { RedisChannel, RedisKey } from "./types";
+import { RedisChannel, RedisKey } from "~";
 import { randomUUID } from "crypto";
 
-export * from "ioredis";
+type RedisCallback<T> = (data: T) => Promise<any> | any;
 
-type Callback<T> = (data: T) => Promise<void | any> | void | any;
-type MessageHandler<T = unknown> = {
+type RedisMessageHandler<T = unknown> = {
   id: string;
   channel: RedisChannel;
-  callback: Callback<T>;
+  callback: RedisCallback<T>;
 };
 
 const prefix = "\x1b[35mREDIS:\x1b[0m";
@@ -17,7 +16,7 @@ export class RedisHelper {
   public status: number = 0;
   private client: Redis | null = null;
   private subscr: Redis | null = null;
-  private messageHandlers: MessageHandler<any>[] = [];
+  private messageHandlers: RedisMessageHandler<any>[] = [];
 
   constructor() {}
 
@@ -27,14 +26,26 @@ export class RedisHelper {
     this.initiate();
   }
 
+  private getClient() {
+    if (!this.client) throw new Error("Redis client has not ben set yer");
+    return this.client;
+  }
+
+  private getSubscr() {
+    if (!this.subscr) throw new Error("Redis subscribe has not ben set yer");
+    return this.subscr;
+  }
+
   initiate() {
-    if (!(this.client && this.subscr)) return;
+    const client = this.getClient();
+    const subscr = this.getSubscr();
+
     this.status = 1;
-    this.client.on("connect", () =>
+    client.on("connect", () =>
       console.log(prefix, "Redis connected successfully!")
     );
-    this.client.on("error", (err) => console.error("❌ Redis Error:", err));
-    this.subscr.on("message", async (channel, message) => {
+    client.on("error", (err) => console.error("❌ Redis Error:", err));
+    subscr.on("message", async (channel, message) => {
       const handlers = this.messageHandlers.filter(
         (v) => v.channel === channel
       );
@@ -60,17 +71,17 @@ export class RedisHelper {
   async del(key: RedisKey) {}
 
   async pub<T>(channel: RedisChannel, data: T) {
-    if (!this.client) return;
+    const client = this.getClient();
     const message = typeof data == "string" ? data : JSON.stringify(data);
     console.log(prefix, `message published to ${channel}`);
-    await this.client.publish(channel, message);
+    await client.publish(channel, message);
   }
 
-  async sub<T>(channel: RedisChannel, callback: Callback<T>) {
+  async sub<T>(channel: RedisChannel, callback: RedisCallback<T>) {
     if (!this.subscr) return;
     await this.subscr.subscribe(channel);
 
-    const handler: MessageHandler<T> = {
+    const handler: RedisMessageHandler<T> = {
       id: randomUUID(),
       channel,
       callback,
@@ -96,8 +107,9 @@ const globalInstance = globalThis as typeof globalThis & {
   __REDIS_HELPER__?: RedisHelper;
 };
 
-if (!globalInstance.__REDIS_HELPER__) {
+if (!globalInstance.__REDIS_HELPER__)
   globalInstance.__REDIS_HELPER__ = new RedisHelper();
-}
 
-export default globalInstance.__REDIS_HELPER__ as RedisHelper;
+export * from "ioredis";
+export const redis = globalInstance.__REDIS_HELPER__;
+export default Redis;

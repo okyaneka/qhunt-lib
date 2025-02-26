@@ -1,25 +1,14 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
-var deepmerge = require('deepmerge');
 var mongoose = require('mongoose');
 var browser = require('@zxing/browser');
-var Joi = require('joi');
 
-function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
-
-var deepmerge__default = /*#__PURE__*/_interopDefault(deepmerge);
-var Joi__default = /*#__PURE__*/_interopDefault(Joi);
-
-// _src/helpers/bonus/index.ts
+// _src/helpers/bonus.ts
 var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
   return Math.round(maxPoint * (1 - seconds / totalSeconds));
 };
 var bonus = { timeBonus };
 var bonus_default = bonus;
-var common = { deepmerge: deepmerge__default.default };
-var common_default = common;
 var transaction = async (operation) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -81,7 +70,7 @@ var scanByFile = (file) => {
 var qrcode = { scanByStream, scanByFile };
 var qrcode_default = qrcode;
 
-// _src/helpers/response/index.ts
+// _src/helpers/response.ts
 var success = (data = null, message = "success") => {
   return {
     code: 200,
@@ -106,37 +95,8 @@ var errorValidation = (error2) => {
 };
 var response = { success, error, errorValidation };
 var response_default = response;
-var createValidator = (base, option) => {
-  let v = base;
-  if (option?.required) v = v.required();
-  if (option?.allow !== undefined) v = v.allow(option.allow);
-  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
-  return v;
-};
-var string = (option) => createValidator(Joi__default.default.string().trim(), option);
-var number = (option) => createValidator(Joi__default.default.number(), option);
-var boolean = (option) => createValidator(Joi__default.default.boolean(), option);
-var array = (item, options) => {
-  let v = createValidator(
-    Joi__default.default.array().items(item)
-  );
-  if (options?.required) v = v.min(1);
-  if (options?.defaultValue) v.default(options.defaultValue);
-  if (options?.allow) v.allow(options.allow);
-  return v;
-};
-var generate = (fields) => Joi__default.default.object(fields);
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate
-};
-var schema_default = schema;
 
-// _src/helpers/service/index.ts
+// _src/helpers/service.ts
 var list = async (model2, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;
   const filter = {
@@ -156,25 +116,9 @@ var list = async (model2, page, limit, filters = {}, sort) => {
 var service = { list };
 var service_default = service;
 
-// _src/helpers/index.ts
-var helpers = {
-  bonus: bonus_default,
-  common: common_default,
-  db: db_default,
-  model: model_default,
-  qrcode: qrcode_default,
-  response: response_default,
-  schema: schema_default,
-  service: service_default
-};
-var helpers_default = helpers;
-
 exports.bonus = bonus_default;
-exports.common = common_default;
 exports.db = db_default;
-exports.default = helpers_default;
 exports.model = model_default;
 exports.qrcode = qrcode_default;
 exports.response = response_default;
-exports.schema = schema_default;
 exports.service = service_default;

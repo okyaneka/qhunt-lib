@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-import RedisHelper from "./redis";
-import S3Helper from "./s3";
-export { mongoose, RedisHelper, S3Helper };
-//# sourceMappingURL=index.d.ts.map
+import { awsS3 } from "./aws-s3";
+import { redis } from "./redis";
+import mongoose from "./mongoose";
+export { awsS3, redis, mongoose };

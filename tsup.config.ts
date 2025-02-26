@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 import { glob } from "glob";
 
 const srcFiles = glob.sync("_src/**/*.{ts,tsx}", {
-  ignore: ["_src/**/*.test.ts", "tsup.config.ts"],
+  ignore: ["_src/**/*.test.ts", "tsup.config.ts", "_src/types/*"],
 });
 
 export default defineConfig({

@@ -1,44 +1,13 @@
-import ChallengeService from "./challenge";
-import PhotoHuntService from "./photo-hunt";
-import QrService from "./qr";
-import StageService from "./stage";
-import TriviaService from "./trivia";
-import UserChallengeService from "./user-challenge";
-import UserPhotoHuntService from "./user-photo-hunt";
-import UserPublicService from "./user-public";
-import UserService from "./user";
-import UserStageService from "./user-stage";
-import UserTriviaService from "./user-trivia";
-import LeaderboardService from "./leaderboard";
-
-const services = {
-  ChallengeService,
-  PhotoHuntService,
-  QrService,
-  StageService,
-  TriviaService,
-  UserChallengeService,
-  UserPublicService,
-  UserService,
-  UserStageService,
-  UserTriviaService,
-  UserPhotoHuntService,
-  LeaderboardService,
-} as const;
-
-export {
-  ChallengeService,
-  PhotoHuntService,
-  QrService,
-  StageService,
-  TriviaService,
-  UserChallengeService,
-  UserPublicService,
-  UserService,
-  UserStageService,
-  UserTriviaService,
-  UserPhotoHuntService,
-  LeaderboardService,
-};
-
-export default services;
+export { default as ChallengeService } from "./challenge-service";
+export { default as LeaderboardService } from "./leaderboard-service";
+export { default as PhotoHuntService } from "./photo-hunt-service";
+export { default as QrService } from "./qr-service";
+export { default as S3Service } from "./s3-service";
+export { default as StageService } from "./stage-service";
+export { default as TriviaService } from "./trivia-service";
+export { default as UserChallengeService } from "./user-challenge-service";
+export { default as UserPhotoHuntService } from "./user-photo-hunt-service";
+export { default as UserPublicService } from "./user-public-service";
+export { default as UserService } from "./user-service";
+export { default as UserStageService } from "./user-stage-service";
+export { default as UserTriviaService } from "./user-trivia-service";

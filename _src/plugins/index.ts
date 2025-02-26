@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import RedisHelper from "./redis";
-import S3Helper from "./s3";
+import { awsS3 } from "./aws-s3";
+import { redis } from "./redis";
+import mongoose from "./mongoose";
 
-export { mongoose, RedisHelper, S3Helper };
+export { awsS3, redis, mongoose };
