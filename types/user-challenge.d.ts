@@ -38,3 +38,4 @@ export interface UserChallengeParams extends DefaultListParams {
     userStageId: string;
     status: UserChallengeStatus | null;
 }
+//# sourceMappingURL=user-challenge.d.ts.map

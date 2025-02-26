@@ -56,3 +56,4 @@ declare const UserStageService: {
     }>;
 };
 export default UserStageService;
+//# sourceMappingURL=index.d.ts.map

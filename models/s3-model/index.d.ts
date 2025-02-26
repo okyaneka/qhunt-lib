@@ -15,3 +15,4 @@ declare const S3Model: Model<S3, {}, {}, {}, import("mongoose").Document<unknown
     __v: number;
 }, any>;
 export default S3Model;
+//# sourceMappingURL=index.d.ts.map

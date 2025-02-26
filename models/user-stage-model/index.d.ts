@@ -24,3 +24,4 @@ declare const UserStageModel: Model<UserStage, {}, {}, {}, import("mongoose").Do
     __v: number;
 }, any>;
 export default UserStageModel;
+//# sourceMappingURL=index.d.ts.map

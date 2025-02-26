@@ -14,3 +14,4 @@ declare const UserPublicService: {
     }>;
 };
 export default UserPublicService;
+//# sourceMappingURL=index.d.ts.map

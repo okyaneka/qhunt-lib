@@ -60,3 +60,4 @@ declare const QrService: {
     verify: (code: string, TID: string) => Promise<import("../..").QrContent>;
 };
 export default QrService;
+//# sourceMappingURL=index.d.ts.map

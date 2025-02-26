@@ -15,3 +15,4 @@ declare const QrModel: Model<Qr, {}, {}, {}, import("mongoose").Document<unknown
     __v: number;
 }, any>;
 export default QrModel;
+//# sourceMappingURL=index.d.ts.map

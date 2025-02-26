@@ -54,3 +54,4 @@ declare const ChallengeService: {
     }>;
 };
 export default ChallengeService;
+//# sourceMappingURL=index.d.ts.map

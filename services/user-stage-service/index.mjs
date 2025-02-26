@@ -878,9 +878,13 @@ var init = async (stage, userStage, session) => {
       return item.toObject();
     })
   );
-  return await user_challenge_model_default.find({
-    _id: { $in: contents.map((item) => item._id) }
-  });
+  return await user_challenge_model_default.find(
+    {
+      _id: { $in: contents.map((item) => item._id) }
+    },
+    { _id: true },
+    { session }
+  );
 };
 var summary3 = async (userStageId, TID, session) => {
   return user_challenge_model_default.aggregate().match({
@@ -936,7 +940,7 @@ var setup3 = async (stageId, TID) => {
       { session }
     );
     const contents = await init(stageData, userStageData, session);
-    userStageData.contents = contents.map((item) => item.id);
+    userStageData.contents = contents.map((item) => item._id.toString());
     await userStageData.save({ session });
     return userStageData.toObject();
   }).finally(() => {

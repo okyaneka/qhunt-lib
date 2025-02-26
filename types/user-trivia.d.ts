@@ -23,3 +23,4 @@ export interface UserTrivia {
     trivia: TriviaForeign;
     results: UserTriviaResult | null;
 }
+//# sourceMappingURL=user-trivia.d.ts.map

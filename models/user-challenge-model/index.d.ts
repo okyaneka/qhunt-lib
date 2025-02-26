@@ -24,3 +24,4 @@ declare const UserChallengeModel: Model<UserChallenge, {}, {}, {}, import("mongo
     __v: number;
 }, any>;
 export default UserChallengeModel;
+//# sourceMappingURL=index.d.ts.map

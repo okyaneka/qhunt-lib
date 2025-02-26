@@ -4,3 +4,4 @@ declare const db: {
     transaction: <T>(operation: (session: ClientSession) => Promise<T>) => Promise<T>;
 };
 export default db;
+//# sourceMappingURL=db.d.ts.map

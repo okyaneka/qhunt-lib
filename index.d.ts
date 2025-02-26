@@ -12,3 +12,4 @@ export * from "./types/user-stage";
 export * from "./types/user-trivia";
 export * from "./types/leaderboard";
 export * from "./types/s3";
+//# sourceMappingURL=index.d.ts.map

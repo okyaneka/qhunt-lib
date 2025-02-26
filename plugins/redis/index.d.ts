@@ -20,3 +20,4 @@ export declare class RedisHelper {
 export * from "ioredis";
 export declare const redis: RedisHelper;
 export default Redis;
+//# sourceMappingURL=index.d.ts.map

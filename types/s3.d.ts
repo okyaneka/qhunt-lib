@@ -14,3 +14,4 @@ export interface S3 extends Timestamps {
     fileSize: number;
     user: UserForeign;
 }
+//# sourceMappingURL=s3.d.ts.map

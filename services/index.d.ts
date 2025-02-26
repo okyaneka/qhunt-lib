@@ -11,3 +11,4 @@ export { default as UserPublicService } from "./user-public-service";
 export { default as UserService } from "./user-service";
 export { default as UserStageService } from "./user-stage-service";
 export { default as UserTriviaService } from "./user-trivia-service";
+//# sourceMappingURL=index.d.ts.map

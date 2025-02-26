@@ -16,3 +16,4 @@ export interface LeaderboardData {
     ranks: LeaderboardStage[];
     total: number;
 }
+//# sourceMappingURL=leaderboard.d.ts.map

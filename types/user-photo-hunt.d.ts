@@ -20,3 +20,4 @@ export interface UserPhotoHunt {
     photoHunt: PhotoHuntForeign;
     results: UserPhotoHuntResult | null;
 }
+//# sourceMappingURL=user-photo-hunt.d.ts.map

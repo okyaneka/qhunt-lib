@@ -26,3 +26,4 @@ declare const StageModel: Model<Stage, {}, {}, {}, import("mongoose").Document<u
     __v: number;
 }, any>;
 export default StageModel;
+//# sourceMappingURL=index.d.ts.map

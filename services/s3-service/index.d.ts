@@ -13,3 +13,4 @@ declare const S3Service: {
     readonly delete: (key: string) => Promise<import("../../plugins/aws-s3").DeleteObjectCommandOutput>;
 };
 export default S3Service;
+//# sourceMappingURL=index.d.ts.map

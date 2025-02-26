@@ -26,3 +26,4 @@ declare const TriviaService: {
     verify: (id: string) => Promise<void>;
 };
 export default TriviaService;
+//# sourceMappingURL=index.d.ts.map

@@ -23,3 +23,4 @@ export interface Trivia extends Timestamps {
     allowMultiple: boolean;
     options: TriviaOption[];
 }
+//# sourceMappingURL=trivia.d.ts.map

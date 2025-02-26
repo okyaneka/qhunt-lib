@@ -61,7 +61,7 @@ export const setup = async (stageId: string, TID: string) => {
 
     const contents = await UserChallengeInit(stageData, userStageData, session);
 
-    userStageData.contents = contents.map((item) => item.id);
+    userStageData.contents = contents.map((item) => item._id.toString());
     await userStageData.save({ session });
 
     return userStageData.toObject();

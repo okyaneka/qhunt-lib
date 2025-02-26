@@ -28,3 +28,4 @@ export interface UserStage extends Timestamps {
     results: UserStageResult | null;
     contents: string[];
 }
+//# sourceMappingURL=user-stage.d.ts.map

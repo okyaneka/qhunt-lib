@@ -26,3 +26,4 @@ declare const TriviaModel: Model<Trivia, {}, {}, {}, import("mongoose").Document
     __v: number;
 }, any>;
 export default TriviaModel;
+//# sourceMappingURL=index.d.ts.map

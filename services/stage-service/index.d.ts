@@ -52,3 +52,4 @@ declare const StageService: {
     }>;
 };
 export default StageService;
+//# sourceMappingURL=index.d.ts.map

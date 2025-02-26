@@ -14,3 +14,4 @@ declare const service: {
     }>;
 };
 export default service;
+//# sourceMappingURL=service.d.ts.map
