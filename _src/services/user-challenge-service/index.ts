@@ -130,9 +130,13 @@ export const init = async (
     })
   );
 
-  return await UserChallengeModel.find({
-    _id: { $in: contents.map((item) => item._id) },
-  });
+  return await UserChallengeModel.find(
+    {
+      _id: { $in: contents.map((item) => item._id) },
+    },
+    { _id: true },
+    { session }
+  );
 };
 
 export const setup = async (
