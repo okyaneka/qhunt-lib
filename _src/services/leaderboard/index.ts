@@ -1,5 +1,5 @@
 import { PipelineStage } from "mongoose";
-import { UserStageModel } from "~/models";
+import UserStageModel from "~/models/user-stage-model";
 import { LeaderboardData, LeaderboardStage } from "~/types/leaderboard";
 
 export const stage = async (

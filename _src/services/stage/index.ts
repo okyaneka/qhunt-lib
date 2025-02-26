@@ -1,5 +1,6 @@
 import { transaction } from "~/helpers/db";
-import { ChallengeModel, StageModel } from "~/models";
+import ChallengeModel from "~/models/challenge-model";
+import StageModel from "~/models/stage-model";
 import { StageListParams, StagePayload, STAGE_STATUS } from "~/types";
 
 const isUsed = async (ids: string[], id?: string) => {

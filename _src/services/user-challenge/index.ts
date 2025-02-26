@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { verify as ChallengeVerify } from "../challenge";
-import { ChallengeModel, UserChallengeModel } from "~/models";
+import ChallengeModel from "~/models/challenge-model";
+import UserChallengeModel from "~/models/user-challenge-model";
 import {
   CHALLENGE_TYPES,
   UserChallengeForeign,

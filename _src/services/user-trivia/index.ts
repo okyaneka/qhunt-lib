@@ -10,7 +10,7 @@ import {
   details as TriviaServiceDetails,
   detail as TriviaServiceDetail,
 } from "../trivia";
-import { UserTriviaModel } from "~/models";
+import UserTriviaModel from "~/models/user-trivia-model";
 import { ClientSession } from "mongoose";
 import { db } from "~/helpers";
 import { submit as UserChallengeSubmit } from "../user-challenge";

@@ -1,4 +1,4 @@
-import { UserStageModel } from "~/models";
+import UserStageModel from "~/models/user-stage-model";
 import {
   StageForeign,
   UserPublicForeign,

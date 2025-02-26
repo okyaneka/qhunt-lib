@@ -1,7 +1,7 @@
 import { model, Model, models, Schema } from "mongoose";
 import { PhotoHunt, PhotoHuntForeign, PHOTO_HUNT_STATUS } from "~/types";
 import { IdNameSchema, ToObject } from "~/helpers/model";
-import { QrForeignSchema } from "../qr";
+import { QrForeignSchema } from "../qr-model";
 
 export const PhotoHuntForeignSchema = new Schema<PhotoHuntForeign>(
   {

@@ -1,7 +1,7 @@
 import { enc, lib, SHA256 } from "crypto-js";
 import { ClientSession } from "mongoose";
-import { UserModel } from "~/models";
-import { UserPublicModel } from "~/models";
+import UserModel from "~/models/user-model";
+import UserPublicModel from "~/models/user-public-model";
 
 export const verify = async (value: string, session?: ClientSession) => {
   if (!value) throw new Error("token is required");

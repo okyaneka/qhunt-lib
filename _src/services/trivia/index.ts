@@ -2,7 +2,7 @@ import {
   detail as ChallengeDetail,
   updateContent as ChallengeUpdateContent,
 } from "../challenge";
-import { TriviaModel } from "~/models";
+import TriviaModel from "~/models/trivia-model";
 import { TriviaPayload, CHALLENGE_TYPES } from "~/types";
 import { IdName } from "~/helpers/types";
 import { ClientSession } from "mongoose";

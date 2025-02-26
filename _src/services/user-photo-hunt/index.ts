@@ -1,4 +1,4 @@
-import UserPhotoHuntModel from "~/models/user-photo-hunt";
+import UserPhotoHuntModel from "~/models/user-photo-hunt-model";
 import {
   UserChallengeForeign,
   UserPhotoHuntResult,

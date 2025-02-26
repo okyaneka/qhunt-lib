@@ -1,8 +1,8 @@
 import { model, Model, models, Schema } from "mongoose";
 import { UserPhotoHunt, UserPhotoHuntResult } from "~/types";
-import { PhotoHuntForeignSchema } from "../photo-hunt";
-import { UserChallengeForeignSchema } from "../user-challenge";
-import { UserPublicForeignSchema } from "../user-public";
+import { PhotoHuntForeignSchema } from "../photo-hunt-model";
+import { UserChallengeForeignSchema } from "../user-challenge-model";
+import { UserPublicForeignSchema } from "../user-public-model";
 import { ToObject } from "~/helpers/model";
 
 const UserPhotoHuntResultSchema = new Schema<UserPhotoHuntResult>(

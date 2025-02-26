@@ -1,8 +1,8 @@
 import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
 import { UserTrivia, UserTriviaResult } from "~/types";
-import { UserPublicForeignSchema } from "../user-public";
-import { UserChallengeForeignSchema } from "../user-challenge";
-import { TriviaForeignSchema } from "../trivia";
+import { UserPublicForeignSchema } from "../user-public-model";
+import { UserChallengeForeignSchema } from "../user-challenge-model";
+import { TriviaForeignSchema } from "../trivia-model";
 
 const ToObject: ToObjectOptions = {
   transform: (doc, ret) => {

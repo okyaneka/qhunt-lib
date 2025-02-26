@@ -9,9 +9,9 @@ import {
 import {
   ChallengeForeignSchema,
   ChallengeSettingsForeignSchema,
-} from "../challenge";
-import { UserPublicForeignSchema } from "../user-public";
-import { UserStageForeignSchema } from "../user-stage";
+} from "../challenge-model";
+import { UserPublicForeignSchema } from "../user-public-model";
+import { UserStageForeignSchema } from "../user-stage-model";
 
 export const UserChallengeForeignSchema = new Schema<UserChallengeForeign>(
   {

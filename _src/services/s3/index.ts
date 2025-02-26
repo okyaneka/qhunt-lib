@@ -1,4 +1,4 @@
-import S3Model from "~/models/s3";
+import S3Model from "~/models/s3-model";
 import { detail as UserDetail } from "../user";
 import { UserForeign } from "~/types";
 import { ClientSession } from "mongoose";

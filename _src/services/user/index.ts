@@ -9,7 +9,8 @@ import {
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 import { db } from "~/helpers";
-import { UserModel, UserPublicModel } from "~/models";
+import UserModel from "~/models/user-model";
+import UserPublicModel from "~/models/user-public-model";
 import {
   setup as UserPublicSetup,
   verify as UserPublicVerify,

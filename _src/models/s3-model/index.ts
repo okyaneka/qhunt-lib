@@ -1,6 +1,6 @@
 import { Model, model, models, Schema } from "mongoose";
 import { S3, S3Foreign } from "~/types/s3";
-import { UserForeignSchema } from "../user";
+import { UserForeignSchema } from "../user-model";
 import { ToObject } from "~/helpers/model";
 
 export const S3ForeignSchema = new Schema<S3Foreign>(

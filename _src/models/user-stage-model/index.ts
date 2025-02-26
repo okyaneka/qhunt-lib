@@ -6,8 +6,8 @@ import {
   UserStageStatus,
 } from "~/types";
 import { ToObject } from "~/helpers/model";
-import { StageForeignSchema } from "../stage";
-import { UserPublicForeignSchema } from "../user-public";
+import { StageForeignSchema } from "../stage-model";
+import { UserPublicForeignSchema } from "../user-public-model";
 
 export const UserStageForeignSchema = new Schema<UserStageForeign>(
   {
