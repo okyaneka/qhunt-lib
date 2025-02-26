@@ -1896,9 +1896,8 @@ var login = async (payload, secret) => {
   if (!user) throw new Error("user not found");
   const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
   if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await user_public_model_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  ) || await setup(user.id);
+  const userPublic = await user_public_model_default.findOne({ "user.id": user._id });
+  if (!userPublic) throw new Error("user_public.not_found");
   const token = jsonwebtoken.sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
   });
