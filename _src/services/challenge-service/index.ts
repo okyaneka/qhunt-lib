@@ -1,12 +1,9 @@
 import { db } from "~/helpers";
-import {
-  ChallengeListParams,
-  ChallengePayload,
-  CHALLENGE_STATUS,
-} from "~/types";
+import { ChallengeListParams, ChallengePayload } from "~";
 import { detail as StageDetail } from "../stage-service";
 import ChallengeModel from "~/models/challenge-model";
 import StageModel from "~/models/stage-model";
+import { CHALLENGE_STATUS } from "~/helpers/contants";
 
 export const list = async (params: ChallengeListParams) => {
   const skip = (params.page - 1) * params.limit;

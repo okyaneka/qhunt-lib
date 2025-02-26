@@ -4,7 +4,7 @@ import {
   UserPublicForeign,
   UserStageListParams,
   UserStageResult,
-} from "~/types";
+} from "~";
 import { verify as StageVerify } from "../stage-service";
 import {
   init as UserChallengeInit,

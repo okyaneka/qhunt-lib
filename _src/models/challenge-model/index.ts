@@ -1,12 +1,11 @@
 import { Model, model, models, Schema } from "mongoose";
 import {
   Challenge,
-  CHALLENGE_STATUS,
-  CHALLENGE_TYPES,
   ChallengeForeign,
   ChallengeSettings,
   ChallengeSettingsForeign,
-} from "~/types";
+} from "~";
+import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/helpers/contants";
 import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
 
 const ChallengeSettingsSchema = new Schema<ChallengeSettings>(

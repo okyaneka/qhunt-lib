@@ -4,8 +4,7 @@ import {
   UserPhotoHuntResult,
   UserPhotoHuntSummary,
   UserPublicForeign,
-  CHALLENGE_TYPES,
-} from "~/types";
+} from "~";
 import {
   details as PhotoHuntDetails,
   verifyCode as PhotoHuntVerifyCode,
@@ -16,6 +15,7 @@ import {
   detail as UserChallengeDetail,
 } from "../user-challenge-service";
 import { db } from "~/helpers";
+import { CHALLENGE_TYPES } from "~/helpers/contants";
 
 export const setup = async (
   userPublic: UserPublicForeign,

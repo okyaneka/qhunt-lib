@@ -1,14 +1,15 @@
 import QrModel from "~/models/qr-model";
 import PhotoHuntModel from "~/models/photo-hunt-model";
-import { IdName } from "~/helpers/types";
+import { IdName } from "~";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
-import { QrContent, CHALLENGE_TYPES, PhotoHuntPayload } from "~/types";
+import { QrContent, PhotoHuntPayload } from "~";
 import { list as QrServiceList } from "../qr-service";
 import {
   detail as ChallengeDetail,
   updateContent as ChallengeUpdateContent,
 } from "../challenge-service";
+import { CHALLENGE_TYPES } from "~/helpers/contants";
 
 const createMany = async (
   challenge: IdName,

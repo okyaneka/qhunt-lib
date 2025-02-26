@@ -1,5 +1,5 @@
 import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
-import { User, UserForeign, UserRole } from "~/types";
+import { User, UserForeign, UserRole } from "~";
 
 const ToObject: ToObjectOptions = {
   transform: (doc, ret) => {

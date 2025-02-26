@@ -1,8 +1,9 @@
 import { Model, model, models, Schema } from "mongoose";
-import { USER_PUBLIC_GENDER, UserPublic, UserPublicForeign } from "~/types";
+import { UserPublic, UserPublicForeign } from "~";
 import { ToObject } from "~/helpers/model";
 import { UserForeignSchema } from "../user-model";
 import { S3ForeignSchema } from "../s3-model";
+import { USER_PUBLIC_GENDER } from "~/helpers/contants";
 
 export const UserPublicForeignSchema = new Schema<UserPublicForeign>(
   {

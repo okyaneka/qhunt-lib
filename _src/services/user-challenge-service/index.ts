@@ -3,18 +3,16 @@ import { verify as ChallengeVerify } from "../challenge-service";
 import ChallengeModel from "~/models/challenge-model";
 import UserChallengeModel from "~/models/user-challenge-model";
 import {
-  CHALLENGE_TYPES,
   UserChallengeForeign,
   UserChallengeParams,
   UserChallengeResult,
-  USER_CHALLENGE_STATUS,
   UserChallengeSummary,
   UserStage,
   Stage,
   UserPublicForeign,
   ChallengeForeign,
   ChallengeSettingsForeign,
-} from "~/types";
+} from "~";
 import { verify as UserPublicVerify } from "../user-public-service";
 import UserStageService from "../user-stage-service";
 import StageService from "../stage-service";
@@ -34,6 +32,7 @@ import {
 import { ClientSession } from "mongoose";
 import { timeBonus } from "~/helpers/bonus";
 import { RedisHelper } from "~/plugins";
+import { CHALLENGE_TYPES, USER_CHALLENGE_STATUS } from "~/helpers/contants";
 
 const services = {
   [CHALLENGE_TYPES.Trivia]: {

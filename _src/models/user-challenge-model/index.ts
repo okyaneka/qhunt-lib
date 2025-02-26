@@ -1,17 +1,13 @@
 import { Model, model, models, Schema } from "mongoose";
 import { ToObject } from "~/helpers/model";
-import {
-  UserChallenge,
-  UserChallengeForeign,
-  UserChallengeResult,
-  USER_CHALLENGE_STATUS,
-} from "~/types";
+import { UserChallenge, UserChallengeForeign, UserChallengeResult } from "~";
 import {
   ChallengeForeignSchema,
   ChallengeSettingsForeignSchema,
 } from "../challenge-model";
 import { UserPublicForeignSchema } from "../user-public-model";
 import { UserStageForeignSchema } from "../user-stage-model";
+import { USER_CHALLENGE_STATUS } from "~/helpers/contants";
 
 export const UserChallengeForeignSchema = new Schema<UserChallengeForeign>(
   {

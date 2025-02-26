@@ -1,5 +1,5 @@
 import { Schema, ToObjectOptions } from "mongoose";
-import { Feedback, IdName, Periode } from "../types";
+import { Feedback, IdName, Periode } from "~";
 
 export const IdNameSchema = new Schema<IdName>(
   {
@@ -31,6 +31,7 @@ export const ToObject: ToObjectOptions = {
     return { id: _id.toString(), ...rest };
   },
 };
+
 const model = {
   IdNameSchema,
   PeriodSchema,

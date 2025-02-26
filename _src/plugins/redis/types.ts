@@ -1,4 +1,4 @@
-import { ValueOf } from "~/helpers/types";
+import { ValueOf } from "~";
 
 const REDIS_KEYS = {} as const;
 

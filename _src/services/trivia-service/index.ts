@@ -3,10 +3,11 @@ import {
   updateContent as ChallengeUpdateContent,
 } from "../challenge-service";
 import TriviaModel from "~/models/trivia-model";
-import { TriviaPayload, CHALLENGE_TYPES } from "~/types";
-import { IdName } from "~/helpers/types";
+import { TriviaPayload } from "~";
+import { IdName } from "~";
 import { ClientSession } from "mongoose";
 import { transaction } from "~/helpers/db";
+import { CHALLENGE_TYPES } from "~/helpers/contants";
 
 const createMany = async (
   challenge: IdName,

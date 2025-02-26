@@ -1,6 +1,6 @@
 import S3Model from "~/models/s3-model";
 import { detail as UserDetail } from "../user-service";
-import { UserForeign } from "~/types";
+import { UserForeign } from "~";
 import { ClientSession } from "mongoose";
 import { S3Payload } from "~/types/s3";
 import { S3Helper } from "~/plugins";

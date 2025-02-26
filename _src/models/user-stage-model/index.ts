@@ -4,7 +4,7 @@ import {
   UserStageForeign,
   UserStageResult,
   UserStageStatus,
-} from "~/types";
+} from "~";
 import { ToObject } from "~/helpers/model";
 import { StageForeignSchema } from "../stage-model";
 import { UserPublicForeignSchema } from "../user-public-model";

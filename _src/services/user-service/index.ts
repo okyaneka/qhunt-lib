@@ -5,7 +5,7 @@ import {
   UserRole,
   S3Foreign,
   S3Payload,
-} from "~/types";
+} from "~";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 import { db } from "~/helpers";

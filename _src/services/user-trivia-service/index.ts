@@ -3,9 +3,8 @@ import {
   UserPublicForeign,
   UserTriviaResult,
   UserTriviaSummary,
-  CHALLENGE_TYPES,
   TriviaForeign,
-} from "~/types";
+} from "~";
 import {
   details as TriviaServiceDetails,
   detail as TriviaServiceDetail,
@@ -14,6 +13,7 @@ import UserTriviaModel from "~/models/user-trivia-model";
 import { ClientSession } from "mongoose";
 import { db } from "~/helpers";
 import { submit as UserChallengeSubmit } from "../user-challenge-service";
+import { CHALLENGE_TYPES } from "~/helpers/contants";
 
 export const verify = async (triviaId: string, TID: string) => {
   const item = await UserTriviaModel.findOne({

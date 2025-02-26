@@ -1,11 +1,7 @@
 import { PeriodSchema, ToObject } from "~/helpers/model";
-import {
-  STAGE_STATUS,
-  Stage,
-  StageForeign,
-  StageSettingsForeign,
-} from "~/types";
+import { Stage, StageForeign, StageSettingsForeign } from "~";
 import { Model, model, models, Schema } from "mongoose";
+import { STAGE_STATUS } from "~/helpers/contants";
 
 const StageSettingsSchema = new Schema<Stage["settings"]>(
   {

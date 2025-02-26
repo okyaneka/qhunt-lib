@@ -12,9 +12,10 @@ import {
   verify as TriviaVerify,
 } from "../trivia-service";
 import { enc, SHA256 } from "crypto-js";
-import { QR_STATUS, QrListParams, QrPayload, QrUpdatePayload } from "~/types";
+import { QrListParams, QrPayload, QrUpdatePayload } from "~";
 import { setup as UserChallengeSetup } from "../user-challenge-service";
 import { setup as UserStageSetup } from "../user-stage-service";
+import { QR_STATUS } from "~/helpers/contants";
 import QrModel from "~/models/qr-model";
 
 const services = {
