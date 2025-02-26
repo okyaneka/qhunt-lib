@@ -5,7 +5,7 @@
     "dev": "nodemon",
     "build": "pnpm build:dts && pnpm build:js",
     "build:js": "tsup",
-    "build:dts": "rm -rf helpers models services types plugins index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
+    "build:dts": "rm -rf constants helpers models plugins services types index.* && tsc --emitDeclarationOnly --project tsconfig.build.json && tsc-alias",
     "test": "jest"
   },
   "keywords": [],
@@ -17,9 +17,7 @@
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "bcryptjs": "^2.4.3",
-    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
-    "deepmerge": "^4.3.1",
     "ioredis": "^5.5.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
@@ -27,7 +25,6 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/crypto-js": "^4.2.2",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "glob": "^11.0.1",

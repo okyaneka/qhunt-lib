@@ -1,16 +1,12 @@
-import deepmerge from 'deepmerge';
 import { Schema, startSession } from 'mongoose';
 import { BrowserQRCodeReader } from '@zxing/browser';
-import Joi from 'joi';
 
-// _src/helpers/bonus/index.ts
+// _src/helpers/bonus.ts
 var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
   return Math.round(maxPoint * (1 - seconds / totalSeconds));
 };
 var bonus = { timeBonus };
 var bonus_default = bonus;
-var common = { deepmerge };
-var common_default = common;
 var transaction = async (operation) => {
   const session = await startSession();
   session.startTransaction();
@@ -72,7 +68,7 @@ var scanByFile = (file) => {
 var qrcode = { scanByStream, scanByFile };
 var qrcode_default = qrcode;
 
-// _src/helpers/response/index.ts
+// _src/helpers/response.ts
 var success = (data = null, message = "success") => {
   return {
     code: 200,
@@ -97,37 +93,8 @@ var errorValidation = (error2) => {
 };
 var response = { success, error, errorValidation };
 var response_default = response;
-var createValidator = (base, option) => {
-  let v = base;
-  if (option?.required) v = v.required();
-  if (option?.allow !== undefined) v = v.allow(option.allow);
-  if (option?.defaultValue !== undefined) v = v.default(option.defaultValue);
-  return v;
-};
-var string = (option) => createValidator(Joi.string().trim(), option);
-var number = (option) => createValidator(Joi.number(), option);
-var boolean = (option) => createValidator(Joi.boolean(), option);
-var array = (item, options) => {
-  let v = createValidator(
-    Joi.array().items(item)
-  );
-  if (options?.required) v = v.min(1);
-  if (options?.defaultValue) v.default(options.defaultValue);
-  if (options?.allow) v.allow(options.allow);
-  return v;
-};
-var generate = (fields) => Joi.object(fields);
-var schema = {
-  createValidator,
-  string,
-  number,
-  boolean,
-  array,
-  generate
-};
-var schema_default = schema;
 
-// _src/helpers/service/index.ts
+// _src/helpers/service.ts
 var list = async (model2, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;
   const filter = {
@@ -147,17 +114,4 @@ var list = async (model2, page, limit, filters = {}, sort) => {
 var service = { list };
 var service_default = service;
 
-// _src/helpers/index.ts
-var helpers = {
-  bonus: bonus_default,
-  common: common_default,
-  db: db_default,
-  model: model_default,
-  qrcode: qrcode_default,
-  response: response_default,
-  schema: schema_default,
-  service: service_default
-};
-var helpers_default = helpers;
-
-export { bonus_default as bonus, common_default as common, db_default as db, helpers_default as default, model_default as model, qrcode_default as qrcode, response_default as response, schema_default as schema, service_default as service };
+export { bonus_default as bonus, db_default as db, model_default as model, qrcode_default as qrcode, response_default as response, service_default as service };

@@ -16,15 +16,24 @@ var RedisHelper = class {
     this.subscr = new Redis__default(options);
     this.initiate();
   }
+  getClient() {
+    if (!this.client) throw new Error("Redis client has not ben set yer");
+    return this.client;
+  }
+  getSubscr() {
+    if (!this.subscr) throw new Error("Redis subscribe has not ben set yer");
+    return this.subscr;
+  }
   initiate() {
-    if (!(this.client && this.subscr)) return;
+    const client = this.getClient();
+    const subscr = this.getSubscr();
     this.status = 1;
-    this.client.on(
+    client.on(
       "connect",
       () => console.log(prefix, "Redis connected successfully!")
     );
-    this.client.on("error", (err) => console.error("\u274C Redis Error:", err));
-    this.subscr.on("message", async (channel, message) => {
+    client.on("error", (err) => console.error("\u274C Redis Error:", err));
+    subscr.on("message", async (channel, message) => {
       const handlers = this.messageHandlers.filter(
         (v) => v.channel === channel
       );
@@ -45,10 +54,10 @@ var RedisHelper = class {
   async del(key) {
   }
   async pub(channel, data) {
-    if (!this.client) return;
+    const client = this.getClient();
     const message = typeof data == "string" ? data : JSON.stringify(data);
     console.log(prefix, `message published to ${channel}`);
-    await this.client.publish(channel, message);
+    await client.publish(channel, message);
   }
   async sub(channel, callback) {
     if (!this.subscr) return;
@@ -73,9 +82,9 @@ var RedisHelper = class {
   }
 };
 var globalInstance = globalThis;
-if (!globalInstance.__REDIS_HELPER__) {
+if (!globalInstance.__REDIS_HELPER__)
   globalInstance.__REDIS_HELPER__ = new RedisHelper();
-}
-var redis_default = globalInstance.__REDIS_HELPER__;
+var redis = globalInstance.__REDIS_HELPER__;
+var redis_default = Redis__default;
 
-export { RedisHelper, redis_default as default };
+export { RedisHelper, redis_default as default, redis };

@@ -4,6 +4,7 @@
     "esModuleInterop": true,
     "outDir": ".",
     "paths": {
+      "~": ["./"],
       "~/*": ["./*"]
     },
     "noUnusedLocals": true,
@@ -15,7 +16,7 @@
     "moduleResolution": "node",
     "declaration": true,
     "emitDeclarationOnly": true,
-    "declarationMap": true
+    "declarationMap": false
   },
 
   "include": ["_src/**/*"],
