@@ -1,8 +1,9 @@
 import { enc, lib, SHA256 } from "crypto-js";
+import { ClientSession } from "mongoose";
 import { UserModel } from "~/models";
 import { UserPublicModel } from "~/models";
 
-export const verify = async (value: string) => {
+export const verify = async (value: string, session?: ClientSession) => {
   if (!value) throw new Error("token is required");
 
   const userPublic = await UserPublicModel.findOneAndUpdate(
@@ -10,7 +11,8 @@ export const verify = async (value: string) => {
       $or: [{ "user.id": value }, { code: value }],
       deletedAt: null,
     },
-    { lastAccessedAt: new Date() }
+    { lastAccessedAt: new Date() },
+    { new: true, session }
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();

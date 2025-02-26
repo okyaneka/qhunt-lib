@@ -91,12 +91,11 @@ var USER_CHALLENGE_STATUS = {
 };
 
 // _src/types/user-public/index.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
 
 // _src/types/user-stage/index.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -295,7 +294,8 @@ var ToObject2 = {
 var UserForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    name: { type: String, default: "" }
+    name: { type: String, default: "" },
+    email: { type: String, required: true }
   },
   { _id: false }
 );
@@ -314,6 +314,29 @@ var UserSchema = new Schema(
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
 models.User || model("User", UserSchema);
+var S3ForeignSchema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    user: { type: UserForeignSchema, required: true }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+models.S3 || model("S3", S3Schema);
+
+// _src/models/user-public/index.ts
 var UserPublicForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -330,10 +353,11 @@ var UserPublicSchema = new Schema(
     dob: { type: Date, default: null },
     gender: {
       type: String,
-      enum: Object.values(UserPublicGender),
+      enum: Object.values(USER_PUBLIC_GENDER),
       default: null
     },
     phone: { type: String, default: "" },
+    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },

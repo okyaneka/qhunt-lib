@@ -10,4 +10,5 @@ export * from "./user-public";
 export * from "./user-stage";
 export * from "./user-trivia";
 export * from "./leaderboard";
+export * from "./s3";
 //# sourceMappingURL=index.d.ts.map

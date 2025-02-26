@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 import RedisHelper from "./redis";
+import S3Helper from "./s3";
 
-const plugins = { mongoose, RedisHelper } as const;
-
-export { mongoose, RedisHelper };
-
-export default plugins;
+export { mongoose, RedisHelper, S3Helper };

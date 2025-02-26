@@ -46,12 +46,11 @@ var USER_CHALLENGE_STATUS = {
 };
 
 // _src/types/user-public/index.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
 
 // _src/types/user-stage/index.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -75,6 +74,6 @@ exports.QR_CONTENT_TYPES = QR_CONTENT_TYPES;
 exports.QR_STATUS = QR_STATUS;
 exports.STAGE_STATUS = STAGE_STATUS;
 exports.USER_CHALLENGE_STATUS = USER_CHALLENGE_STATUS;
-exports.UserPublicGender = UserPublicGender;
+exports.USER_PUBLIC_GENDER = USER_PUBLIC_GENDER;
 exports.UserRole = UserRole;
 exports.UserStageStatus = UserStageStatus;

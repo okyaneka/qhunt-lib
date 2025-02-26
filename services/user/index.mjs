@@ -5,6 +5,30 @@ import { Schema, models, model, startSession } from 'mongoose';
 import '@zxing/browser';
 import 'joi';
 import { lib, enc, SHA256 } from 'crypto-js';
+import 'dayjs';
+import * as Redis from 'ioredis';
+import Redis__default from 'ioredis';
+import { randomUUID } from 'crypto';
+import * as client_s3_star from '@aws-sdk/client-s3';
+import { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
 
 // _src/helpers/types/index.ts
 var PUBLISHING_STATUS = {
@@ -52,12 +76,11 @@ var USER_CHALLENGE_STATUS = {
 };
 
 // _src/types/user-public/index.ts
-var UserPublicGender = /* @__PURE__ */ ((UserPublicGender2) => {
-  UserPublicGender2["Male"] = "male";
-  UserPublicGender2["Female"] = "female";
-  UserPublicGender2["Panda"] = "panda";
-  return UserPublicGender2;
-})(UserPublicGender || {});
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
 
 // _src/types/user-stage/index.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -294,7 +317,8 @@ var ToObject2 = {
 var UserForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    name: { type: String, default: "" }
+    name: { type: String, default: "" },
+    email: { type: String, required: true }
   },
   { _id: false }
 );
@@ -314,6 +338,30 @@ UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
 var UserModel = models.User || model("User", UserSchema);
 var user_default = UserModel;
+var S3ForeignSchema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    user: { type: UserForeignSchema, required: true }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+var S3Model = models.S3 || model("S3", S3Schema);
+var s3_default = S3Model;
+
+// _src/models/user-public/index.ts
 var UserPublicForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -330,10 +378,11 @@ var UserPublicSchema = new Schema(
     dob: { type: Date, default: null },
     gender: {
       type: String,
-      enum: Object.values(UserPublicGender),
+      enum: Object.values(USER_PUBLIC_GENDER),
       default: null
     },
     phone: { type: String, default: "" },
+    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },
@@ -376,7 +425,8 @@ var UserStageSchema = new Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-models.UserStage || model("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = models.UserStage || model("UserStage", UserStageSchema, "usersStage");
+var user_stage_default = UserStageModel;
 
 // _src/models/user-challenge/index.ts
 var UserChallengeForeignSchema = new Schema(
@@ -419,7 +469,8 @@ var UserChallengeSchema = new Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
+var UserChallengeModel = models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
+var user_challenge_default = UserChallengeModel;
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -448,7 +499,7 @@ var UserTriviaSchema = new Schema(
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
-new Schema(
+var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     hint: { type: String, required: true }
@@ -473,14 +524,15 @@ var PhotoHuntSchema = new Schema(
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var verify = async (value) => {
+var verify = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_default.findOneAndUpdate(
     {
       $or: [{ "user.id": value }, { code: value }],
       deletedAt: null
     },
-    { lastAccessedAt: /* @__PURE__ */ new Date() }
+    { lastAccessedAt: /* @__PURE__ */ new Date() },
+    { new: true, session }
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
@@ -502,17 +554,242 @@ var setup = async (userId) => {
   const user = await user_public_default.create(payload);
   return user.toObject();
 };
+var UserPhotoHuntResultSchema = new Schema(
+  {
+    feedback: { type: String, default: null },
+    foundAt: { type: Date, default: Date.now() },
+    score: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+var UserPhotoHuntSchema = new Schema({
+  photoHunt: { type: PhotoHuntForeignSchema, required: true },
+  results: { type: UserPhotoHuntResultSchema, default: null },
+  userChallenge: { type: UserChallengeForeignSchema, required: true },
+  userPublic: { type: UserPublicForeignSchema, required: true }
+});
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
+models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
+
+// _src/plugins/redis/index.ts
+var redis_exports = {};
+__export(redis_exports, {
+  RedisHelper: () => RedisHelper,
+  default: () => redis_default
+});
+__reExport(redis_exports, Redis);
+var prefix = "\x1B[35mREDIS:\x1B[0m";
+var RedisHelper = class {
+  status = 0;
+  client = null;
+  subscr = null;
+  messageHandlers = [];
+  constructor() {
+  }
+  init(options) {
+    this.client = new Redis__default(options);
+    this.subscr = new Redis__default(options);
+    this.initiate();
+  }
+  initiate() {
+    if (!(this.client && this.subscr)) return;
+    this.status = 1;
+    this.client.on(
+      "connect",
+      () => console.log(prefix, "Redis connected successfully!")
+    );
+    this.client.on("error", (err) => console.error("\u274C Redis Error:", err));
+    this.subscr.on("message", async (channel, message) => {
+      const handlers = this.messageHandlers.filter(
+        (v) => v.channel === channel
+      );
+      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
+      handlers.forEach((handler) => {
+        console.log(
+          prefix,
+          `message received from ${channel} to id ${handler.id}`
+        );
+        handler.callback(data);
+      });
+    });
+  }
+  async get(key) {
+  }
+  async set(key) {
+  }
+  async del(key) {
+  }
+  async pub(channel, data) {
+    if (!this.client) return;
+    const message = typeof data == "string" ? data : JSON.stringify(data);
+    console.log(prefix, `message published to ${channel}`);
+    await this.client.publish(channel, message);
+  }
+  async sub(channel, callback) {
+    if (!this.subscr) return;
+    await this.subscr.subscribe(channel);
+    const handler = {
+      id: randomUUID(),
+      channel,
+      callback
+    };
+    this.messageHandlers.push(handler);
+    console.log(prefix, `channel ${channel} subscribed with id ${handler.id}`);
+    return () => {
+      const index = this.messageHandlers.findIndex(
+        ({ id }) => id === handler.id
+      );
+      if (index !== -1) this.messageHandlers.splice(index, 1);
+      console.log(
+        prefix,
+        `channel ${channel} with id ${handler.id} unsubscribed`
+      );
+    };
+  }
+};
+var globalInstance = globalThis;
+if (!globalInstance.__REDIS_HELPER__) {
+  globalInstance.__REDIS_HELPER__ = new RedisHelper();
+}
+var redis_default = globalInstance.__REDIS_HELPER__;
+
+// _src/plugins/s3/index.ts
+var s3_exports = {};
+__export(s3_exports, {
+  S3Helper: () => S3Helper,
+  default: () => s3_default2
+});
+__reExport(s3_exports, client_s3_star);
+var prefix2 = "\x1B[0;92mS3:\x1B[0m";
+var S3Helper = class {
+  status = 0;
+  bucket;
+  client;
+  constructor() {
+    this.bucket = null;
+    this.client = null;
+  }
+  init({ bucket, ...config }) {
+    this.bucket = bucket;
+    this.client = new S3Client(config);
+    this.initiate();
+  }
+  async initiate() {
+    if (!(this.client && this.bucket)) return;
+    this.status = 1;
+    this.client.send(new HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+      console.log(prefix2, "Aws S3 connected successfully!");
+    }).catch((err) => {
+      console.log(prefix2, "\u274C Aws S3 Error:", err.message);
+    });
+  }
+  async put(payload) {
+    if (!(this.client && this.bucket)) return;
+    const { buffer, filename, mimetype } = payload;
+    const names = filename.split(".");
+    const ext = names.pop();
+    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const config = {
+      Bucket: this.bucket,
+      Key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: "public-read"
+    };
+    const command = new PutObjectCommand(config);
+    const region = await this.client.config.region();
+    const res = await this.client.send(command);
+    return {
+      fileName: Key,
+      size: res.Size,
+      fileUrl: `https://${this.bucket}.s3.${region}.amazonaws.com/${Key}`
+    };
+  }
+  async delete(key) {
+    if (!(this.client && this.bucket)) return;
+    const config = {
+      Bucket: this.bucket,
+      Key: key
+    };
+    const command = new DeleteObjectCommand(config);
+    const res = await this.client.send(command);
+    return res;
+  }
+};
+var globalInstance2 = globalThis;
+if (!globalInstance2.__S3_HELPER__) {
+  globalInstance2.__S3_HELPER__ = new S3Helper();
+}
+var s3_default2 = globalInstance2.__S3_HELPER__;
+var userSync = async (TID, session) => {
+  const userPublicData = await verify(TID, session);
+  const userPublic = {
+    code: userPublicData.code,
+    id: userPublicData.id,
+    name: userPublicData.name
+  };
+  await user_challenge_default.updateMany(
+    { "userPublic.code": TID },
+    { userPublic }
+  );
+};
+
+// _src/services/user-stage/index.ts
+var userSync2 = async (TID, session) => {
+  const userPublicData = await verify(TID, session);
+  const userPublic = {
+    id: userPublicData.id,
+    code: userPublicData.code,
+    name: userPublicData.name
+  };
+  await user_stage_default.updateMany({ "userPublic.code": TID }, { userPublic });
+};
+
+// _src/services/s3/index.ts
+var set = async (payload, userId, session) => {
+  const resS3 = await s3_default2.put(payload);
+  if (!resS3) throw new Error("s3.failed_upload");
+  const userData = await detail6(userId, session);
+  const user = {
+    id: userData.id,
+    name: userData.name,
+    email: userData.email
+  };
+  const item = await s3_default.create({
+    fileName: resS3.fileName,
+    fileUrl: resS3.fileUrl,
+    fileSize: payload.buffer.length,
+    fileType: payload.mimetype,
+    user
+  });
+  return item.toObject();
+};
+var get = async (path) => {
+};
+var _delete = async (key) => {
+  const res = await s3_default2.delete(key);
+  await s3_default.deleteOne({ fileName: key });
+  return res;
+};
+var S3Service = { set, get, delete: _delete };
+var s3_default3 = S3Service;
 
 // _src/services/user/index.ts
-var register = async (payload, code) => {
+var register = async (payload, TID) => {
   return await db_default.transaction(async (session) => {
-    const email = payload.email;
-    const userExists = await user_default.findOne({ email }).session(session);
+    const { email, name, password: rawPassword } = payload;
+    const userPublic = await verify(TID, session);
+    if (userPublic.user?.id) throw new Error("user already exists");
+    const userExists = await user_default.findOne({ email }, { _id: 1 }).session(
+      session
+    );
     if (userExists) throw new Error("email taken");
-    const password = await hash(payload.password, 10);
+    const password = await hash(rawPassword, 10);
     const [user] = await user_default.create(
       [
         {
+          name,
           email,
           password,
           role: "public" /* Public */
@@ -520,12 +797,13 @@ var register = async (payload, code) => {
       ],
       { session }
     );
-    await user_public_default.findOneAndUpdate(
-      { code },
-      { $set: { user: { id: user._id, name: user.name } } },
-      { new: true, session }
-    );
-    return user;
+    const data = {
+      name: user.name,
+      user: { id: user._id, name: user.name, email: user.email }
+    };
+    await user_public_default.updateOne({ code: TID }, { $set: data }, { session });
+    await dataSync(TID, session);
+    return user.toObject();
   });
 };
 var login = async (payload, secret) => {
@@ -545,36 +823,74 @@ var login = async (payload, secret) => {
 };
 var profile = async (bearer) => {
 };
-var list = async (params) => {
+var list2 = async (params) => {
 };
 var create = async (payload) => {
 };
-var detail = async (id) => {
-  const user = await user_default.findOne({ _id: id, deletedAt: null }).catch(
-    () => {
-    }
-  );
+var detail6 = async (id, session) => {
+  const user = await user_default.findOne({ _id: id, deletedAt: null }, null, {
+    session
+  });
   if (!user) throw new Error("user not found");
-  const meta = await verify(user.id);
+  const meta = await verify(user.id, session);
   return {
     ...user.toObject(),
     meta
   };
 };
 var update = async (id, payload) => {
+  return db_default.transaction(async (session) => {
+    await user_default.updateOne(
+      { _id: id },
+      { $set: { name: payload.name } },
+      { session, new: true }
+    );
+    const userPublic = await user_public_default.findOneAndUpdate(
+      { "user.id": id },
+      { $set: { ...payload, "user.name": payload.name } },
+      { session, new: true }
+    );
+    if (!userPublic) throw new Error("user.not_found");
+    await dataSync(userPublic.code, session);
+    redis_default.pub("update-user", userPublic);
+    return userPublic.toObject();
+  });
 };
-var _delete = async (id) => {
+var updatePhoto = async (payload, userId) => {
+  return db_default.transaction(async (session) => {
+    const userPublic = await user_public_default.findOne({ "user.id": userId });
+    if (!userPublic) throw new Error("user.not_found");
+    if (userPublic.photo?.fileName)
+      await s3_default3.delete(userPublic.photo.fileName);
+    const res = await s3_default3.set(payload, userId, session);
+    const photo = {
+      fileName: res.fileName,
+      fileSize: res.fileSize,
+      fileUrl: res.fileUrl
+    };
+    userPublic.photo = photo;
+    await userPublic?.save({ session });
+    redis_default.pub("update-user", userPublic);
+    return userPublic;
+  });
+};
+var _delete2 = async (id) => {
+};
+var dataSync = async (TID, session) => {
+  await userSync2(TID, session);
+  await userSync(TID, session);
 };
 var UserService = {
   register,
   login,
   profile,
-  list,
+  list: list2,
   create,
-  detail,
+  detail: detail6,
   update,
-  delete: _delete
+  updatePhoto,
+  delete: _delete2
 };
 var user_default2 = UserService;
 
-export { _delete, create, user_default2 as default, detail, list, login, profile, register, update };
+export { _delete2 as _delete, create, dataSync, user_default2 as default, detail6 as detail, list2 as list, login, profile, register, update, updatePhoto };

@@ -2,29 +2,39 @@ import Redis, { RedisOptions } from "ioredis";
 import { RedisChannel, RedisKey } from "./types";
 import { randomUUID } from "crypto";
 
-const prefix = "\x1b[35mREDIS:\x1b[0m";
-
 export * from "ioredis";
 
-type Callback<T> = (data: T) => Promise<void> | void;
+type Callback<T> = (data: T) => Promise<void | any> | void | any;
 type MessageHandler<T = unknown> = {
   id: string;
   channel: RedisChannel;
   callback: Callback<T>;
 };
 
-class RedisHelper {
-  private client: Redis;
+const prefix = "\x1b[35mREDIS:\x1b[0m";
+
+export class RedisHelper {
+  public status: number = 0;
+  private client: Redis | null = null;
+  private subscr: Redis | null = null;
   private messageHandlers: MessageHandler<any>[] = [];
 
-  constructor(options: RedisOptions) {
-    this.client = new Redis(options);
+  constructor() {}
 
+  init(options: RedisOptions) {
+    this.client = new Redis(options);
+    this.subscr = new Redis(options);
+    this.initiate();
+  }
+
+  initiate() {
+    if (!(this.client && this.subscr)) return;
+    this.status = 1;
     this.client.on("connect", () =>
       console.log(prefix, "Redis connected successfully!")
     );
     this.client.on("error", (err) => console.error("❌ Redis Error:", err));
-    this.client.on("message", async (channel, message) => {
+    this.subscr.on("message", async (channel, message) => {
       const handlers = this.messageHandlers.filter(
         (v) => v.channel === channel
       );
@@ -34,11 +44,6 @@ class RedisHelper {
         .catch(() => message);
 
       handlers.forEach((handler) => {
-        // pengecekan sebelum hit, ya sebenernya ini bakal di hit ke semua
-        // tapi hanya ke id yang terkait yang akan dapat datanya.
-        // sekarang, gimana caranya
-        // sekarang coba aja tanpa id dengan multi koneksi, apakah callback akan hit 2x atau hanya 1x
-
         console.log(
           prefix,
           `message received from ${channel} to id ${handler.id}`
@@ -55,13 +60,15 @@ class RedisHelper {
   async del(key: RedisKey) {}
 
   async pub<T>(channel: RedisChannel, data: T) {
+    if (!this.client) return;
     const message = typeof data == "string" ? data : JSON.stringify(data);
     console.log(prefix, `message published to ${channel}`);
     await this.client.publish(channel, message);
   }
 
   async sub<T>(channel: RedisChannel, callback: Callback<T>) {
-    await this.client.subscribe(channel);
+    if (!this.subscr) return;
+    await this.subscr.subscribe(channel);
 
     const handler: MessageHandler<T> = {
       id: randomUUID(),
@@ -85,4 +92,12 @@ class RedisHelper {
   }
 }
 
-export default RedisHelper;
+const globalInstance = globalThis as typeof globalThis & {
+  __REDIS_HELPER__?: RedisHelper;
+};
+
+if (!globalInstance.__REDIS_HELPER__) {
+  globalInstance.__REDIS_HELPER__ = new RedisHelper();
+}
+
+export default globalInstance.__REDIS_HELPER__ as RedisHelper;

@@ -1,11 +1,12 @@
-export declare const verify: (value: string) => Promise<import("../..").UserPublic & {
+import { ClientSession } from "mongoose";
+export declare const verify: (value: string, session?: ClientSession) => Promise<import("../..").UserPublic & {
     _id: import("mongoose").Types.ObjectId;
 }>;
 export declare const setup: (userId?: string) => Promise<import("../..").UserPublic & {
     _id: import("mongoose").Types.ObjectId;
 }>;
 declare const UserPublicService: {
-    verify: (value: string) => Promise<import("../..").UserPublic & {
+    verify: (value: string, session?: ClientSession) => Promise<import("../..").UserPublic & {
         _id: import("mongoose").Types.ObjectId;
     }>;
     setup: (userId?: string) => Promise<import("../..").UserPublic & {

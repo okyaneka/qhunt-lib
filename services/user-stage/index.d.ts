@@ -26,6 +26,7 @@ export declare const detail: (id: string, TID: string) => Promise<import("../../
 export declare const submitState: (id: string, TID: string, session?: ClientSession) => Promise<import("../../types").UserStage & {
     _id: import("mongoose").Types.ObjectId;
 }>;
+export declare const userSync: (TID: string, session?: ClientSession) => Promise<void>;
 declare const UserStageService: {
     list: (params: UserStageListParams, TID: string) => Promise<{
         list: (import("../../types").UserStage & {

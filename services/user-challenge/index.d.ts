@@ -33,6 +33,7 @@ export declare const submit: (id: string, TID: string, session?: ClientSession, 
     _id: import("mongoose").Types.ObjectId;
 }>;
 export declare const summary: (userStageId: string, TID: string, session?: ClientSession) => Promise<UserChallengeSummary[]>;
+export declare const userSync: (TID: string, session?: ClientSession) => Promise<void>;
 declare const UserChallengeService: {
     readonly verify: (challengeId: string, TID: string, setDiscover?: boolean) => Promise<(import("../../types").UserChallenge & {
         _id: import("mongoose").Types.ObjectId;

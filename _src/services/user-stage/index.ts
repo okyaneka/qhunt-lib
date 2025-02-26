@@ -145,6 +145,18 @@ export const submitState = async (
   return item.toObject();
 };
 
+export const userSync = async (TID: string, session?: ClientSession) => {
+  const userPublicData = await UserPublicVerify(TID, session);
+
+  const userPublic: UserPublicForeign = {
+    id: userPublicData.id,
+    code: userPublicData.code,
+    name: userPublicData.name,
+  };
+
+  await UserStageModel.updateMany({ "userPublic.code": TID }, { userPublic });
+};
+
 const UserStageService = { list, detail, setup, verify, submitState };
 
 export default UserStageService;
