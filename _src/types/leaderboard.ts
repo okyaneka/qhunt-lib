@@ -1,10 +1,6 @@
-import { IdName, ValueOf } from "~/helpers/types";
-import { UserPublicForeign } from "../user-public";
-
-export const LEADERBOARD_MODE = {
-  Ranks: "ranks",
-  Current: "current",
-} as const;
+import { IdName, ValueOf } from "~";
+import { UserPublicForeign } from "./user-public";
+import { LEADERBOARD_MODE } from "~/helpers/contants";
 
 export type LeaderboardMode = ValueOf<typeof LEADERBOARD_MODE>;
 

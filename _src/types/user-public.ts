@@ -1,12 +1,7 @@
-import { Timestamps, ValueOf } from "~/helpers/types";
-import { UserForeign } from "../user";
-import { S3Foreign } from "../s3";
-
-export const USER_PUBLIC_GENDER = {
-  Male: "male",
-  Female: "female",
-  Panda: "panda",
-} as const;
+import { Timestamps, ValueOf } from "~";
+import { UserForeign } from "./user";
+import { S3Foreign } from "./s3";
+import { USER_PUBLIC_GENDER } from "~/helpers/contants";
 
 export type UserPublicGender = ValueOf<typeof USER_PUBLIC_GENDER>;
 

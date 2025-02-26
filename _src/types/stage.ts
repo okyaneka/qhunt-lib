@@ -1,12 +1,5 @@
-import {
-  PUBLISHING_STATUS,
-  DefaultListParams,
-  Periode,
-  Timestamps,
-  ValueOf,
-} from "~/helpers/types";
-
-export const STAGE_STATUS = PUBLISHING_STATUS;
+import { STAGE_STATUS } from "~/helpers/contants";
+import { DefaultListParams, Periode, Timestamps, ValueOf } from "~";
 
 export type StageStatus = ValueOf<typeof STAGE_STATUS>;
 

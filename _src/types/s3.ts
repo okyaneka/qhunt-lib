@@ -1,5 +1,5 @@
-import { Timestamps } from "~/helpers/types";
-import { UserForeign } from "../user";
+import { Timestamps } from "~";
+import { UserForeign } from "./user";
 
 export interface S3Payload {
   buffer: Buffer;

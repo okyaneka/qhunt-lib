@@ -1,4 +1,4 @@
-import { Feedback, IdName, Timestamps } from "~/helpers/types";
+import { Feedback, IdName, Timestamps } from "~";
 
 export interface TriviaOption {
   text: string;

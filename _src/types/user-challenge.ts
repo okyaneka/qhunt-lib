@@ -1,29 +1,8 @@
-import {
-  Timestamps,
-  DefaultListParams,
-  ValueOf,
-  ScoreSummary,
-} from "~/helpers/types";
-import { ChallengeForeign, ChallengeSettingsForeign } from "../challenge";
-import { UserPublicForeign } from "../user-public";
-import { UserStageForeign } from "../user-stage";
-
-/**
- * Status description
- *
- * Undiscovered  : when challenge not discovered yet
- * Discovered    : when challenge discovered
- * Ongoing       : when user start doing the challenge
- * Completed     : when user complete the challenge
- * Failed        : when user fail the challenge
- */
-export const USER_CHALLENGE_STATUS = {
-  Undiscovered: "undiscovered",
-  Discovered: "discovered",
-  OnGoing: "ongoing",
-  Completed: "completed",
-  Failed: "failed",
-} as const;
+import { Timestamps, DefaultListParams, ValueOf, ScoreSummary } from "~";
+import { ChallengeForeign, ChallengeSettingsForeign } from "./challenge";
+import { UserPublicForeign } from "./user-public";
+import { UserStageForeign } from "./user-stage";
+import { USER_CHALLENGE_STATUS } from "~/helpers/contants";
 
 export type UserChallengeStatus = ValueOf<typeof USER_CHALLENGE_STATUS>;
 

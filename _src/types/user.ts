@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams } from "~/helpers/types";
+import { Timestamps, DefaultListParams } from "~";
 
 export enum UserRole {
   Admin = "admin",

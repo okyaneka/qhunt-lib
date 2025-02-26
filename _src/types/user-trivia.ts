@@ -1,8 +1,8 @@
-import { ScoreSummary } from "~/helpers/types";
-import { TriviaForeign } from "../trivia";
-import { UserChallengeForeign } from "../user-challenge";
-import { UserPublicForeign } from "../user-public";
-import { CHALLENGE_TYPES } from "../challenge";
+import { ScoreSummary } from "~";
+import { TriviaForeign } from "./trivia";
+import { UserChallengeForeign } from "./user-challenge";
+import { UserPublicForeign } from "./user-public";
+import { CHALLENGE_TYPES } from "~/helpers/contants";
 
 export interface UserTriviaSummary extends ScoreSummary {
   type: typeof CHALLENGE_TYPES.Trivia;

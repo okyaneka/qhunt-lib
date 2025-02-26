@@ -1,17 +1,6 @@
-import {
-  PUBLISHING_STATUS,
-  DefaultListParams,
-  Feedback,
-  Timestamps,
-  ValueOf,
-} from "~/helpers/types";
-import { Stage } from "../stage";
-
-export const CHALLENGE_STATUS = PUBLISHING_STATUS;
-export const CHALLENGE_TYPES = {
-  Trivia: "trivia",
-  PhotoHunt: "photohunt",
-} as const;
+import { DefaultListParams, Feedback, Timestamps, ValueOf } from "~";
+import { Stage } from "./stage";
+import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/helpers/contants";
 
 export type ChallengeStatus = ValueOf<typeof CHALLENGE_STATUS>;
 export type ChallengeType = ValueOf<typeof CHALLENGE_TYPES>;

@@ -1,18 +1,5 @@
-import {
-  DefaultListParams,
-  PUBLISHING_STATUS,
-  Timestamps,
-  ValueOf,
-} from "~/helpers/types";
-
-export const QR_STATUS = PUBLISHING_STATUS;
-
-export const QR_CONTENT_TYPES = {
-  Stage: "stage",
-  Challenge: "challenge",
-  Trivia: "trivia",
-  PhotoHunt: "photohunt",
-} as const;
+import { QR_CONTENT_TYPES, QR_STATUS } from "~/helpers/contants";
+import { DefaultListParams, Timestamps, ValueOf } from "~";
 
 export type QrStatus = ValueOf<typeof QR_STATUS>;
 export type QrContentType = ValueOf<typeof QR_CONTENT_TYPES>;

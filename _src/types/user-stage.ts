@@ -1,6 +1,6 @@
-import { Timestamps, DefaultListParams } from "~/helpers/types";
-import { UserPublicForeign } from "../user-public";
-import { StageForeign } from "../stage";
+import { Timestamps, DefaultListParams } from "~";
+import { UserPublicForeign } from "./user-public";
+import { StageForeign } from "./stage";
 
 export enum UserStageStatus {
   OnGoing = "ongoing",

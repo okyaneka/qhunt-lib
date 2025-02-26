@@ -1,12 +1,6 @@
-import {
-  IdName,
-  PUBLISHING_STATUS,
-  Timestamps,
-  ValueOf,
-} from "~/helpers/types";
-import { QrForeign } from "../qr";
-
-export const PHOTO_HUNT_STATUS = PUBLISHING_STATUS;
+import { IdName, Timestamps, ValueOf } from "~";
+import { QrForeign } from "./qr";
+import { PHOTO_HUNT_STATUS } from "~/helpers/contants";
 
 export type PhotoHuntStatus = ValueOf<typeof PHOTO_HUNT_STATUS>;
 
