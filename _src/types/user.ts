@@ -16,6 +16,8 @@ export interface UserPayload {
   password: string;
 }
 
+export type UserLoginPayload = Pick<User, "email" | "password">;
+
 export type UserForeign = Pick<User, "id" | "name" | "email">;
 
 export type Auth = Pick<User, "id" | "name" | "email"> & { token: string };
