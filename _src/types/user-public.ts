@@ -1,7 +1,7 @@
 import { Timestamps, ValueOf } from "~";
 import { UserForeign } from "./user";
 import { S3Foreign } from "./s3";
-import { USER_PUBLIC_GENDER } from "~/helpers/contants";
+import { USER_PUBLIC_GENDER } from "~/constants";
 
 export type UserPublicGender = ValueOf<typeof USER_PUBLIC_GENDER>;
 

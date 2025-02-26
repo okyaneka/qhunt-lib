@@ -2,7 +2,7 @@ import { transaction } from "~/helpers/db";
 import ChallengeModel from "~/models/challenge-model";
 import StageModel from "~/models/stage-model";
 import { StageListParams, StagePayload } from "~";
-import { STAGE_STATUS } from "~/helpers/contants";
+import { STAGE_STATUS } from "~/constants";
 
 const isUsed = async (ids: string[], id?: string) => {
   const filter: any = {

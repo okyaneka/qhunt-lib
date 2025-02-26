@@ -1,7 +1,7 @@
-import { enc, lib, SHA256 } from "crypto-js";
 import { ClientSession } from "mongoose";
 import UserModel from "~/models/user-model";
 import UserPublicModel from "~/models/user-public-model";
+import { createHash, randomBytes } from "crypto";
 
 export const verify = async (value: string, session?: ClientSession) => {
   if (!value) throw new Error("token is required");
@@ -20,10 +20,11 @@ export const verify = async (value: string, session?: ClientSession) => {
 
 export const setup = async (userId?: string) => {
   const timestamp = Date.now();
-  const salt = lib.WordArray.random(4).toString(enc.Hex);
-  const code: string = SHA256(`${timestamp}${salt}`).toString(enc.Hex);
+  const salt = randomBytes(4).toString("hex");
+  const code: string = createHash("sha256")
+    .update(`${timestamp}${salt}`)
+    .digest("hex");
   const payload: any = { code };
-
   if (userId) {
     const userPublic = await UserPublicModel.findOne({
       "user.id": userId,

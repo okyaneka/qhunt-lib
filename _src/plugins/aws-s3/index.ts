@@ -1,4 +1,4 @@
-import {
+import AwsS3, {
   DeleteObjectCommand,
   DeleteObjectCommandInput,
   HeadBucketCommand,
@@ -10,8 +10,6 @@ import {
 import { S3Payload } from "~/types/s3";
 
 const prefix = "\x1b[0;92mS3:\x1b[0m";
-
-export * from "@aws-sdk/client-s3";
 
 export type S3Options = S3ClientConfig & { bucket: string };
 
@@ -44,15 +42,28 @@ export class S3Helper {
       });
   }
 
+  private getClient() {
+    if (!this.client) throw new Error("Aws S3 has not been setup yet");
+    return this.client;
+  }
+
+  private getBucket() {
+    if (!this.bucket) throw new Error("S3 Bucket has not been setup yet");
+
+    return this.bucket;
+  }
+
   async put(payload: S3Payload) {
-    if (!(this.client && this.bucket)) return;
+    const client = this.getClient();
+    const bucket = this.getBucket();
+
     const { buffer, filename, mimetype } = payload;
     const names = filename.split(".");
     const ext = names.pop();
     const Key = `${names.join(".")}-${Date.now()}.${ext}`;
 
     const config: PutObjectCommandInput = {
-      Bucket: this.bucket,
+      Bucket: bucket,
       Key,
       Body: buffer,
       ContentType: mimetype,
@@ -60,26 +71,28 @@ export class S3Helper {
     };
 
     const command = new PutObjectCommand(config);
-    const region = await this.client.config.region();
+    const region = await client.config.region();
 
-    const res = await this.client.send(command);
+    const res = await client.send(command);
 
     return {
       fileName: Key,
       size: res.Size,
-      fileUrl: `https://${this.bucket}.s3.${region}.amazonaws.com/${Key}`,
+      fileUrl: `https://${bucket}.s3.${region}.amazonaws.com/${Key}`,
     };
   }
 
   async delete(key: string) {
-    if (!(this.client && this.bucket)) return;
+    const client = this.getClient();
+    const bucket = this.getBucket();
+
     const config: DeleteObjectCommandInput = {
-      Bucket: this.bucket,
+      Bucket: bucket,
       Key: key,
     };
 
     const command = new DeleteObjectCommand(config);
-    const res = await this.client.send(command);
+    const res = await client.send(command);
     return res;
   }
 }
@@ -88,8 +101,9 @@ const globalInstance = globalThis as typeof globalThis & {
   __S3_HELPER__?: S3Helper;
 };
 
-if (!globalInstance.__S3_HELPER__) {
+if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
-}
 
-export default globalInstance.__S3_HELPER__ as S3Helper;
+export * from "@aws-sdk/client-s3";
+export const awsS3 = globalInstance.__S3_HELPER__ as S3Helper;
+export default AwsS3;

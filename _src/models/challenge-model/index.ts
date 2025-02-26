@@ -5,7 +5,7 @@ import {
   ChallengeSettings,
   ChallengeSettingsForeign,
 } from "~";
-import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/constants";
 import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
 
 const ChallengeSettingsSchema = new Schema<ChallengeSettings>(

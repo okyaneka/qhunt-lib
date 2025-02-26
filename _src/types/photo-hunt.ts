@@ -1,6 +1,6 @@
 import { IdName, Timestamps, ValueOf } from "~";
 import { QrForeign } from "./qr";
-import { PHOTO_HUNT_STATUS } from "~/helpers/contants";
+import { PHOTO_HUNT_STATUS } from "~/constants";
 
 export type PhotoHuntStatus = ValueOf<typeof PHOTO_HUNT_STATUS>;
 

@@ -2,7 +2,7 @@ import { Timestamps, DefaultListParams, ValueOf, ScoreSummary } from "~";
 import { ChallengeForeign, ChallengeSettingsForeign } from "./challenge";
 import { UserPublicForeign } from "./user-public";
 import { UserStageForeign } from "./user-stage";
-import { USER_CHALLENGE_STATUS } from "~/helpers/contants";
+import { USER_CHALLENGE_STATUS } from "~/constants";
 
 export type UserChallengeStatus = ValueOf<typeof USER_CHALLENGE_STATUS>;
 

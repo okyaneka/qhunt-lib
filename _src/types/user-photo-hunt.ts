@@ -2,7 +2,7 @@ import { ScoreSummary } from "~";
 import { PhotoHuntForeign } from "./photo-hunt";
 import { UserChallengeForeign } from "./user-challenge";
 import { UserPublicForeign } from "./user-public";
-import { CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_TYPES } from "~/constants";
 
 export interface UserPhotoHuntSummary extends ScoreSummary {
   type: typeof CHALLENGE_TYPES.PhotoHunt;

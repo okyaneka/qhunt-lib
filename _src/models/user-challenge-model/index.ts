@@ -7,7 +7,7 @@ import {
 } from "../challenge-model";
 import { UserPublicForeignSchema } from "../user-public-model";
 import { UserStageForeignSchema } from "../user-stage-model";
-import { USER_CHALLENGE_STATUS } from "~/helpers/contants";
+import { USER_CHALLENGE_STATUS } from "~/constants";
 
 export const UserChallengeForeignSchema = new Schema<UserChallengeForeign>(
   {

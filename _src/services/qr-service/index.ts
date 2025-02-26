@@ -11,11 +11,11 @@ import {
   detail as TriviaDetail,
   verify as TriviaVerify,
 } from "../trivia-service";
-import { enc, SHA256 } from "crypto-js";
 import { QrListParams, QrPayload, QrUpdatePayload } from "~";
 import { setup as UserChallengeSetup } from "../user-challenge-service";
 import { setup as UserStageSetup } from "../user-stage-service";
-import { QR_STATUS } from "~/helpers/contants";
+import { QR_STATUS } from "~/constants";
+import { createHash } from "crypto";
 import QrModel from "~/models/qr-model";
 
 const services = {
@@ -66,7 +66,7 @@ export const generate = async (count: number) => {
       .toString(16)
       .padStart(8, "0");
     return {
-      code: SHA256(`${Date.now()}${salt}`).toString(enc.Hex),
+      code: createHash("sha256").update(`${Date.now()}${salt}`).digest("hex"),
       status: QR_STATUS.Draft,
     };
   });

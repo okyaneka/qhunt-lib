@@ -1,6 +1,6 @@
 import { DefaultListParams, Feedback, Timestamps, ValueOf } from "~";
 import { Stage } from "./stage";
-import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/constants";
 
 export type ChallengeStatus = ValueOf<typeof CHALLENGE_STATUS>;
 export type ChallengeType = ValueOf<typeof CHALLENGE_TYPES>;

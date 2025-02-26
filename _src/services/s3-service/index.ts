@@ -3,14 +3,14 @@ import { detail as UserDetail } from "../user-service";
 import { UserForeign } from "~";
 import { ClientSession } from "mongoose";
 import { S3Payload } from "~/types/s3";
-import { S3Helper } from "~/plugins";
+import { awsS3 } from "~/plugins/aws-s3";
 
 export const set = async (
   payload: S3Payload,
   userId: string,
   session?: ClientSession
 ) => {
-  const resS3 = await S3Helper.put(payload);
+  const resS3 = await awsS3.put(payload);
   if (!resS3) throw new Error("s3.failed_upload");
 
   const userData = await UserDetail(userId, session);
@@ -35,7 +35,7 @@ export const set = async (
 export const get = async (path: string) => {};
 
 export const _delete = async (key: string) => {
-  const res = await S3Helper.delete(key);
+  const res = await awsS3.delete(key);
   await S3Model.deleteOne({ fileName: key });
   return res;
 };

@@ -19,7 +19,7 @@ import { ClientSession } from "mongoose";
 import { userSync as stageSync } from "~/services/user-stage-service";
 import { userSync as challengeSync } from "~/services/user-challenge-service";
 import { set as S3Set, _delete as S3Delete } from "../s3-service";
-import { RedisHelper } from "~/plugins";
+import { redis } from "~/plugins/redis";
 
 export const register = async (payload: UserPayload, TID: string) => {
   return await db.transaction(async (session) => {
@@ -123,7 +123,7 @@ export const update = async (id: string, payload: UserPublicPayload) => {
 
     await dataSync(userPublic.code, session);
 
-    RedisHelper.pub("update-user", userPublic);
+    redis.pub("update-user", userPublic);
 
     return userPublic.toObject();
   });
@@ -148,7 +148,7 @@ export const updatePhoto = async (payload: S3Payload, userId: string) => {
     userPublic.photo = photo;
     await userPublic?.save({ session });
 
-    RedisHelper.pub("update-user", userPublic);
+    redis.pub("update-user", userPublic);
 
     return userPublic;
   });

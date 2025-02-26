@@ -7,7 +7,7 @@ import { TriviaPayload } from "~";
 import { IdName } from "~";
 import { ClientSession } from "mongoose";
 import { transaction } from "~/helpers/db";
-import { CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_TYPES } from "~/constants";
 
 const createMany = async (
   challenge: IdName,

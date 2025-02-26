@@ -3,7 +3,7 @@ import { UserPublic, UserPublicForeign } from "~";
 import { ToObject } from "~/helpers/model";
 import { UserForeignSchema } from "../user-model";
 import { S3ForeignSchema } from "../s3-model";
-import { USER_PUBLIC_GENDER } from "~/helpers/contants";
+import { USER_PUBLIC_GENDER } from "~/constants";
 
 export const UserPublicForeignSchema = new Schema<UserPublicForeign>(
   {

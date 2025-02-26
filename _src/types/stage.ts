@@ -1,4 +1,4 @@
-import { STAGE_STATUS } from "~/helpers/contants";
+import { STAGE_STATUS } from "~/constants";
 import { DefaultListParams, Periode, Timestamps, ValueOf } from "~";
 
 export type StageStatus = ValueOf<typeof STAGE_STATUS>;

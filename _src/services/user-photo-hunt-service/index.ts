@@ -15,7 +15,7 @@ import {
   detail as UserChallengeDetail,
 } from "../user-challenge-service";
 import db from "~/helpers/db";
-import { CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_TYPES } from "~/constants";
 
 export const setup = async (
   userPublic: UserPublicForeign,

@@ -12,7 +12,7 @@ import {
 import UserTriviaModel from "~/models/user-trivia-model";
 import { ClientSession } from "mongoose";
 import { submit as UserChallengeSubmit } from "../user-challenge-service";
-import { CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_TYPES } from "~/constants";
 import db from "~/helpers/db";
 
 export const verify = async (triviaId: string, TID: string) => {

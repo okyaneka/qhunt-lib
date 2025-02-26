@@ -1,4 +1,4 @@
-import { PUBLISHING_STATUS } from "~/helpers/contants";
+import { PUBLISHING_STATUS, REDIS_CHANNELS, REDIS_KEYS } from "~/constants";
 
 export type ValueOf<T> = T[keyof T];
 
@@ -37,3 +37,6 @@ export interface ScoreSummary {
   totalBonus: number;
   totalScore: number;
 }
+
+export type RedisKey = ValueOf<typeof REDIS_KEYS>;
+export type RedisChannel = ValueOf<typeof REDIS_CHANNELS>;

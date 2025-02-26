@@ -9,7 +9,7 @@ import {
   detail as ChallengeDetail,
   updateContent as ChallengeUpdateContent,
 } from "../challenge-service";
-import { CHALLENGE_TYPES } from "~/helpers/contants";
+import { CHALLENGE_TYPES } from "~/constants";
 
 const createMany = async (
   challenge: IdName,

@@ -1,4 +1,4 @@
-import { QR_CONTENT_TYPES, QR_STATUS } from "~/helpers/contants";
+import { QR_CONTENT_TYPES, QR_STATUS } from "~/constants";
 import { DefaultListParams, Timestamps, ValueOf } from "~";
 
 export type QrStatus = ValueOf<typeof QR_STATUS>;

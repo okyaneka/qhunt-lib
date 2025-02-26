@@ -31,8 +31,8 @@ import {
 } from "~/services/user-photo-hunt-service";
 import { ClientSession } from "mongoose";
 import { timeBonus } from "~/helpers/bonus";
-import { RedisHelper } from "~/plugins";
-import { CHALLENGE_TYPES, USER_CHALLENGE_STATUS } from "~/helpers/contants";
+import { CHALLENGE_TYPES, USER_CHALLENGE_STATUS } from "~/constants";
+import { redis } from "~/plugins/redis";
 
 const services = {
   [CHALLENGE_TYPES.Trivia]: {
@@ -318,7 +318,7 @@ export const submit = async (
       session
     );
 
-    RedisHelper.pub("leaderboard", userChallenge.userStage.stageId);
+    redis.pub("leaderboard", userChallenge.userStage.stageId);
   }
 
   return userChallenge.toObject();

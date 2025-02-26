@@ -1,6 +1,6 @@
 import { IdName, ValueOf } from "~";
 import { UserPublicForeign } from "./user-public";
-import { LEADERBOARD_MODE } from "~/helpers/contants";
+import { LEADERBOARD_MODE } from "~/constants";
 
 export type LeaderboardMode = ValueOf<typeof LEADERBOARD_MODE>;
 
