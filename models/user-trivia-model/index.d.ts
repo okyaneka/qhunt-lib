@@ -6,3 +6,4 @@ declare const UserTriviaModel: Model<UserTrivia, {}, {}, {}, import("mongoose").
     __v: number;
 }, any>;
 export default UserTriviaModel;
+//# sourceMappingURL=index.d.ts.map

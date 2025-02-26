@@ -43,3 +43,4 @@ declare const UserPhotoHuntService: {
     readonly summary: (userChallengeId: string, TID: string, session?: ClientSession) => Promise<UserPhotoHuntSummary>;
 };
 export default UserPhotoHuntService;
+//# sourceMappingURL=index.d.ts.map

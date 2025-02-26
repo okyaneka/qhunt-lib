@@ -3,3 +3,4 @@ declare const bonus: {
     readonly timeBonus: (seconds: number, totalSeconds: number, maxPoint?: number) => number;
 };
 export default bonus;
+//# sourceMappingURL=bonus.d.ts.map

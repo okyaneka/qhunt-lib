@@ -902,7 +902,7 @@ var setup2 = async (stageId, TID) => {
       { session }
     );
     const contents = await init(stageData, userStageData, session);
-    userStageData.contents = contents.map((item) => item.id);
+    userStageData.contents = contents.map((item) => item._id.toString());
     await userStageData.save({ session });
     return userStageData.toObject();
   }).finally(() => {
@@ -1442,9 +1442,13 @@ var init = async (stage2, userStage, session) => {
       return item.toObject();
     })
   );
-  return await user_challenge_model_default.find({
-    _id: { $in: contents.map((item) => item._id) }
-  });
+  return await user_challenge_model_default.find(
+    {
+      _id: { $in: contents.map((item) => item._id) }
+    },
+    { _id: true },
+    { session }
+  );
 };
 var setup5 = async (challengeId, TID, setDiscover) => {
   const exist = await verify6(challengeId, TID, setDiscover);

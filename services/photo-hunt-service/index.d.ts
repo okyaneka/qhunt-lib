@@ -28,3 +28,4 @@ declare const PhotoHuntService: {
     }>;
 };
 export default PhotoHuntService;
+//# sourceMappingURL=index.d.ts.map

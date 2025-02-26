@@ -43,3 +43,4 @@ export interface Qr extends Timestamps {
     location: QrLocation | null;
     accessCount: number | null;
 }
+//# sourceMappingURL=qr.d.ts.map

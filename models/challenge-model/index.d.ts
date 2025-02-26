@@ -24,3 +24,4 @@ declare const ChallengeModel: Model<Challenge, {}, {}, {}, import("mongoose").Do
     __v: number;
 }, any>;
 export default ChallengeModel;
+//# sourceMappingURL=index.d.ts.map

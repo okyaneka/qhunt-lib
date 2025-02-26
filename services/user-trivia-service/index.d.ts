@@ -42,3 +42,4 @@ declare const UserTriviaService: {
     readonly summary: (userChallengeId: string, TID: string, session?: ClientSession) => Promise<UserTriviaSummary>;
 };
 export default UserTriviaService;
+//# sourceMappingURL=index.d.ts.map

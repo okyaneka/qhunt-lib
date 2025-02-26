@@ -76,3 +76,4 @@ declare const UserService: {
     delete: (id: string) => Promise<void>;
 };
 export default UserService;
+//# sourceMappingURL=index.d.ts.map

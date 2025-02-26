@@ -15,3 +15,4 @@ declare const UserModel: Model<User, {}, {}, {}, import("mongoose").Document<unk
     __v: number;
 }, any>;
 export default UserModel;
+//# sourceMappingURL=index.d.ts.map

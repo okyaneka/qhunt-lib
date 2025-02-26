@@ -22,3 +22,4 @@ export declare class S3Helper {
 export * from "@aws-sdk/client-s3";
 export declare const awsS3: S3Helper;
 export default AwsS3;
+//# sourceMappingURL=index.d.ts.map

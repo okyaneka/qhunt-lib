@@ -73,3 +73,4 @@ declare const UserChallengeService: {
     })[]>;
 };
 export default UserChallengeService;
+//# sourceMappingURL=index.d.ts.map

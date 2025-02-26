@@ -32,3 +32,4 @@ export interface Challenge extends Timestamps {
     settings: ChallengeSettings;
     contents: string[];
 }
+//# sourceMappingURL=challenge.d.ts.map

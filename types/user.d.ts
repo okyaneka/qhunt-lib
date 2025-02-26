@@ -23,3 +23,4 @@ export interface User extends Timestamps {
     password: string;
     role: UserRole;
 }
+//# sourceMappingURL=user.d.ts.map

@@ -16,7 +16,7 @@
     "moduleResolution": "node",
     "declaration": true,
     "emitDeclarationOnly": true,
-    "declarationMap": false
+    "declarationMap": true
   },
 
   "include": ["_src/**/*"],

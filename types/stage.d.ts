@@ -28,3 +28,4 @@ export interface Stage extends Timestamps {
     contents: string[];
     settings: StageSettings;
 }
+//# sourceMappingURL=stage.d.ts.map

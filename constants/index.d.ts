@@ -58,3 +58,4 @@ export declare const REDIS_CHANNELS: {
     readonly Leaderboard: "leaderboard";
     readonly UpdateUser: "update-user";
 };
+//# sourceMappingURL=index.d.ts.map

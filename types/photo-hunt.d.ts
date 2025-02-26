@@ -15,3 +15,4 @@ export interface PhotoHunt extends Timestamps {
     qr: QrForeign | null;
     status: PhotoHuntStatus;
 }
+//# sourceMappingURL=photo-hunt.d.ts.map

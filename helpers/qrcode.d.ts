@@ -5,3 +5,4 @@ declare const qrcode: {
     readonly scanByFile: (file: File) => Promise<import("@zxing/library").Result>;
 };
 export default qrcode;
+//# sourceMappingURL=qrcode.d.ts.map

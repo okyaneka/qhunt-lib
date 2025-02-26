@@ -15,3 +15,4 @@ declare const UserPublicModel: Model<UserPublic, {}, {}, {}, import("mongoose").
     __v: number;
 }, any>;
 export default UserPublicModel;
+//# sourceMappingURL=index.d.ts.map

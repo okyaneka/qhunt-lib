@@ -6,3 +6,4 @@ declare const UserPhotoHuntModel: Model<UserPhotoHunt, {}, {}, {}, import("mongo
     __v: number;
 }, any>;
 export default UserPhotoHuntModel;
+//# sourceMappingURL=index.d.ts.map

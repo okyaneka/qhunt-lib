@@ -63,3 +63,4 @@ declare const model: {
     }>;
 };
 export default model;
+//# sourceMappingURL=model.d.ts.map

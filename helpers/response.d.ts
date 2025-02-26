@@ -38,3 +38,4 @@ declare const response: {
     };
 };
 export default response;
+//# sourceMappingURL=response.d.ts.map

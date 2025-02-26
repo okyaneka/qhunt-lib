@@ -15,3 +15,4 @@ declare const PhotoHuntModel: Model<PhotoHunt, {}, {}, {}, import("mongoose").Do
     __v: number;
 }, any>;
 export default PhotoHuntModel;
+//# sourceMappingURL=index.d.ts.map
