@@ -11,10 +11,7 @@ import { sign } from "jsonwebtoken";
 import db from "~/helpers/db";
 import UserModel from "~/models/user-model";
 import UserPublicModel from "~/models/user-public-model";
-import {
-  setup as UserPublicSetup,
-  verify as UserPublicVerify,
-} from "../user-public-service";
+import { verify as UserPublicVerify } from "../user-public-service";
 import { ClientSession } from "mongoose";
 import { userSync as stageSync } from "~/services/user-stage-service";
 import { userSync as challengeSync } from "~/services/user-challenge-service";
@@ -72,10 +69,12 @@ export const login = async (
 
   if (!isPasswordValid) throw new Error("invalid password");
 
-  const userPublic =
-    (await UserPublicModel.findOne({ "user.id": user._id }).catch(
-      () => null
-    )) || (await UserPublicSetup(user.id));
+  const userPublic = await UserPublicModel.findOne({ "user.id": user._id });
+  if (!userPublic) throw new Error("user_public.not_found");
+
+  // .catch(
+  //   () => null
+  // )) || (await UserPublicSetup(user.id));
 
   const token = sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60,

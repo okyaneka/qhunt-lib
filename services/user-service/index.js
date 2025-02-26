@@ -5,9 +5,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var bcryptjs = require('bcryptjs');
 var jsonwebtoken = require('jsonwebtoken');
 var mongoose = require('mongoose');
-var crypto = require('crypto');
 require('dayjs');
 var Redis = require('ioredis');
+var crypto = require('crypto');
 var client_s3_star = require('@aws-sdk/client-s3');
 
 function _interopNamespace(e) {
@@ -222,6 +222,8 @@ UserPublicSchema.set("toJSON", ToObject2);
 UserPublicSchema.set("toObject", ToObject2);
 var UserPublicModel = mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
 var user_public_model_default = UserPublicModel;
+
+// _src/services/user-public-service/index.ts
 var verify = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_model_default.findOneAndUpdate(
@@ -234,23 +236,6 @@ var verify = async (value, session) => {
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
-};
-var setup = async (userId) => {
-  const timestamp = Date.now();
-  const salt = crypto.randomBytes(4).toString("hex");
-  const code = crypto.createHash("sha256").update(`${timestamp}${salt}`).digest("hex");
-  const payload = { code };
-  if (userId) {
-    const userPublic = await user_public_model_default.findOne({
-      "user.id": userId,
-      deletedAt: null
-    });
-    if (userPublic) return userPublic.toObject();
-    const user2 = await user_model_default.findOne({ _id: userId, deletedAt: null });
-    if (user2) payload.user = { id: user2.id, name: user2.name };
-  }
-  const user = await user_public_model_default.create(payload);
-  return user.toObject();
 };
 var StageSettingsSchema = new mongoose.Schema(
   {
@@ -840,9 +825,8 @@ var login = async (payload, secret) => {
   if (!user) throw new Error("user not found");
   const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
   if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await user_public_model_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  ) || await setup(user.id);
+  const userPublic = await user_public_model_default.findOne({ "user.id": user._id });
+  if (!userPublic) throw new Error("user_public.not_found");
   const token = jsonwebtoken.sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
   });

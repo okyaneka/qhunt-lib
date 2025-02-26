@@ -23,7 +23,7 @@ var errorValidation = (error2) => {
   const validation = error2?.details.reduce((car, cur) => {
     return { ...car, [cur.context?.key]: cur.message };
   }, {});
-  return response.error({ validation }, "validation error");
+  return response.error({ validation }, "validation_error");
 };
 var response = { success, error, errorValidation };
 var response_default = response;

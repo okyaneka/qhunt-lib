@@ -1,10 +1,10 @@
 import { hash, compare } from 'bcryptjs';
 import { sign } from 'jsonwebtoken';
 import { Schema, models, model, startSession } from 'mongoose';
-import { randomUUID, randomBytes, createHash } from 'crypto';
 import 'dayjs';
 import * as Redis from 'ioredis';
 import Redis__default from 'ioredis';
+import { randomUUID } from 'crypto';
 import * as client_s3_star from '@aws-sdk/client-s3';
 import client_s3_star__default, { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
@@ -199,6 +199,8 @@ UserPublicSchema.set("toJSON", ToObject2);
 UserPublicSchema.set("toObject", ToObject2);
 var UserPublicModel = models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
 var user_public_model_default = UserPublicModel;
+
+// _src/services/user-public-service/index.ts
 var verify = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_model_default.findOneAndUpdate(
@@ -211,23 +213,6 @@ var verify = async (value, session) => {
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
-};
-var setup = async (userId) => {
-  const timestamp = Date.now();
-  const salt = randomBytes(4).toString("hex");
-  const code = createHash("sha256").update(`${timestamp}${salt}`).digest("hex");
-  const payload = { code };
-  if (userId) {
-    const userPublic = await user_public_model_default.findOne({
-      "user.id": userId,
-      deletedAt: null
-    });
-    if (userPublic) return userPublic.toObject();
-    const user2 = await user_model_default.findOne({ _id: userId, deletedAt: null });
-    if (user2) payload.user = { id: user2.id, name: user2.name };
-  }
-  const user = await user_public_model_default.create(payload);
-  return user.toObject();
 };
 var StageSettingsSchema = new Schema(
   {
@@ -817,9 +802,8 @@ var login = async (payload, secret) => {
   if (!user) throw new Error("user not found");
   const isPasswordValid = await compare(payload.password, user.password);
   if (!isPasswordValid) throw new Error("invalid password");
-  const userPublic = await user_public_model_default.findOne({ "user.id": user._id }).catch(
-    () => null
-  ) || await setup(user.id);
+  const userPublic = await user_public_model_default.findOne({ "user.id": user._id });
+  if (!userPublic) throw new Error("user_public.not_found");
   const token = sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
   });

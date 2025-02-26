@@ -27,7 +27,7 @@ export const errorValidation = (error: ValidationError) => {
     return { ...car, [cur.context?.key as string]: cur.message };
   }, {});
 
-  return response.error({ validation }, "validation error");
+  return response.error({ validation }, "validation_error");
 };
 
 const response = { success, error, errorValidation };
