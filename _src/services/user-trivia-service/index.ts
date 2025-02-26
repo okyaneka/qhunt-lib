@@ -11,9 +11,9 @@ import {
 } from "../trivia-service";
 import UserTriviaModel from "~/models/user-trivia-model";
 import { ClientSession } from "mongoose";
-import { db } from "~/helpers";
 import { submit as UserChallengeSubmit } from "../user-challenge-service";
 import { CHALLENGE_TYPES } from "~/helpers/contants";
+import db from "~/helpers/db";
 
 export const verify = async (triviaId: string, TID: string) => {
   const item = await UserTriviaModel.findOne({

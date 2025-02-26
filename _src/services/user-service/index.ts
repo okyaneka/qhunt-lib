@@ -8,7 +8,7 @@ import {
 } from "~";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
-import { db } from "~/helpers";
+import db from "~/helpers/db";
 import UserModel from "~/models/user-model";
 import UserPublicModel from "~/models/user-public-model";
 import {

@@ -1,4 +1,4 @@
-import { db } from "~/helpers";
+import db from "~/helpers/db";
 import { ChallengeListParams, ChallengePayload } from "~";
 import { detail as StageDetail } from "../stage-service";
 import ChallengeModel from "~/models/challenge-model";

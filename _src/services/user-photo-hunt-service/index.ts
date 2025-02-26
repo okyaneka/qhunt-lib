@@ -14,7 +14,7 @@ import {
   submit as UserChallengeSubmit,
   detail as UserChallengeDetail,
 } from "../user-challenge-service";
-import { db } from "~/helpers";
+import db from "~/helpers/db";
 import { CHALLENGE_TYPES } from "~/helpers/contants";
 
 export const setup = async (
