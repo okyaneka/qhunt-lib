@@ -1,17 +1,20 @@
 import {
   detail as ChallengeDetail,
   verify as ChallengeVerify,
-} from "../challenge";
+} from "../challenge-service";
 import {
   detail as PhotoHuntDetail,
   verify as PhotoHuntVerify,
-} from "../photo-hunt";
-import { detail as StageDetail, verify as StageVerify } from "../stage";
-import { detail as TriviaDetail, verify as TriviaVerify } from "../trivia";
+} from "../photo-hunt-service";
+import { detail as StageDetail, verify as StageVerify } from "../stage-service";
+import {
+  detail as TriviaDetail,
+  verify as TriviaVerify,
+} from "../trivia-service";
 import { enc, SHA256 } from "crypto-js";
 import { QR_STATUS, QrListParams, QrPayload, QrUpdatePayload } from "~/types";
-import { setup as UserChallengeSetup } from "../user-challenge";
-import { setup as UserStageSetup } from "../user-stage";
+import { setup as UserChallengeSetup } from "../user-challenge-service";
+import { setup as UserStageSetup } from "../user-stage-service";
 import QrModel from "~/models/qr-model";
 
 const services = {

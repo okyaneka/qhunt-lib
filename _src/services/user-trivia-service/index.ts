@@ -9,11 +9,11 @@ import {
 import {
   details as TriviaServiceDetails,
   detail as TriviaServiceDetail,
-} from "../trivia";
+} from "../trivia-service";
 import UserTriviaModel from "~/models/user-trivia-model";
 import { ClientSession } from "mongoose";
 import { db } from "~/helpers";
-import { submit as UserChallengeSubmit } from "../user-challenge";
+import { submit as UserChallengeSubmit } from "../user-challenge-service";
 
 export const verify = async (triviaId: string, TID: string) => {
   const item = await UserTriviaModel.findOne({

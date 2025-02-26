@@ -1,7 +1,7 @@
 import {
   detail as ChallengeDetail,
   updateContent as ChallengeUpdateContent,
-} from "../challenge";
+} from "../challenge-service";
 import TriviaModel from "~/models/trivia-model";
 import { TriviaPayload, CHALLENGE_TYPES } from "~/types";
 import { IdName } from "~/helpers/types";

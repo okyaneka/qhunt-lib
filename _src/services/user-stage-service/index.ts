@@ -5,12 +5,12 @@ import {
   UserStageListParams,
   UserStageResult,
 } from "~/types";
-import { verify as StageVerify } from "../stage";
+import { verify as StageVerify } from "../stage-service";
 import {
   init as UserChallengeInit,
   summary as UserChallengeServiceSummary,
-} from "../user-challenge";
-import { verify as UserPublicVerify } from "../user-public";
+} from "../user-challenge-service";
+import { verify as UserPublicVerify } from "../user-public-service";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
 

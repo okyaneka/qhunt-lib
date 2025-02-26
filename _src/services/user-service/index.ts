@@ -14,11 +14,11 @@ import UserPublicModel from "~/models/user-public-model";
 import {
   setup as UserPublicSetup,
   verify as UserPublicVerify,
-} from "../user-public";
+} from "../user-public-service";
 import { ClientSession } from "mongoose";
-import { userSync as stageSync } from "~/services/user-stage";
-import { userSync as challengeSync } from "~/services/user-challenge";
-import S3Service from "../s3";
+import { userSync as stageSync } from "~/services/user-stage-service";
+import { userSync as challengeSync } from "~/services/user-challenge-service";
+import { set as S3Set, _delete as S3Delete } from "../s3-service";
 import { RedisHelper } from "~/plugins";
 
 export const register = async (payload: UserPayload, TID: string) => {
@@ -135,10 +135,9 @@ export const updatePhoto = async (payload: S3Payload, userId: string) => {
 
     if (!userPublic) throw new Error("user.not_found");
 
-    if (userPublic.photo?.fileName)
-      await S3Service.delete(userPublic.photo.fileName);
+    if (userPublic.photo?.fileName) await S3Delete(userPublic.photo.fileName);
 
-    const res = await S3Service.set(payload, userId, session);
+    const res = await S3Set(payload, userId, session);
 
     const photo: S3Foreign = {
       fileName: res.fileName,

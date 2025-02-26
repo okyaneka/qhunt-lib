@@ -4,11 +4,11 @@ import { IdName } from "~/helpers/types";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
 import { QrContent, CHALLENGE_TYPES, PhotoHuntPayload } from "~/types";
-import { list as QrServiceList } from "../qr";
+import { list as QrServiceList } from "../qr-service";
 import {
   detail as ChallengeDetail,
   updateContent as ChallengeUpdateContent,
-} from "../challenge";
+} from "../challenge-service";
 
 const createMany = async (
   challenge: IdName,

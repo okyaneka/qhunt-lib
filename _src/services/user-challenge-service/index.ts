@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { verify as ChallengeVerify } from "../challenge";
+import { verify as ChallengeVerify } from "../challenge-service";
 import ChallengeModel from "~/models/challenge-model";
 import UserChallengeModel from "~/models/user-challenge-model";
 import {
@@ -15,22 +15,22 @@ import {
   ChallengeForeign,
   ChallengeSettingsForeign,
 } from "~/types";
-import { verify as UserPublicVerify } from "../user-public";
-import UserStageService from "../user-stage";
-import StageService from "../stage";
+import { verify as UserPublicVerify } from "../user-public-service";
+import UserStageService from "../user-stage-service";
+import StageService from "../stage-service";
 import service from "~/helpers/service";
 import {
   details as UserTriviaDetails,
   setup as UserTriviaSetup,
   submitEmpties as UserTriviaSubmitEmpties,
   summary as UserTriviaSummary,
-} from "~/services/user-trivia";
+} from "~/services/user-trivia-service";
 import {
   details as UserPhotoHuntDetails,
   setup as UserPhotoHuntSetup,
   submitEmpties as UserPhotoHuntSubmitEmpties,
   summary as UserPhotoHuntSummary,
-} from "~/services/user-photo-hunt";
+} from "~/services/user-photo-hunt-service";
 import { ClientSession } from "mongoose";
 import { timeBonus } from "~/helpers/bonus";
 import { RedisHelper } from "~/plugins";

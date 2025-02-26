@@ -9,12 +9,12 @@ import {
 import {
   details as PhotoHuntDetails,
   verifyCode as PhotoHuntVerifyCode,
-} from "../photo-hunt";
+} from "../photo-hunt-service";
 import { ClientSession } from "mongoose";
 import {
   submit as UserChallengeSubmit,
   detail as UserChallengeDetail,
-} from "../user-challenge";
+} from "../user-challenge-service";
 import { db } from "~/helpers";
 
 export const setup = async (

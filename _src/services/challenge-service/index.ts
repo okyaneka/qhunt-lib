@@ -4,7 +4,7 @@ import {
   ChallengePayload,
   CHALLENGE_STATUS,
 } from "~/types";
-import { detail as StageDetail } from "../stage";
+import { detail as StageDetail } from "../stage-service";
 import ChallengeModel from "~/models/challenge-model";
 import StageModel from "~/models/stage-model";
 
