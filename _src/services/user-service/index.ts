@@ -5,6 +5,7 @@ import {
   UserRole,
   S3Foreign,
   S3Payload,
+  UserForeign,
 } from "~";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
@@ -128,13 +129,15 @@ export const update = async (id: string, payload: UserPublicPayload) => {
   });
 };
 
-export const updatePhoto = async (payload: S3Payload, userId: string) => {
+export const updatePhoto = async (userId: string, payload: S3Payload) => {
   return db.transaction(async (session) => {
+    const user = await detail(userId, session);
     const userPublic = await UserPublicModel.findOne({ "user.id": userId });
 
     if (!userPublic) throw new Error("user.not_found");
 
-    if (userPublic.photo?.fileName) await S3Delete(userPublic.photo.fileName);
+    const oldPhoto = user.photo?.fileName;
+    if (oldPhoto) await S3Delete(oldPhoto);
 
     const res = await S3Set(payload, userId, session);
 
@@ -144,9 +147,15 @@ export const updatePhoto = async (payload: S3Payload, userId: string) => {
       fileUrl: res.fileUrl,
     };
 
-    userPublic.photo = photo;
-    await userPublic?.save({ session });
+    await UserModel.updateOne({ _id: user.id }, { $set: { photo } });
 
+    const newUser: UserForeign = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      photo: res.fileUrl,
+    };
+    userPublic.user = newUser;
     redis.pub("update-user", userPublic);
 
     return userPublic;

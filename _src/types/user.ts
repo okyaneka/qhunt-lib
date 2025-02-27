@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams } from "~";
+import { Timestamps, DefaultListParams, S3Foreign } from "~";
 
 export enum UserRole {
   Admin = "admin",
@@ -18,7 +18,9 @@ export interface UserPayload {
 
 export type UserLoginPayload = Pick<User, "email" | "password">;
 
-export type UserForeign = Pick<User, "id" | "name" | "email">;
+export type UserForeign = Pick<User, "id" | "name" | "email"> & {
+  photo: string | null;
+};
 
 export type Auth = Pick<User, "id" | "name" | "email"> & { token: string };
 
@@ -27,5 +29,6 @@ export interface User extends Timestamps {
   name: string;
   email: string;
   password: string;
+  photo: S3Foreign | null;
   role: UserRole;
 }

@@ -19,6 +19,7 @@ export const set = async (
     id: userData.id,
     name: userData.name,
     email: userData.email,
+    photo: userData.photo?.fileUrl || null,
   };
 
   const item = await S3Model.create({
