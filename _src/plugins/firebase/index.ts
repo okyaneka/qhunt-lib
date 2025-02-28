@@ -17,7 +17,7 @@ export class FirebaseHelper {
   }
 
   private async initiate() {
-    const app = await Promise.resolve().then(() => {
+    const app = await Promise.resolve().then(async () => {
       const app = getApps();
       return app[0];
     });
@@ -35,6 +35,7 @@ export class FirebaseHelper {
   signInWithGoogle() {
     const auth = this.getAuth();
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
     return signInWithPopup(auth, provider);
   }
 

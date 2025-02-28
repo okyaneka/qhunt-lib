@@ -1,5 +1,4 @@
 import { Timestamps } from "~";
-import { UserForeign } from "./user";
 
 export interface S3Payload {
   buffer: Buffer;
@@ -15,5 +14,5 @@ export interface S3 extends Timestamps {
   fileUrl: string;
   fileType: string;
   fileSize: number;
-  user: UserForeign;
+  userId: string;
 }

@@ -1,6 +1,5 @@
 import { Model, model, models, Schema } from "mongoose";
 import { S3, S3Foreign } from "~/types/s3";
-import { UserForeignSchema } from "../user-model";
 import { ToObject } from "~/helpers/model";
 
 export const S3ForeignSchema = new Schema<S3Foreign>(
@@ -18,7 +17,7 @@ const S3Schema = new Schema<S3>(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    user: { type: UserForeignSchema, required: true },
+    userId: { type: String, required: true },
   },
   { timestamps: true }
 );

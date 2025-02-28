@@ -85,7 +85,7 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    user: { type: UserForeignSchema, required: true }
+    userId: { type: String, required: true }
   },
   { timestamps: true }
 );
@@ -761,16 +761,14 @@ var aws_s3_default = S3Helper;
 
 // _src/services/s3-service/index.ts
 var S3ServiceSet = async (payload, userId, session) => {
+  const userData = await user_model_default.findOne(
+    { _id: userId },
+    { _id: true },
+    { session }
+  );
+  if (!userData) throw new Error("s3.user_empty");
   const resS3 = await awsS3.put(payload);
   if (!resS3) throw new Error("s3.failed_upload");
-  const userData = await user_model_default.findOne({ _id: userId }, null, { session });
-  if (!userData) throw new Error("s3.user_empty");
-  const user = {
-    id: userData._id.toString(),
-    name: userData.name,
-    email: userData.email,
-    photo: null
-  };
   const [item] = await s3_model_default.create(
     [
       {
@@ -778,7 +776,7 @@ var S3ServiceSet = async (payload, userId, session) => {
         fileUrl: resS3.fileUrl,
         fileSize: payload.buffer.length,
         fileType: payload.mimetype,
-        user
+        userId
       }
     ],
     { session }

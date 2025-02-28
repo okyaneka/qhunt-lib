@@ -1,5 +1,4 @@
 import { Timestamps } from "..";
-import { UserForeign } from "./user";
 export interface S3Payload {
     buffer: Buffer;
     mimetype: string;
@@ -12,6 +11,6 @@ export interface S3 extends Timestamps {
     fileUrl: string;
     fileType: string;
     fileSize: number;
-    user: UserForeign;
+    userId: string;
 }
 //# sourceMappingURL=s3.d.ts.map

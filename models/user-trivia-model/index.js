@@ -44,7 +44,7 @@ var S3Schema = new mongoose.Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    user: { type: UserForeignSchema, required: true }
+    userId: { type: String, required: true }
   },
   { timestamps: true }
 );
