@@ -1,4 +1,4 @@
-import AwsS3, {
+import {
   DeleteObjectCommand,
   DeleteObjectCommandInput,
   HeadBucketCommand,
@@ -8,8 +8,9 @@ import AwsS3, {
   S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { S3Payload } from "~/types/s3";
+import slugify from "slugify";
 
-const prefix = "\x1b[0;92mS3:\x1b[0m";
+const prefix = "\x1b[38;5;165mS3:\x1b[0m";
 
 export type S3Options = S3ClientConfig & { bucket: string };
 
@@ -59,8 +60,9 @@ export class S3Helper {
 
     const { buffer, filename, mimetype } = payload;
     const names = filename.split(".");
-    const ext = names.pop();
-    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
 
     const config: PutObjectCommandInput = {
       Bucket: bucket,
@@ -74,6 +76,7 @@ export class S3Helper {
     const region = await client.config.region();
 
     const res = await client.send(command);
+    console.log(prefix, `success put file`);
 
     return {
       fileName: Key,
@@ -93,6 +96,7 @@ export class S3Helper {
 
     const command = new DeleteObjectCommand(config);
     const res = await client.send(command);
+    console.log(prefix, `success delete file`);
     return res;
   }
 }
@@ -106,4 +110,4 @@ if (!globalInstance.__S3_HELPER__)
 
 export * from "@aws-sdk/client-s3";
 export const awsS3 = globalInstance.__S3_HELPER__ as S3Helper;
-export default AwsS3;
+export default S3Helper;
