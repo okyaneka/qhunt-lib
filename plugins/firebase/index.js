@@ -15,7 +15,7 @@ var FirebaseHelper = class {
     this.initiate();
   }
   async initiate() {
-    const app$1 = await Promise.resolve().then(() => {
+    const app$1 = await Promise.resolve().then(async () => {
       const app2 = app.getApps();
       return app2[0];
     });
@@ -30,6 +30,7 @@ var FirebaseHelper = class {
   signInWithGoogle() {
     const auth$1 = this.getAuth();
     const provider = new auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
     return auth.signInWithPopup(auth$1, provider);
   }
   async signOut() {

@@ -20,91 +20,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-
-// _src/constants/index.ts
-var PUBLISHING_STATUS = {
-  Draft: "draft",
-  Publish: "publish"
-};
-var CHALLENGE_STATUS = PUBLISHING_STATUS;
-var CHALLENGE_TYPES = {
-  Trivia: "trivia",
-  PhotoHunt: "photohunt"
-};
-var PHOTO_HUNT_STATUS = PUBLISHING_STATUS;
-var QR_CONTENT_TYPES = {
-  Stage: "stage",
-  Challenge: "challenge",
-  Trivia: "trivia",
-  PhotoHunt: "photohunt"
-};
-var QR_STATUS = PUBLISHING_STATUS;
-var STAGE_STATUS = PUBLISHING_STATUS;
-var USER_PROVIDERS = {
-  Email: "email",
-  Google: "google",
-  TikTok: "tiktok"
-};
-var USER_ROLES = {
-  Admin: "admin",
-  Private: "private",
-  Public: "public"
-};
-var USER_CHALLENGE_STATUS = {
-  Undiscovered: "undiscovered",
-  Discovered: "discovered",
-  OnGoing: "ongoing",
-  Completed: "completed",
-  Failed: "failed"
-};
-var USER_PUBLIC_GENDER = {
-  Male: "male",
-  Female: "female",
-  Panda: "panda"
-};
-
-// _src/models/user-model/index.ts
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, __v, password, ...rest } = ret;
-    return { id: _id, ...rest };
-  }
-};
-var UserForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, default: "" },
-    email: { type: String, required: true },
-    photo: { type: String, default: null }
-  },
-  { _id: false }
-);
-var UserSchema = new Schema(
-  {
-    name: { type: String, default: "" },
-    role: {
-      type: String,
-      enum: Object.values(USER_ROLES),
-      default: USER_ROLES.Public
-    },
-    email: { type: String, required: true, unique: true },
-    photo: { type: S3ForeignSchema, default: null },
-    provider: {
-      type: [String],
-      enum: Object.values(USER_PROVIDERS),
-      default: []
-    },
-    password: { type: String, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-UserSchema.set("toJSON", ToObject);
-UserSchema.set("toObject", ToObject);
-var UserModel = models.User || model("User", UserSchema);
-var user_model_default = UserModel;
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -126,7 +41,7 @@ var FeedbackSchema = new Schema(
   },
   { _id: false }
 );
-var ToObject2 = {
+var ToObject = {
   transform: (doc, ret) => {
     const { _id, deletedAt, __v, ...rest } = ret;
     return { id: _id.toString(), ...rest };
@@ -148,12 +63,12 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    user: { type: UserForeignSchema, required: true }
+    userId: { type: String, required: true }
   },
   { timestamps: true }
 );
-S3Schema.set("toObject", ToObject2);
-S3Schema.set("toJSON", ToObject2);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
 var S3Model = models.S3 || model("S3", S3Schema);
 var s3_model_default = S3Model;
 
@@ -239,6 +154,50 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
+
+// _src/constants/index.ts
+var PUBLISHING_STATUS = {
+  Draft: "draft",
+  Publish: "publish"
+};
+var CHALLENGE_STATUS = PUBLISHING_STATUS;
+var CHALLENGE_TYPES = {
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
+var PHOTO_HUNT_STATUS = PUBLISHING_STATUS;
+var QR_CONTENT_TYPES = {
+  Stage: "stage",
+  Challenge: "challenge",
+  Trivia: "trivia",
+  PhotoHunt: "photohunt"
+};
+var QR_STATUS = PUBLISHING_STATUS;
+var STAGE_STATUS = PUBLISHING_STATUS;
+var USER_PROVIDERS = {
+  Email: "email",
+  Google: "google",
+  TikTok: "tiktok"
+};
+var USER_ROLES = {
+  Admin: "admin",
+  Private: "private",
+  Public: "public"
+};
+var USER_CHALLENGE_STATUS = {
+  Undiscovered: "undiscovered",
+  Discovered: "discovered",
+  OnGoing: "ongoing",
+  Completed: "completed",
+  Failed: "failed"
+};
+var USER_PUBLIC_GENDER = {
+  Male: "male",
+  Female: "female",
+  Panda: "panda"
+};
+
+// _src/models/challenge-model/index.ts
 var ChallengeSettingsSchema = new Schema(
   {
     type: {
@@ -289,8 +248,8 @@ var ChallengeSchema = new Schema(
   },
   { timestamps: true }
 );
-ChallengeSchema.set("toJSON", ToObject2);
-ChallengeSchema.set("toObject", ToObject2);
+ChallengeSchema.set("toJSON", ToObject);
+ChallengeSchema.set("toObject", ToObject);
 models.Challenge || model("Challenge", ChallengeSchema);
 var QrForeignSchema = new Schema(
   {
@@ -335,8 +294,8 @@ var QrSchema = new Schema(
     timestamps: true
   }
 );
-QrSchema.set("toObject", ToObject2);
-QrSchema.set("toJSON", ToObject2);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
 models.Qr || model("Qr", QrSchema);
 
 // _src/models/photo-hunt-model/index.ts
@@ -362,8 +321,8 @@ var PhotoHuntSchema = new Schema(
   },
   { timestamps: true }
 );
-PhotoHuntSchema.set("toObject", ToObject2);
-PhotoHuntSchema.set("toJSON", ToObject2);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
 models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var StageSettingsSchema = new Schema(
   {
@@ -403,8 +362,8 @@ var StageSchema = new Schema(
   },
   { timestamps: true }
 );
-StageSchema.set("toObject", ToObject2);
-StageSchema.set("toJSON", ToObject2);
+StageSchema.set("toObject", ToObject);
+StageSchema.set("toJSON", ToObject);
 models.Stage || model("Stage", StageSchema);
 var TriviaOptionSchema = new Schema(
   {
@@ -440,9 +399,52 @@ var TriviaSchema = new Schema(
   },
   { timestamps: true }
 );
-TriviaSchema.set("toObject", ToObject2);
-TriviaSchema.set("toJSON", ToObject2);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
 models.Trivia || model("Trivia", TriviaSchema);
+var ToObject2 = {
+  transform: (doc, ret) => {
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
+  }
+};
+var UserForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" },
+    email: { type: String, required: true },
+    photo: { type: String, default: null }
+  },
+  { _id: false }
+);
+var UserSchema = new Schema(
+  {
+    name: { type: String, default: "" },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.Public
+    },
+    email: { type: String, required: true, unique: true },
+    photo: { type: S3ForeignSchema, default: null },
+    provider: {
+      type: [String],
+      enum: Object.values(USER_PROVIDERS),
+      default: []
+    },
+    password: { type: String, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+UserSchema.set("toJSON", ToObject2);
+UserSchema.set("toObject", ToObject2);
+var UserModel = models.User || model("User", UserSchema);
+var user_model_default = UserModel;
+
+// _src/models/user-public-model/index.ts
 var UserPublicForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -468,8 +470,8 @@ var UserPublicSchema = new Schema(
   },
   { timestamps: true }
 );
-UserPublicSchema.set("toJSON", ToObject2);
-UserPublicSchema.set("toObject", ToObject2);
+UserPublicSchema.set("toJSON", ToObject);
+UserPublicSchema.set("toObject", ToObject);
 models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
 
 // _src/types/user-stage.ts
@@ -512,8 +514,8 @@ var UserStageSchema = new Schema(
   },
   { timestamps: true }
 );
-UserStageSchema.set("toJSON", ToObject2);
-UserStageSchema.set("toObject", ToObject2);
+UserStageSchema.set("toJSON", ToObject);
+UserStageSchema.set("toObject", ToObject);
 models.UserStage || model("UserStage", UserStageSchema, "usersStage");
 
 // _src/models/user-challenge-model/index.ts
@@ -555,8 +557,8 @@ var UserChallengeSchema = new Schema(
   },
   { timestamps: true }
 );
-UserChallengeSchema.set("toJSON", ToObject2);
-UserChallengeSchema.set("toObject", ToObject2);
+UserChallengeSchema.set("toJSON", ToObject);
+UserChallengeSchema.set("toObject", ToObject);
 models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var UserPhotoHuntResultSchema = new Schema(
   {
@@ -572,8 +574,8 @@ var UserPhotoHuntSchema = new Schema({
   userChallenge: { type: UserChallengeForeignSchema, required: true },
   userPublic: { type: UserPublicForeignSchema, required: true }
 });
-UserPhotoHuntSchema.set("toObject", ToObject2);
-UserPhotoHuntSchema.set("toJSON", ToObject2);
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
 models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 var ToObject3 = {
   transform: (doc, ret) => {
@@ -606,16 +608,14 @@ models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
 
 // _src/services/s3-service/index.ts
 var S3ServiceSet = async (payload, userId, session) => {
+  const userData = await user_model_default.findOne(
+    { _id: userId },
+    { _id: true },
+    { session }
+  );
+  if (!userData) throw new Error("s3.user_empty");
   const resS3 = await awsS3.put(payload);
   if (!resS3) throw new Error("s3.failed_upload");
-  const userData = await user_model_default.findOne({ _id: userId }, null, { session });
-  if (!userData) throw new Error("s3.user_empty");
-  const user = {
-    id: userData._id.toString(),
-    name: userData.name,
-    email: userData.email,
-    photo: null
-  };
   const [item] = await s3_model_default.create(
     [
       {
@@ -623,7 +623,7 @@ var S3ServiceSet = async (payload, userId, session) => {
         fileUrl: resS3.fileUrl,
         fileSize: payload.buffer.length,
         fileType: payload.mimetype,
-        user
+        userId
       }
     ],
     { session }
