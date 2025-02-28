@@ -6,13 +6,17 @@ var mongoose = require('mongoose');
 
 // _src/models/s3-model/index.ts
 
-// _src/types/user.ts
-var UserRole = /* @__PURE__ */ ((UserRole2) => {
-  UserRole2["Admin"] = "admin";
-  UserRole2["Private"] = "private";
-  UserRole2["Public"] = "public";
-  return UserRole2;
-})(UserRole || {});
+// _src/constants/index.ts
+var USER_PROVIDERS = {
+  Email: "email",
+  Google: "google",
+  TikTok: "tiktok"
+};
+var USER_ROLES = {
+  Admin: "admin",
+  Private: "private",
+  Public: "public"
+};
 
 // _src/models/user-model/index.ts
 var ToObject = {
@@ -25,16 +29,27 @@ var UserForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" },
-    email: { type: String, required: true }
+    email: { type: String, required: true },
+    photo: { type: String, default: null }
   },
   { _id: false }
 );
 var UserSchema = new mongoose.Schema(
   {
     name: { type: String, default: "" },
-    role: { type: String, enum: Object.values(UserRole) },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.Public
+    },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    photo: { type: S3ForeignSchema, default: null },
+    provider: {
+      type: [String],
+      enum: Object.values(USER_PROVIDERS),
+      default: []
+    },
+    password: { type: String, default: null },
     deletedAt: { type: Date, default: null }
   },
   {

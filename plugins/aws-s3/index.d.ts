@@ -1,4 +1,4 @@
-import AwsS3, { S3ClientConfig } from "@aws-sdk/client-s3";
+import { S3ClientConfig } from "@aws-sdk/client-s3";
 import { S3Payload } from "../../types/s3";
 export type S3Options = S3ClientConfig & {
     bucket: string;
@@ -17,9 +17,9 @@ export declare class S3Helper {
         size: number | undefined;
         fileUrl: string;
     }>;
-    delete(key: string): Promise<AwsS3.DeleteObjectCommandOutput>;
+    delete(key: string): Promise<import("@aws-sdk/client-s3").DeleteObjectCommandOutput>;
 }
 export * from "@aws-sdk/client-s3";
 export declare const awsS3: S3Helper;
-export default AwsS3;
+export default S3Helper;
 //# sourceMappingURL=index.d.ts.map

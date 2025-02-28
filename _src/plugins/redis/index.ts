@@ -1,4 +1,4 @@
-import Redis, { RedisOptions } from "ioredis";
+import { Redis, RedisOptions } from "ioredis";
 import { RedisChannel, RedisKey } from "~";
 import { randomUUID } from "crypto";
 
@@ -10,7 +10,7 @@ type RedisMessageHandler<T = unknown> = {
   callback: RedisCallback<T>;
 };
 
-const prefix = "\x1b[35mREDIS:\x1b[0m";
+const prefix = "\x1b[38;5;196mREDIS:\x1b[0m";
 
 export class RedisHelper {
   public status: number = 0;
@@ -112,4 +112,4 @@ if (!globalInstance.__REDIS_HELPER__)
 
 export * from "ioredis";
 export const redis = globalInstance.__REDIS_HELPER__;
-export default Redis;
+export default RedisHelper;

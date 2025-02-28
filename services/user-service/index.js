@@ -6,9 +6,13 @@ var bcryptjs = require('bcryptjs');
 var jsonwebtoken = require('jsonwebtoken');
 var mongoose = require('mongoose');
 require('dayjs');
-var Redis = require('ioredis');
+var ioredis_star = require('ioredis');
 var crypto = require('crypto');
 var client_s3_star = require('@aws-sdk/client-s3');
+var slugify = require('slugify');
+require('@zxing/browser');
+
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
 function _interopNamespace(e) {
   if (e && e.__esModule) return e;
@@ -28,8 +32,9 @@ function _interopNamespace(e) {
   return Object.freeze(n);
 }
 
-var Redis__namespace = /*#__PURE__*/_interopNamespace(Redis);
+var ioredis_star__namespace = /*#__PURE__*/_interopNamespace(ioredis_star);
 var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
+var slugify__default = /*#__PURE__*/_interopDefault(slugify);
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -48,22 +53,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-
-// _src/types/user.ts
-var UserRole = /* @__PURE__ */ ((UserRole2) => {
-  UserRole2["Admin"] = "admin";
-  UserRole2["Private"] = "private";
-  UserRole2["Public"] = "public";
-  return UserRole2;
-})(UserRole || {});
-
-// _src/types/user-stage.ts
-var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
-  UserStageStatus2["OnGoing"] = "ongoing";
-  UserStageStatus2["Completed"] = "completed";
-  UserStageStatus2["End"] = "end";
-  return UserStageStatus2;
-})(UserStageStatus || {});
 var transaction = async (operation) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -79,36 +68,6 @@ var transaction = async (operation) => {
 };
 var db = { transaction };
 var db_default = db;
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, __v, password, ...rest } = ret;
-    return { id: _id, ...rest };
-  }
-};
-var UserForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, default: "" },
-    email: { type: String, required: true }
-  },
-  { _id: false }
-);
-var UserSchema = new mongoose.Schema(
-  {
-    name: { type: String, default: "" },
-    role: { type: String, enum: Object.values(UserRole) },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-UserSchema.set("toJSON", ToObject);
-UserSchema.set("toObject", ToObject);
-var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
-var user_model_default = UserModel;
 var IdNameSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -130,12 +89,14 @@ var FeedbackSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var ToObject2 = {
+var ToObject = {
   transform: (doc, ret) => {
     const { _id, deletedAt, __v, ...rest } = ret;
     return { id: _id.toString(), ...rest };
   }
 };
+
+// _src/models/s3-model/index.ts
 var S3ForeignSchema = new mongoose.Schema(
   {
     fileName: { type: String, required: true },
@@ -154,8 +115,8 @@ var S3Schema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-S3Schema.set("toObject", ToObject2);
-S3Schema.set("toJSON", ToObject2);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
 var S3Model = mongoose.models.S3 || mongoose.model("S3", S3Schema);
 var s3_model_default = S3Model;
 
@@ -178,6 +139,16 @@ var QR_CONTENT_TYPES = {
 };
 var QR_STATUS = PUBLISHING_STATUS;
 var STAGE_STATUS = PUBLISHING_STATUS;
+var USER_PROVIDERS = {
+  Email: "email",
+  Google: "google",
+  TikTok: "tiktok"
+};
+var USER_ROLES = {
+  Admin: "admin",
+  Private: "private",
+  Public: "public"
+};
 var USER_CHALLENGE_STATUS = {
   Undiscovered: "undiscovered",
   Discovered: "discovered",
@@ -191,7 +162,48 @@ var USER_PUBLIC_GENDER = {
   Panda: "panda"
 };
 
-// _src/models/user-public-model/index.ts
+// _src/models/user-model/index.ts
+var ToObject2 = {
+  transform: (doc, ret) => {
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
+  }
+};
+var UserForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" },
+    email: { type: String, required: true },
+    photo: { type: String, default: null }
+  },
+  { _id: false }
+);
+var UserSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "" },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.Public
+    },
+    email: { type: String, required: true, unique: true },
+    photo: { type: S3ForeignSchema, default: null },
+    provider: {
+      type: [String],
+      enum: Object.values(USER_PROVIDERS),
+      default: []
+    },
+    password: { type: String, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+UserSchema.set("toJSON", ToObject2);
+UserSchema.set("toObject", ToObject2);
+var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
+var user_model_default = UserModel;
 var UserPublicForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -212,14 +224,13 @@ var UserPublicSchema = new mongoose.Schema(
       default: null
     },
     phone: { type: String, default: "" },
-    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
-UserPublicSchema.set("toJSON", ToObject2);
-UserPublicSchema.set("toObject", ToObject2);
+UserPublicSchema.set("toJSON", ToObject);
+UserPublicSchema.set("toObject", ToObject);
 var UserPublicModel = mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
 var user_public_model_default = UserPublicModel;
 
@@ -237,6 +248,14 @@ var verify = async (value, session) => {
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
 };
+
+// _src/types/user-stage.ts
+var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
+  UserStageStatus2["OnGoing"] = "ongoing";
+  UserStageStatus2["Completed"] = "completed";
+  UserStageStatus2["End"] = "end";
+  return UserStageStatus2;
+})(UserStageStatus || {});
 var StageSettingsSchema = new mongoose.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
@@ -275,8 +294,8 @@ var StageSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-StageSchema.set("toObject", ToObject2);
-StageSchema.set("toJSON", ToObject2);
+StageSchema.set("toObject", ToObject);
+StageSchema.set("toJSON", ToObject);
 mongoose.models.Stage || mongoose.model("Stage", StageSchema);
 
 // _src/models/user-stage-model/index.ts
@@ -311,8 +330,8 @@ var UserStageSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-UserStageSchema.set("toJSON", ToObject2);
-UserStageSchema.set("toObject", ToObject2);
+UserStageSchema.set("toJSON", ToObject);
+UserStageSchema.set("toObject", ToObject);
 var UserStageModel = mongoose.models.UserStage || mongoose.model("UserStage", UserStageSchema, "usersStage");
 var user_stage_model_default = UserStageModel;
 var ChallengeSettingsSchema = new mongoose.Schema(
@@ -365,8 +384,8 @@ var ChallengeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-ChallengeSchema.set("toJSON", ToObject2);
-ChallengeSchema.set("toObject", ToObject2);
+ChallengeSchema.set("toJSON", ToObject);
+ChallengeSchema.set("toObject", ToObject);
 mongoose.models.Challenge || mongoose.model("Challenge", ChallengeSchema);
 var UserChallengeForeignSchema = new mongoose.Schema(
   {
@@ -406,8 +425,8 @@ var UserChallengeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-UserChallengeSchema.set("toJSON", ToObject2);
-UserChallengeSchema.set("toObject", ToObject2);
+UserChallengeSchema.set("toJSON", ToObject);
+UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
 var TriviaOptionSchema = new mongoose.Schema(
@@ -444,8 +463,8 @@ var TriviaSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-TriviaSchema.set("toObject", ToObject2);
-TriviaSchema.set("toJSON", ToObject2);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
 mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
 var ToObject3 = {
   transform: (doc, ret) => {
@@ -518,8 +537,8 @@ var QrSchema = new mongoose.Schema(
     timestamps: true
   }
 );
-QrSchema.set("toObject", ToObject2);
-QrSchema.set("toJSON", ToObject2);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
 mongoose.models.Qr || mongoose.model("Qr", QrSchema);
 
 // _src/models/photo-hunt-model/index.ts
@@ -545,8 +564,8 @@ var PhotoHuntSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-PhotoHuntSchema.set("toObject", ToObject2);
-PhotoHuntSchema.set("toJSON", ToObject2);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
 mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 
 // _src/models/user-photo-hunt-model/index.ts
@@ -564,8 +583,8 @@ var UserPhotoHuntSchema = new mongoose.Schema({
   userChallenge: { type: UserChallengeForeignSchema, required: true },
   userPublic: { type: UserPublicForeignSchema, required: true }
 });
-UserPhotoHuntSchema.set("toObject", ToObject2);
-UserPhotoHuntSchema.set("toJSON", ToObject2);
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
 mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 
 // _src/plugins/redis/index.ts
@@ -575,8 +594,8 @@ __export(redis_exports, {
   default: () => redis_default,
   redis: () => redis
 });
-__reExport(redis_exports, Redis__namespace);
-var prefix = "\x1B[35mREDIS:\x1B[0m";
+__reExport(redis_exports, ioredis_star__namespace);
+var prefix = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
   client = null;
@@ -585,8 +604,8 @@ var RedisHelper = class {
   constructor() {
   }
   init(options) {
-    this.client = new Redis__namespace.default(options);
-    this.subscr = new Redis__namespace.default(options);
+    this.client = new ioredis_star.Redis(options);
+    this.subscr = new ioredis_star.Redis(options);
     this.initiate();
   }
   getClient() {
@@ -658,7 +677,7 @@ var globalInstance = globalThis;
 if (!globalInstance.__REDIS_HELPER__)
   globalInstance.__REDIS_HELPER__ = new RedisHelper();
 var redis = globalInstance.__REDIS_HELPER__;
-var redis_default = Redis__namespace.default;
+var redis_default = RedisHelper;
 var userSync = async (TID, session) => {
   const userPublicData = await verify(TID, session);
   const userPublic = {
@@ -691,7 +710,7 @@ __export(aws_s3_exports, {
   default: () => aws_s3_default
 });
 __reExport(aws_s3_exports, client_s3_star__namespace);
-var prefix2 = "\x1B[0;92mS3:\x1B[0m";
+var prefix2 = "\x1B[38;5;165mS3:\x1B[0m";
 var S3Helper = class {
   status = 0;
   bucket;
@@ -727,8 +746,9 @@ var S3Helper = class {
     const bucket = this.getBucket();
     const { buffer, filename, mimetype } = payload;
     const names = filename.split(".");
-    const ext = names.pop();
-    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
     const config = {
       Bucket: bucket,
       Key,
@@ -739,6 +759,7 @@ var S3Helper = class {
     const command = new client_s3_star.PutObjectCommand(config);
     const region = await client.config.region();
     const res = await client.send(command);
+    console.log(prefix2, `success put file`);
     return {
       fileName: Key,
       size: res.Size,
@@ -754,6 +775,7 @@ var S3Helper = class {
     };
     const command = new client_s3_star.DeleteObjectCommand(config);
     const res = await client.send(command);
+    console.log(prefix2, `success delete file`);
     return res;
   }
 };
@@ -761,31 +783,48 @@ var globalInstance2 = globalThis;
 if (!globalInstance2.__S3_HELPER__)
   globalInstance2.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance2.__S3_HELPER__;
-var aws_s3_default = client_s3_star__namespace.default;
+var aws_s3_default = S3Helper;
 
 // _src/services/s3-service/index.ts
-var set = async (payload, userId, session) => {
+var S3ServiceSet = async (payload, userId, session) => {
   const resS3 = await awsS3.put(payload);
   if (!resS3) throw new Error("s3.failed_upload");
-  const userData = await detail6(userId, session);
+  const userData = await user_model_default.findOne({ _id: userId }, null, { session });
+  if (!userData) throw new Error("s3.user_empty");
   const user = {
-    id: userData.id,
+    id: userData._id.toString(),
     name: userData.name,
-    email: userData.email
+    email: userData.email,
+    photo: null
   };
-  const item = await s3_model_default.create({
-    fileName: resS3.fileName,
-    fileUrl: resS3.fileUrl,
-    fileSize: payload.buffer.length,
-    fileType: payload.mimetype,
-    user
-  });
+  const [item] = await s3_model_default.create(
+    [
+      {
+        fileName: resS3.fileName,
+        fileUrl: resS3.fileUrl,
+        fileSize: payload.buffer.length,
+        fileType: payload.mimetype,
+        user
+      }
+    ],
+    { session }
+  );
   return item.toObject();
 };
-var _delete = async (key) => {
+var S3ServiceDelete = async (key, session) => {
   const res = await awsS3.delete(key);
-  await s3_model_default.deleteOne({ fileName: key });
+  await s3_model_default.deleteOne({ fileName: key }, { session });
   return res;
+};
+
+// _src/helpers/index.ts
+var urlToBuffer = async (photoURL) => {
+  const response = await fetch(photoURL);
+  if (!response.ok) throw new Error("Failed to fetch image");
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const mimetype = response.headers.get("content-type") || "application/octet-stream";
+  return { buffer, mimetype };
 };
 
 // _src/services/user-service/index.ts
@@ -793,7 +832,7 @@ var register = async (payload, TID) => {
   return await db_default.transaction(async (session) => {
     const { email, name, password: rawPassword } = payload;
     const userPublic = await verify(TID, session);
-    if (userPublic.user?.id) throw new Error("user already exists");
+    if (userPublic.user?.id) throw new Error("user.exists");
     const userExists = await user_model_default.findOne({ email }, { _id: 1 }).session(
       session
     );
@@ -805,7 +844,8 @@ var register = async (payload, TID) => {
           name,
           email,
           password,
-          role: "public" /* Public */
+          role: USER_ROLES.Public,
+          provider: [USER_PROVIDERS.Email]
         }
       ],
       { session }
@@ -819,12 +859,74 @@ var register = async (payload, TID) => {
     return user.toObject();
   });
 };
-var login = async (payload, secret) => {
+var googleSign = async (payload, TID) => {
+  return await db_default.transaction(async (session) => {
+    const { email, displayName: name, photoURL, phoneNumber: phone } = payload;
+    if (!(email && name)) throw new Error("user.payload_invalid");
+    const user = await Promise.resolve().then(async () => {
+      const userExists = await user_model_default.findOne({ email }, null, { session });
+      if (userExists) {
+        if (!userExists.provider.includes(USER_PROVIDERS.Google)) {
+          userExists.provider.push(USER_PROVIDERS.Google);
+          await userExists.save({ session });
+        }
+        return userExists;
+      }
+      const [user2] = await user_model_default.create(
+        [{ name, email, provider: ["google"] }],
+        { session }
+      );
+      return user2;
+    });
+    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
+    const userId = user._id.toString();
+    const userForeign = {
+      id: userId,
+      name,
+      email,
+      photo: user.photo?.fileUrl || null
+    };
+    if (photoURL) {
+      const res = await urlToBuffer(photoURL);
+      const s3payload = {
+        ...res,
+        filename: `${name}_photo`
+      };
+      const photo = await S3ServiceSet(s3payload, userId, session);
+      userForeign.photo = photo.fileUrl;
+      const s3foreign = {
+        fileName: photo.fileName,
+        fileSize: photo.fileSize,
+        fileUrl: photo.fileUrl
+      };
+      await user_model_default.updateOne(
+        { _id: userId },
+        { $set: { photo: s3foreign } },
+        { session }
+      );
+    }
+    await user_public_model_default.findOneAndUpdate(
+      { "user.id": userId },
+      { $set: { name, phone, user: userForeign } },
+      { session, new: true }
+    );
+    await dataSync(TID, session);
+    const userResult = await user_model_default.findOne({ _id: userId }, null, {
+      session
+    });
+    return userResult?.toObject();
+  });
+};
+var login = async (payload, provider, secret) => {
   const email = payload.email;
   const user = await user_model_default.findOne({ email });
   if (!user) throw new Error("user not found");
-  const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
-  if (!isPasswordValid) throw new Error("invalid password");
+  if (provider == "email") {
+    if (!user.password) throw new Error("user.password_empty");
+    if (!payload.password) throw new Error("login.password_empty");
+    const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
+    if (!isPasswordValid) throw new Error("invalid password");
+  }
   const userPublic = await user_public_model_default.findOne({ "user.id": user._id });
   if (!userPublic) throw new Error("user_public.not_found");
   const token = jsonwebtoken.sign({ id: user._id }, secret, {
@@ -868,24 +970,37 @@ var update = async (id, payload) => {
     return userPublic.toObject();
   });
 };
-var updatePhoto = async (payload, userId) => {
-  return db_default.transaction(async (session) => {
+var updatePhoto = async (userId, payload) => {
+  return await db_default.transaction(async (session) => {
+    const user = await detail6(userId, session);
     const userPublic = await user_public_model_default.findOne({ "user.id": userId });
     if (!userPublic) throw new Error("user.not_found");
-    if (userPublic.photo?.fileName) await _delete(userPublic.photo.fileName);
-    const res = await set(payload, userId, session);
+    const oldPhoto = user.photo?.fileName;
+    if (oldPhoto) await S3ServiceDelete(oldPhoto);
+    const res = await S3ServiceSet(payload, userId, session);
     const photo = {
       fileName: res.fileName,
       fileSize: res.fileSize,
       fileUrl: res.fileUrl
     };
-    userPublic.photo = photo;
-    await userPublic?.save({ session });
+    await user_model_default.updateOne(
+      { _id: user.id },
+      { $set: { photo } },
+      { session }
+    );
+    const newUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      photo: res.fileUrl
+    };
+    userPublic.user = newUser;
+    await userPublic.save({ session });
     redis.pub("update-user", userPublic);
-    return userPublic;
+    return userPublic.toObject();
   });
 };
-var _delete2 = async (id) => {
+var _delete = async (id) => {
 };
 var dataSync = async (TID, session) => {
   await userSync2(TID, session);
@@ -893,6 +1008,7 @@ var dataSync = async (TID, session) => {
 };
 var UserService = {
   register,
+  googleSign,
   login,
   profile,
   list: list2,
@@ -900,15 +1016,16 @@ var UserService = {
   detail: detail6,
   update,
   updatePhoto,
-  delete: _delete2
+  delete: _delete
 };
 var user_service_default = UserService;
 
-exports._delete = _delete2;
+exports._delete = _delete;
 exports.create = create;
 exports.dataSync = dataSync;
 exports.default = user_service_default;
 exports.detail = detail6;
+exports.googleSign = googleSign;
 exports.list = list2;
 exports.login = login;
 exports.profile = profile;

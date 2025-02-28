@@ -2,7 +2,6 @@ import { Model, model, models, Schema } from "mongoose";
 import { UserPublic, UserPublicForeign } from "~";
 import { ToObject } from "~/helpers/model";
 import { UserForeignSchema } from "../user-model";
-import { S3ForeignSchema } from "../s3-model";
 import { USER_PUBLIC_GENDER } from "~/constants";
 
 export const UserPublicForeignSchema = new Schema<UserPublicForeign>(
@@ -26,7 +25,6 @@ const UserPublicSchema = new Schema<UserPublic>(
       default: null,
     },
     phone: { type: String, default: "" },
-    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null },
   },

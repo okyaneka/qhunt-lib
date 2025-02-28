@@ -2,9 +2,11 @@ import {
   UserListParams,
   UserPayload,
   UserPublicPayload,
-  UserRole,
   S3Foreign,
   S3Payload,
+  UserForeign,
+  UserProvider,
+  UserLoginPayload,
 } from "~";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
@@ -15,15 +17,18 @@ import { verify as UserPublicVerify } from "../user-public-service";
 import { ClientSession } from "mongoose";
 import { userSync as stageSync } from "~/services/user-stage-service";
 import { userSync as challengeSync } from "~/services/user-challenge-service";
-import { set as S3Set, _delete as S3Delete } from "../s3-service";
+import { S3ServiceSet, S3ServiceDelete } from "../s3-service";
 import { redis } from "~/plugins/redis";
+import { USER_PROVIDERS, USER_ROLES } from "~/constants";
+import { User as FirebaseUser } from "firebase/auth";
+import { urlToBuffer } from "~/helpers";
 
 export const register = async (payload: UserPayload, TID: string) => {
   return await db.transaction(async (session) => {
     const { email, name, password: rawPassword } = payload;
 
     const userPublic = await UserPublicVerify(TID, session);
-    if (userPublic.user?.id) throw new Error("user already exists");
+    if (userPublic.user?.id) throw new Error("user.exists");
 
     const userExists = await UserModel.findOne({ email }, { _id: 1 }).session(
       session
@@ -38,7 +43,8 @@ export const register = async (payload: UserPayload, TID: string) => {
           name,
           email,
           password,
-          role: UserRole.Public,
+          role: USER_ROLES.Public,
+          provider: [USER_PROVIDERS.Email],
         },
       ],
       { session }
@@ -57,24 +63,94 @@ export const register = async (payload: UserPayload, TID: string) => {
   });
 };
 
+export const googleSign = async (payload: FirebaseUser, TID: string) => {
+  return await db.transaction(async (session) => {
+    const { email, displayName: name, photoURL, phoneNumber: phone } = payload;
+    if (!(email && name)) throw new Error("user.payload_invalid");
+
+    const user = await Promise.resolve().then(async () => {
+      const userExists = await UserModel.findOne({ email }, null, { session });
+      if (userExists) {
+        if (!userExists.provider.includes(USER_PROVIDERS.Google)) {
+          userExists.provider.push(USER_PROVIDERS.Google);
+          await userExists.save({ session });
+        }
+        return userExists;
+      }
+
+      const [user] = await UserModel.create(
+        [{ name, email, provider: ["google"] }],
+        { session }
+      );
+      return user;
+    });
+
+    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
+
+    const userId = user._id.toString();
+
+    const userForeign: UserForeign = {
+      id: userId,
+      name,
+      email,
+      photo: user.photo?.fileUrl || null,
+    };
+
+    if (photoURL) {
+      const res = await urlToBuffer(photoURL);
+      const s3payload: S3Payload = {
+        ...res,
+        filename: `${name}_photo`,
+      };
+      const photo = await S3ServiceSet(s3payload, userId, session);
+
+      userForeign.photo = photo.fileUrl;
+      const s3foreign: S3Foreign = {
+        fileName: photo.fileName,
+        fileSize: photo.fileSize,
+        fileUrl: photo.fileUrl,
+      };
+      await UserModel.updateOne(
+        { _id: userId },
+        { $set: { photo: s3foreign } },
+        { session }
+      );
+    }
+
+    await UserPublicModel.findOneAndUpdate(
+      { "user.id": userId },
+      { $set: { name, phone, user: userForeign } },
+      { session, new: true }
+    );
+
+    await dataSync(TID, session);
+
+    const userResult = await UserModel.findOne({ _id: userId }, null, {
+      session,
+    });
+
+    return userResult?.toObject();
+  });
+};
+
 export const login = async (
-  payload: Omit<UserPayload, "name">,
+  payload: UserLoginPayload,
+  provider: UserProvider,
   secret: string
 ) => {
   const email = payload.email;
   const user = await UserModel.findOne({ email });
   if (!user) throw new Error("user not found");
 
-  const isPasswordValid = await compare(payload.password, user.password);
-
-  if (!isPasswordValid) throw new Error("invalid password");
+  if (provider == "email") {
+    if (!user.password) throw new Error("user.password_empty");
+    if (!payload.password) throw new Error("login.password_empty");
+    const isPasswordValid = await compare(payload.password, user.password);
+    if (!isPasswordValid) throw new Error("invalid password");
+  }
 
   const userPublic = await UserPublicModel.findOne({ "user.id": user._id });
   if (!userPublic) throw new Error("user_public.not_found");
-
-  // .catch(
-  //   () => null
-  // )) || (await UserPublicSetup(user.id));
 
   const token = sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60,
@@ -128,15 +204,17 @@ export const update = async (id: string, payload: UserPublicPayload) => {
   });
 };
 
-export const updatePhoto = async (payload: S3Payload, userId: string) => {
-  return db.transaction(async (session) => {
+export const updatePhoto = async (userId: string, payload: S3Payload) => {
+  return await db.transaction(async (session) => {
+    const user = await detail(userId, session);
     const userPublic = await UserPublicModel.findOne({ "user.id": userId });
 
     if (!userPublic) throw new Error("user.not_found");
 
-    if (userPublic.photo?.fileName) await S3Delete(userPublic.photo.fileName);
+    const oldPhoto = user.photo?.fileName;
+    if (oldPhoto) await S3ServiceDelete(oldPhoto);
 
-    const res = await S3Set(payload, userId, session);
+    const res = await S3ServiceSet(payload, userId, session);
 
     const photo: S3Foreign = {
       fileName: res.fileName,
@@ -144,12 +222,23 @@ export const updatePhoto = async (payload: S3Payload, userId: string) => {
       fileUrl: res.fileUrl,
     };
 
-    userPublic.photo = photo;
-    await userPublic?.save({ session });
+    await UserModel.updateOne(
+      { _id: user.id },
+      { $set: { photo } },
+      { session }
+    );
 
+    const newUser: UserForeign = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      photo: res.fileUrl,
+    };
+    userPublic.user = newUser;
+    await userPublic.save({ session });
     redis.pub("update-user", userPublic);
 
-    return userPublic;
+    return userPublic.toObject();
   });
 };
 
@@ -162,6 +251,7 @@ export const dataSync = async (TID: string, session?: ClientSession) => {
 
 const UserService = {
   register,
+  googleSign,
   login,
   profile,
   list,

@@ -25,6 +25,18 @@ export const QR_STATUS = PUBLISHING_STATUS;
 
 export const STAGE_STATUS = PUBLISHING_STATUS;
 
+export const USER_PROVIDERS = {
+  Email: "email",
+  Google: "google",
+  TikTok: "tiktok",
+} as const;
+
+export const USER_ROLES = {
+  Admin: "admin",
+  Private: "private",
+  Public: "public",
+} as const;
+
 /**
  * Status description
  *

@@ -116,9 +116,20 @@ var list = async (model2, page, limit, filters = {}, sort) => {
 var service = { list };
 var service_default = service;
 
+// _src/helpers/index.ts
+var urlToBuffer = async (photoURL) => {
+  const response2 = await fetch(photoURL);
+  if (!response2.ok) throw new Error("Failed to fetch image");
+  const arrayBuffer = await response2.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const mimetype = response2.headers.get("content-type") || "application/octet-stream";
+  return { buffer, mimetype };
+};
+
 exports.bonus = bonus_default;
 exports.db = db_default;
 exports.model = model_default;
 exports.qrcode = qrcode_default;
 exports.response = response_default;
 exports.service = service_default;
+exports.urlToBuffer = urlToBuffer;

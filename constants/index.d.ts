@@ -32,6 +32,16 @@ export declare const STAGE_STATUS: {
     readonly Draft: "draft";
     readonly Publish: "publish";
 };
+export declare const USER_PROVIDERS: {
+    readonly Email: "email";
+    readonly Google: "google";
+    readonly TikTok: "tiktok";
+};
+export declare const USER_ROLES: {
+    readonly Admin: "admin";
+    readonly Private: "private";
+    readonly Public: "public";
+};
 /**
  * Status description
  *

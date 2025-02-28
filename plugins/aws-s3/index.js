@@ -2,14 +2,15 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var AwsS3 = require('@aws-sdk/client-s3');
+var clientS3 = require('@aws-sdk/client-s3');
+var slugify = require('slugify');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
-var AwsS3__default = /*#__PURE__*/_interopDefault(AwsS3);
+var slugify__default = /*#__PURE__*/_interopDefault(slugify);
 
 // _src/plugins/aws-s3/index.ts
-var prefix = "\x1B[0;92mS3:\x1B[0m";
+var prefix = "\x1B[38;5;165mS3:\x1B[0m";
 var S3Helper = class {
   status = 0;
   bucket;
@@ -20,13 +21,13 @@ var S3Helper = class {
   }
   init({ bucket, ...config }) {
     this.bucket = bucket;
-    this.client = new AwsS3.S3Client(config);
+    this.client = new clientS3.S3Client(config);
     this.initiate();
   }
   async initiate() {
     if (!(this.client && this.bucket)) return;
     this.status = 1;
-    this.client.send(new AwsS3.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+    this.client.send(new clientS3.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
       console.log(prefix, "Aws S3 connected successfully!");
     }).catch((err) => {
       console.log(prefix, "\u274C Aws S3 Error:", err.message);
@@ -45,8 +46,9 @@ var S3Helper = class {
     const bucket = this.getBucket();
     const { buffer, filename, mimetype } = payload;
     const names = filename.split(".");
-    const ext = names.pop();
-    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
     const config = {
       Bucket: bucket,
       Key,
@@ -54,9 +56,10 @@ var S3Helper = class {
       ContentType: mimetype,
       ACL: "public-read"
     };
-    const command = new AwsS3.PutObjectCommand(config);
+    const command = new clientS3.PutObjectCommand(config);
     const region = await client.config.region();
     const res = await client.send(command);
+    console.log(prefix, `success put file`);
     return {
       fileName: Key,
       size: res.Size,
@@ -70,8 +73,9 @@ var S3Helper = class {
       Bucket: bucket,
       Key: key
     };
-    const command = new AwsS3.DeleteObjectCommand(config);
+    const command = new clientS3.DeleteObjectCommand(config);
     const res = await client.send(command);
+    console.log(prefix, `success delete file`);
     return res;
   }
 };
@@ -79,14 +83,14 @@ var globalInstance = globalThis;
 if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
-var aws_s3_default = AwsS3__default.default;
+var aws_s3_default = S3Helper;
 
 exports.S3Helper = S3Helper;
 exports.awsS3 = awsS3;
 exports.default = aws_s3_default;
-Object.keys(AwsS3).forEach(function (k) {
+Object.keys(clientS3).forEach(function (k) {
   if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
     enumerable: true,
-    get: function () { return AwsS3[k]; }
+    get: function () { return clientS3[k]; }
   });
 });

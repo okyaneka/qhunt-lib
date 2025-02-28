@@ -1,9 +1,9 @@
-import Redis__default from 'ioredis';
+import { Redis } from 'ioredis';
 export * from 'ioredis';
 import { randomUUID } from 'crypto';
 
 // _src/plugins/redis/index.ts
-var prefix = "\x1B[35mREDIS:\x1B[0m";
+var prefix = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
   client = null;
@@ -12,8 +12,8 @@ var RedisHelper = class {
   constructor() {
   }
   init(options) {
-    this.client = new Redis__default(options);
-    this.subscr = new Redis__default(options);
+    this.client = new Redis(options);
+    this.subscr = new Redis(options);
     this.initiate();
   }
   getClient() {
@@ -85,6 +85,6 @@ var globalInstance = globalThis;
 if (!globalInstance.__REDIS_HELPER__)
   globalInstance.__REDIS_HELPER__ = new RedisHelper();
 var redis = globalInstance.__REDIS_HELPER__;
-var redis_default = Redis__default;
+var redis_default = RedisHelper;
 
 export { RedisHelper, redis_default as default, redis };
