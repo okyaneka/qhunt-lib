@@ -1,4 +1,4 @@
-import Redis, { RedisOptions } from "ioredis";
+import { RedisOptions } from "ioredis";
 import { RedisChannel, RedisKey } from "../..";
 type RedisCallback<T> = (data: T) => Promise<any> | any;
 export declare class RedisHelper {
@@ -19,5 +19,5 @@ export declare class RedisHelper {
 }
 export * from "ioredis";
 export declare const redis: RedisHelper;
-export default Redis;
+export default RedisHelper;
 //# sourceMappingURL=index.d.ts.map

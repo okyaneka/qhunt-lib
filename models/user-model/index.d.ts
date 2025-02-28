@@ -1,6 +1,8 @@
 import { Model, Schema } from "mongoose";
 import { User, UserForeign } from "../..";
-export declare const UserForeignSchema: Schema<UserForeign, Model<UserForeign, any, any, any, import("mongoose").Document<unknown, any, UserForeign> & UserForeign & {
+export declare const UserForeignSchema: Schema<UserForeign, Model<UserForeign, any, any, any, import("mongoose").Document<unknown, any, UserForeign> & Pick<User, "email" | "id" | "name"> & {
+    photo: string | null;
+} & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

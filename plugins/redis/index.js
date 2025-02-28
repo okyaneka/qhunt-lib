@@ -2,15 +2,11 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var Redis = require('ioredis');
+var ioredis = require('ioredis');
 var crypto = require('crypto');
 
-function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
-
-var Redis__default = /*#__PURE__*/_interopDefault(Redis);
-
 // _src/plugins/redis/index.ts
-var prefix = "\x1B[35mREDIS:\x1B[0m";
+var prefix = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
   client = null;
@@ -19,8 +15,8 @@ var RedisHelper = class {
   constructor() {
   }
   init(options) {
-    this.client = new Redis__default.default(options);
-    this.subscr = new Redis__default.default(options);
+    this.client = new ioredis.Redis(options);
+    this.subscr = new ioredis.Redis(options);
     this.initiate();
   }
   getClient() {
@@ -92,14 +88,14 @@ var globalInstance = globalThis;
 if (!globalInstance.__REDIS_HELPER__)
   globalInstance.__REDIS_HELPER__ = new RedisHelper();
 var redis = globalInstance.__REDIS_HELPER__;
-var redis_default = Redis__default.default;
+var redis_default = RedisHelper;
 
 exports.RedisHelper = RedisHelper;
 exports.default = redis_default;
 exports.redis = redis;
-Object.keys(Redis).forEach(function (k) {
+Object.keys(ioredis).forEach(function (k) {
   if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
     enumerable: true,
-    get: function () { return Redis[k]; }
+    get: function () { return ioredis[k]; }
   });
 });

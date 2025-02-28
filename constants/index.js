@@ -20,6 +20,16 @@ var QR_CONTENT_TYPES = {
 };
 var QR_STATUS = PUBLISHING_STATUS;
 var STAGE_STATUS = PUBLISHING_STATUS;
+var USER_PROVIDERS = {
+  Email: "email",
+  Google: "google",
+  TikTok: "tiktok"
+};
+var USER_ROLES = {
+  Admin: "admin",
+  Private: "private",
+  Public: "public"
+};
 var USER_CHALLENGE_STATUS = {
   Undiscovered: "undiscovered",
   Discovered: "discovered",
@@ -49,4 +59,6 @@ exports.REDIS_CHANNELS = REDIS_CHANNELS;
 exports.REDIS_KEYS = REDIS_KEYS;
 exports.STAGE_STATUS = STAGE_STATUS;
 exports.USER_CHALLENGE_STATUS = USER_CHALLENGE_STATUS;
+exports.USER_PROVIDERS = USER_PROVIDERS;
 exports.USER_PUBLIC_GENDER = USER_PUBLIC_GENDER;
+exports.USER_ROLES = USER_ROLES;

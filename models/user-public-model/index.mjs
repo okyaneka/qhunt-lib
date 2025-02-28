@@ -28,45 +28,6 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
-
-// _src/types/user.ts
-var UserRole = /* @__PURE__ */ ((UserRole2) => {
-  UserRole2["Admin"] = "admin";
-  UserRole2["Private"] = "private";
-  UserRole2["Public"] = "public";
-  return UserRole2;
-})(UserRole || {});
-
-// _src/models/user-model/index.ts
-var ToObject2 = {
-  transform: (doc, ret) => {
-    const { _id, __v, password, ...rest } = ret;
-    return { id: _id, ...rest };
-  }
-};
-var UserForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, default: "" },
-    email: { type: String, required: true }
-  },
-  { _id: false }
-);
-var UserSchema = new Schema(
-  {
-    name: { type: String, default: "" },
-    role: { type: String, enum: Object.values(UserRole) },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-UserSchema.set("toJSON", ToObject2);
-UserSchema.set("toObject", ToObject2);
-models.User || model("User", UserSchema);
 var S3ForeignSchema = new Schema(
   {
     fileName: { type: String, required: true },
@@ -90,11 +51,63 @@ S3Schema.set("toJSON", ToObject);
 models.S3 || model("S3", S3Schema);
 
 // _src/constants/index.ts
+var USER_PROVIDERS = {
+  Email: "email",
+  Google: "google",
+  TikTok: "tiktok"
+};
+var USER_ROLES = {
+  Admin: "admin",
+  Private: "private",
+  Public: "public"
+};
 var USER_PUBLIC_GENDER = {
   Male: "male",
   Female: "female",
   Panda: "panda"
 };
+
+// _src/models/user-model/index.ts
+var ToObject2 = {
+  transform: (doc, ret) => {
+    const { _id, __v, password, ...rest } = ret;
+    return { id: _id, ...rest };
+  }
+};
+var UserForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, default: "" },
+    email: { type: String, required: true },
+    photo: { type: String, default: null }
+  },
+  { _id: false }
+);
+var UserSchema = new Schema(
+  {
+    name: { type: String, default: "" },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.Public
+    },
+    email: { type: String, required: true, unique: true },
+    photo: { type: S3ForeignSchema, default: null },
+    provider: {
+      type: [String],
+      enum: Object.values(USER_PROVIDERS),
+      default: []
+    },
+    password: { type: String, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+UserSchema.set("toJSON", ToObject2);
+UserSchema.set("toObject", ToObject2);
+models.User || model("User", UserSchema);
 
 // _src/models/user-public-model/index.ts
 var UserPublicForeignSchema = new Schema(
@@ -117,7 +130,6 @@ var UserPublicSchema = new Schema(
       default: null
     },
     phone: { type: String, default: "" },
-    photo: { type: S3ForeignSchema, default: null },
     lastAccessedAt: { type: Date, default: Date.now() },
     deletedAt: { type: Date, default: null }
   },

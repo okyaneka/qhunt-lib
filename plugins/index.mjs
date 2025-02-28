@@ -1,7 +1,11 @@
 import * as client_s3_star from '@aws-sdk/client-s3';
-import client_s3_star__default, { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import * as Redis from 'ioredis';
-import Redis__default from 'ioredis';
+import { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import slugify from 'slugify';
+import * as app_star from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import * as ioredis_star from 'ioredis';
+import { Redis } from 'ioredis';
 import { randomUUID } from 'crypto';
 import * as mongoose_star from 'mongoose';
 import mongoose_star__default from 'mongoose';
@@ -32,7 +36,7 @@ __export(aws_s3_exports, {
   default: () => aws_s3_default
 });
 __reExport(aws_s3_exports, client_s3_star);
-var prefix = "\x1B[0;92mS3:\x1B[0m";
+var prefix = "\x1B[38;5;165mS3:\x1B[0m";
 var S3Helper = class {
   status = 0;
   bucket;
@@ -68,8 +72,9 @@ var S3Helper = class {
     const bucket = this.getBucket();
     const { buffer, filename, mimetype } = payload;
     const names = filename.split(".");
-    const ext = names.pop();
-    const Key = `${names.join(".")}-${Date.now()}.${ext}`;
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
     const config = {
       Bucket: bucket,
       Key,
@@ -80,6 +85,7 @@ var S3Helper = class {
     const command = new PutObjectCommand(config);
     const region = await client.config.region();
     const res = await client.send(command);
+    console.log(prefix, `success put file`);
     return {
       fileName: Key,
       size: res.Size,
@@ -95,6 +101,7 @@ var S3Helper = class {
     };
     const command = new DeleteObjectCommand(config);
     const res = await client.send(command);
+    console.log(prefix, `success delete file`);
     return res;
   }
 };
@@ -102,7 +109,52 @@ var globalInstance = globalThis;
 if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
-var aws_s3_default = client_s3_star__default;
+var aws_s3_default = S3Helper;
+
+// _src/plugins/firebase/index.ts
+var firebase_exports = {};
+__export(firebase_exports, {
+  FirebaseHelper: () => FirebaseHelper,
+  default: () => firebase_default,
+  firebase: () => firebase
+});
+__reExport(firebase_exports, app_star);
+var prefix2 = "\x1B[38;5;208mFIREBASE:\x1B[0m";
+var FirebaseHelper = class {
+  constructor() {
+  }
+  init(options) {
+    initializeApp(options);
+    this.initiate();
+  }
+  async initiate() {
+    const app = await Promise.resolve().then(() => {
+      const app2 = getApps();
+      return app2[0];
+    });
+    console.log(prefix2, `Firebase connected successfully to ${app.name}`);
+  }
+  // private getClient() {
+  //   return getApp();
+  // }
+  getAuth() {
+    return getAuth();
+  }
+  signInWithGoogle() {
+    const auth = this.getAuth();
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
+  }
+  async signOut() {
+    const auth = this.getAuth();
+    return await signOut(auth);
+  }
+};
+var globalInstance2 = globalThis;
+if (!globalInstance2.__FIREBASE__)
+  globalInstance2.__FIREBASE__ = new FirebaseHelper();
+var firebase = globalInstance2.__FIREBASE__;
+var firebase_default = FirebaseHelper;
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -111,8 +163,8 @@ __export(redis_exports, {
   default: () => redis_default,
   redis: () => redis
 });
-__reExport(redis_exports, Redis);
-var prefix2 = "\x1B[35mREDIS:\x1B[0m";
+__reExport(redis_exports, ioredis_star);
+var prefix3 = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
   client = null;
@@ -121,8 +173,8 @@ var RedisHelper = class {
   constructor() {
   }
   init(options) {
-    this.client = new Redis__default(options);
-    this.subscr = new Redis__default(options);
+    this.client = new Redis(options);
+    this.subscr = new Redis(options);
     this.initiate();
   }
   getClient() {
@@ -139,7 +191,7 @@ var RedisHelper = class {
     this.status = 1;
     client.on(
       "connect",
-      () => console.log(prefix2, "Redis connected successfully!")
+      () => console.log(prefix3, "Redis connected successfully!")
     );
     client.on("error", (err) => console.error("\u274C Redis Error:", err));
     subscr.on("message", async (channel, message) => {
@@ -149,7 +201,7 @@ var RedisHelper = class {
       const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
       handlers.forEach((handler) => {
         console.log(
-          prefix2,
+          prefix3,
           `message received from ${channel} to id ${handler.id}`
         );
         handler.callback(data);
@@ -165,7 +217,7 @@ var RedisHelper = class {
   async pub(channel, data) {
     const client = this.getClient();
     const message = typeof data == "string" ? data : JSON.stringify(data);
-    console.log(prefix2, `message published to ${channel}`);
+    console.log(prefix3, `message published to ${channel}`);
     await client.publish(channel, message);
   }
   async sub(channel, callback) {
@@ -177,24 +229,24 @@ var RedisHelper = class {
       callback
     };
     this.messageHandlers.push(handler);
-    console.log(prefix2, `channel ${channel} subscribed with id ${handler.id}`);
+    console.log(prefix3, `channel ${channel} subscribed with id ${handler.id}`);
     return () => {
       const index = this.messageHandlers.findIndex(
         ({ id }) => id === handler.id
       );
       if (index !== -1) this.messageHandlers.splice(index, 1);
       console.log(
-        prefix2,
+        prefix3,
         `channel ${channel} with id ${handler.id} unsubscribed`
       );
     };
   }
 };
-var globalInstance2 = globalThis;
-if (!globalInstance2.__REDIS_HELPER__)
-  globalInstance2.__REDIS_HELPER__ = new RedisHelper();
-var redis = globalInstance2.__REDIS_HELPER__;
-var redis_default = Redis__default;
+var globalInstance3 = globalThis;
+if (!globalInstance3.__REDIS_HELPER__)
+  globalInstance3.__REDIS_HELPER__ = new RedisHelper();
+var redis = globalInstance3.__REDIS_HELPER__;
+var redis_default = RedisHelper;
 
 // _src/plugins/mongoose/index.ts
 var mongoose_exports = {};
@@ -204,4 +256,4 @@ __export(mongoose_exports, {
 __reExport(mongoose_exports, mongoose_star);
 var mongoose_default = mongoose_star__default;
 
-export { awsS3, mongoose_default as mongoose, redis };
+export { awsS3, firebase, mongoose_default as mongoose, redis };
