@@ -1,5 +1,4 @@
 import S3Model from "~/models/s3-model";
-import { UserForeign } from "~";
 import { ClientSession } from "mongoose";
 import { S3Payload } from "~/types/s3";
 import { awsS3 } from "~/plugins/aws-s3";
@@ -10,18 +9,15 @@ export const S3ServiceSet = async (
   userId: string,
   session?: ClientSession
 ) => {
-  const resS3 = await awsS3.put(payload);
-  if (!resS3) throw new Error("s3.failed_upload");
-
-  const userData = await UserModel.findOne({ _id: userId }, null, { session });
+  const userData = await UserModel.findOne(
+    { _id: userId },
+    { _id: true },
+    { session }
+  );
   if (!userData) throw new Error("s3.user_empty");
 
-  const user: UserForeign = {
-    id: userData._id.toString(),
-    name: userData.name,
-    email: userData.email,
-    photo: null,
-  };
+  const resS3 = await awsS3.put(payload);
+  if (!resS3) throw new Error("s3.failed_upload");
 
   const [item] = await S3Model.create(
     [
@@ -30,7 +26,7 @@ export const S3ServiceSet = async (
         fileUrl: resS3.fileUrl,
         fileSize: payload.buffer.length,
         fileType: payload.mimetype,
-        user,
+        userId,
       },
     ],
     { session }
