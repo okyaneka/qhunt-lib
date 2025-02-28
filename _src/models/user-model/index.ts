@@ -1,6 +1,7 @@
 import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
-import { User, UserForeign, UserRole } from "~";
+import { User, UserForeign } from "~";
 import { S3ForeignSchema } from "../s3-model";
+import { USER_PROVIDERS, USER_ROLES } from "~/constants";
 
 const ToObject: ToObjectOptions = {
   transform: (doc, ret) => {
@@ -22,10 +23,19 @@ export const UserForeignSchema = new Schema<UserForeign>(
 const UserSchema = new Schema<User>(
   {
     name: { type: String, default: "" },
-    role: { type: String, enum: Object.values(UserRole) },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.Public,
+    },
     email: { type: String, required: true, unique: true },
     photo: { type: S3ForeignSchema, default: null },
-    password: { type: String, required: true },
+    provider: {
+      type: [String],
+      enum: Object.values(USER_PROVIDERS),
+      default: [],
+    },
+    password: { type: String, default: null },
     deletedAt: { type: Date, default: null },
   },
   {
