@@ -2060,7 +2060,6 @@ var googleSign = async (payload, TID) => {
       );
       return user2;
     });
-    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
     const userId = user._id.toString();
     const userForeign = {
       id: userId,
@@ -2068,7 +2067,7 @@ var googleSign = async (payload, TID) => {
       email,
       photo: user.photo?.fileUrl || null
     };
-    if (photoURL) {
+    if (photoURL && !user.photo?.fileUrl) {
       const res = await urlToBuffer(photoURL);
       const s3payload = {
         ...res,
@@ -2088,10 +2087,11 @@ var googleSign = async (payload, TID) => {
       );
     }
     await user_public_model_default.findOneAndUpdate(
-      { "user.id": userId },
+      { code: TID },
       { $set: { name, phone, user: userForeign } },
-      { session, new: true }
+      { session }
     );
+    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
     await dataSync(TID, session);
     const userResult = await user_model_default.findOne({ _id: userId }, null, {
       session
@@ -2109,7 +2109,9 @@ var login = async (payload, provider, secret) => {
     const isPasswordValid = await bcryptjs.compare(payload.password, user.password);
     if (!isPasswordValid) throw new Error("invalid password");
   }
-  const userPublic = await user_public_model_default.findOne({ "user.id": user._id });
+  const userPublic = await user_public_model_default.findOne({
+    "user.id": user._id.toString()
+  });
   if (!userPublic) throw new Error("user_public.not_found");
   const token = jsonwebtoken.sign({ id: user._id }, secret, {
     expiresIn: 30 * 24 * 60 * 60
