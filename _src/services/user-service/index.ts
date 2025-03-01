@@ -85,8 +85,6 @@ export const googleSign = async (payload: FirebaseUser, TID: string) => {
       return user;
     });
 
-    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
-
     const userId = user._id.toString();
 
     const userForeign: UserForeign = {
@@ -96,7 +94,7 @@ export const googleSign = async (payload: FirebaseUser, TID: string) => {
       photo: user.photo?.fileUrl || null,
     };
 
-    if (photoURL) {
+    if (photoURL && !user.photo?.fileUrl) {
       const res = await urlToBuffer(photoURL);
       const s3payload: S3Payload = {
         ...res,
@@ -118,10 +116,12 @@ export const googleSign = async (payload: FirebaseUser, TID: string) => {
     }
 
     await UserPublicModel.findOneAndUpdate(
-      { "user.id": userId },
+      { code: TID },
       { $set: { name, phone, user: userForeign } },
-      { session, new: true }
+      { session }
     );
+
+    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
 
     await dataSync(TID, session);
 
@@ -149,7 +149,9 @@ export const login = async (
     if (!isPasswordValid) throw new Error("invalid password");
   }
 
-  const userPublic = await UserPublicModel.findOne({ "user.id": user._id });
+  const userPublic = await UserPublicModel.findOne({
+    "user.id": user._id.toString(),
+  });
   if (!userPublic) throw new Error("user_public.not_found");
 
   const token = sign({ id: user._id }, secret, {
