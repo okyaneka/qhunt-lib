@@ -7,6 +7,8 @@ import {
   UserForeign,
   UserProvider,
   UserLoginPayload,
+  UserForeignFull,
+  UserPasswordPayload,
 } from "~";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
@@ -169,19 +171,26 @@ export const list = async (params: UserListParams) => {};
 
 export const create = async (payload: UserPayload) => {};
 
-export const detail = async (id: string, session?: ClientSession) => {
+export const detail = async (
+  id: string,
+  session?: ClientSession
+): Promise<UserForeignFull> => {
   const user = await UserModel.findOne({ _id: id, deletedAt: null }, null, {
     session,
   });
 
   if (!user) throw new Error("user not found");
 
-  const meta = await UserPublicVerify(user.id, session);
-
-  return {
-    ...user.toObject(),
-    meta,
+  const userForeign: UserForeignFull = {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    photo: user.photo,
+    provider: user.provider,
+    role: user.role,
   };
+
+  return userForeign;
 };
 
 export const update = async (id: string, payload: UserPublicPayload) => {
@@ -204,6 +213,29 @@ export const update = async (id: string, payload: UserPublicPayload) => {
 
     return userPublic.toObject();
   });
+};
+
+export const updatePassword = async (
+  id: string,
+  payload: UserPasswordPayload
+) => {
+  const user = await UserModel.findOne({ _id: id });
+  if (!user) throw new Error("user.not_found");
+
+  const provider = user.provider;
+
+  if (payload.old_password && user.password) {
+    const isPasswordValid = await compare(payload.old_password, user.password);
+    if (!isPasswordValid) throw new Error("user.invalid_old_password");
+  } else if (!provider.includes("email")) {
+    provider.push("email");
+  }
+
+  const password = await hash(payload.new_password, 10);
+
+  await UserModel.updateOne({ _id: id }, { $set: { password, provider } });
+
+  return {};
 };
 
 export const updatePhoto = async (userId: string, payload: S3Payload) => {
@@ -260,6 +292,7 @@ const UserService = {
   create,
   detail,
   update,
+  updatePassword,
   updatePhoto,
   delete: _delete,
 };
