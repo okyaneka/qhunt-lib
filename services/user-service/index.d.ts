@@ -1,4 +1,4 @@
-import { UserListParams, UserPayload, UserPublicPayload, S3Foreign, S3Payload, UserProvider, UserLoginPayload } from "../..";
+import { UserListParams, UserPayload, UserPublicPayload, S3Payload, UserProvider, UserLoginPayload, UserForeignFull, UserPasswordPayload } from "../..";
 import { ClientSession } from "mongoose";
 import { User as FirebaseUser } from "firebase/auth";
 export declare const register: (payload: UserPayload, TID: string) => Promise<import("../..").User & {
@@ -17,25 +17,11 @@ export declare const login: (payload: UserLoginPayload, provider: UserProvider, 
 export declare const profile: (bearer: string) => Promise<void>;
 export declare const list: (params: UserListParams) => Promise<void>;
 export declare const create: (payload: UserPayload) => Promise<void>;
-export declare const detail: (id: string, session?: ClientSession) => Promise<{
-    meta: import("../..").UserPublic & {
-        _id: import("mongoose").Types.ObjectId;
-    };
-    id: string;
-    name: string;
-    email: string;
-    password: string | null;
-    provider: UserProvider[];
-    photo: S3Foreign | null;
-    role: import("../..").UserRole;
-    createdAt: Date;
-    updatedAt: Date;
-    deletedAt: Date | null;
-    _id: import("mongoose").Types.ObjectId;
-}>;
+export declare const detail: (id: string, session?: ClientSession) => Promise<UserForeignFull>;
 export declare const update: (id: string, payload: UserPublicPayload) => Promise<import("../..").UserPublic & {
     _id: import("mongoose").Types.ObjectId;
 }>;
+export declare const updatePassword: (id: string, payload: UserPasswordPayload) => Promise<{}>;
 export declare const updatePhoto: (userId: string, payload: S3Payload) => Promise<import("../..").UserPublic & {
     _id: import("mongoose").Types.ObjectId;
 }>;
@@ -58,25 +44,11 @@ declare const UserService: {
     profile: (bearer: string) => Promise<void>;
     list: (params: UserListParams) => Promise<void>;
     create: (payload: UserPayload) => Promise<void>;
-    detail: (id: string, session?: ClientSession) => Promise<{
-        meta: import("../..").UserPublic & {
-            _id: import("mongoose").Types.ObjectId;
-        };
-        id: string;
-        name: string;
-        email: string;
-        password: string | null;
-        provider: UserProvider[];
-        photo: S3Foreign | null;
-        role: import("../..").UserRole;
-        createdAt: Date;
-        updatedAt: Date;
-        deletedAt: Date | null;
-        _id: import("mongoose").Types.ObjectId;
-    }>;
+    detail: (id: string, session?: ClientSession) => Promise<UserForeignFull>;
     update: (id: string, payload: UserPublicPayload) => Promise<import("../..").UserPublic & {
         _id: import("mongoose").Types.ObjectId;
     }>;
+    updatePassword: (id: string, payload: UserPasswordPayload) => Promise<{}>;
     updatePhoto: (userId: string, payload: S3Payload) => Promise<import("../..").UserPublic & {
         _id: import("mongoose").Types.ObjectId;
     }>;

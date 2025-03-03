@@ -1,5 +1,5 @@
 import { Timestamps, ValueOf } from "..";
-import { UserForeign } from "./user";
+import { UserForeign, UserForeignFull } from "./user";
 import { USER_PUBLIC_GENDER } from "../constants";
 export type UserPublicGender = ValueOf<typeof USER_PUBLIC_GENDER>;
 export interface UserPublicPayload {
@@ -11,6 +11,9 @@ export interface UserPublicPayload {
 export interface UserPublicPhotoPayload {
     file: File;
 }
+export type UserPublicFull = Omit<UserPublic, "user"> & {
+    user: UserForeignFull | null;
+};
 export interface UserPublic extends Timestamps {
     id: string;
     user: UserForeign | null;

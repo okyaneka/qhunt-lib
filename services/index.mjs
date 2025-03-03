@@ -1,13 +1,13 @@
 import { Schema, models, model, startSession } from 'mongoose';
 import dayjs from 'dayjs';
 import { randomUUID, randomBytes, createHash } from 'crypto';
-import * as ioredis_star from 'ioredis';
-import { Redis } from 'ioredis';
+import { hash, compare } from 'bcryptjs';
+import { sign } from 'jsonwebtoken';
 import * as client_s3_star from '@aws-sdk/client-s3';
 import { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import slugify from 'slugify';
-import { hash, compare } from 'bcryptjs';
-import { sign } from 'jsonwebtoken';
+import * as ioredis_star from 'ioredis';
+import { Redis } from 'ioredis';
 import '@zxing/browser';
 
 var __defProp = Object.defineProperty;
@@ -823,38 +823,6 @@ UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
-var verify4 = async (value, session) => {
-  if (!value) throw new Error("token is required");
-  const userPublic = await user_public_model_default.findOneAndUpdate(
-    {
-      $or: [{ "user.id": value }, { code: value }],
-      deletedAt: null
-    },
-    { lastAccessedAt: /* @__PURE__ */ new Date() },
-    { new: true, session }
-  );
-  if (!userPublic) throw new Error("invalid user");
-  return userPublic.toObject();
-};
-var setup = async (userId) => {
-  const timestamp = Date.now();
-  const salt = randomBytes(4).toString("hex");
-  const code = createHash("sha256").update(`${timestamp}${salt}`).digest("hex");
-  const payload = { code };
-  if (userId) {
-    const userPublic = await user_public_model_default.findOne({
-      "user.id": userId,
-      deletedAt: null
-    });
-    if (userPublic) return userPublic.toObject();
-    const user2 = await user_model_default.findOne({ _id: userId, deletedAt: null });
-    if (user2) payload.user = { id: user2.id, name: user2.name };
-  }
-  const user = await user_public_model_default.create(payload);
-  return user.toObject();
-};
-var UserPublicService = { verify: verify4, setup };
-var user_public_service_default = UserPublicService;
 
 // _src/services/user-stage-service/index.ts
 var initResults = () => ({
@@ -869,7 +837,7 @@ var verify5 = async (stageId, TID) => {
     "stage.id": stageId
   });
 };
-var setup2 = async (stageId, TID) => {
+var setup = async (stageId, TID) => {
   return transaction(async (session) => {
     console.time("queryTime");
     const exist = await verify5(stageId, TID);
@@ -969,28 +937,109 @@ var userSync = async (TID, session) => {
   };
   await user_stage_model_default.updateMany({ "userPublic.code": TID }, { userPublic });
 };
-var UserStageService = { list: list3, detail: detail4, setup: setup2, verify: verify5, submitState };
+var UserStageService = { list: list3, detail: detail4, setup, verify: verify5, submitState };
 var user_stage_service_default = UserStageService;
 
-// _src/helpers/service.ts
-var list4 = async (model13, page, limit, filters = {}, sort) => {
-  const skip = (page - 1) * limit;
-  const filter = {
-    ...filters,
-    deletedAt: null
-  };
-  const items = await model13.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
-  const totalItems = await model13.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / limit);
-  return {
-    list: items.map((item) => item.toObject ? item.toObject() : item),
-    page,
-    totalItems,
-    totalPages
-  };
+// _src/plugins/aws-s3/index.ts
+var aws_s3_exports = {};
+__export(aws_s3_exports, {
+  S3Helper: () => S3Helper,
+  awsS3: () => awsS3,
+  default: () => aws_s3_default
+});
+__reExport(aws_s3_exports, client_s3_star);
+var prefix = "\x1B[38;5;165mS3:\x1B[0m";
+var S3Helper = class {
+  status = 0;
+  bucket;
+  client;
+  constructor() {
+    this.bucket = null;
+    this.client = null;
+  }
+  init({ bucket, ...config }) {
+    this.bucket = bucket;
+    this.client = new S3Client(config);
+    this.initiate();
+  }
+  async initiate() {
+    if (!(this.client && this.bucket)) return;
+    this.status = 1;
+    this.client.send(new HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+      console.log(prefix, "Aws S3 connected successfully!");
+    }).catch((err) => {
+      console.log(prefix, "\u274C Aws S3 Error:", err.message);
+    });
+  }
+  getClient() {
+    if (!this.client) throw new Error("Aws S3 has not been setup yet");
+    return this.client;
+  }
+  getBucket() {
+    if (!this.bucket) throw new Error("S3 Bucket has not been setup yet");
+    return this.bucket;
+  }
+  async put(payload) {
+    const client = this.getClient();
+    const bucket = this.getBucket();
+    const { buffer, filename, mimetype } = payload;
+    const names = filename.split(".");
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
+    const config = {
+      Bucket: bucket,
+      Key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: "public-read"
+    };
+    const command = new PutObjectCommand(config);
+    const region = await client.config.region();
+    const res = await client.send(command);
+    console.log(prefix, `success put file`);
+    return {
+      fileName: Key,
+      size: res.Size,
+      fileUrl: `https://${bucket}.s3.${region}.amazonaws.com/${Key}`
+    };
+  }
+  async delete(key) {
+    const client = this.getClient();
+    const bucket = this.getBucket();
+    const config = {
+      Bucket: bucket,
+      Key: key
+    };
+    const command = new DeleteObjectCommand(config);
+    const res = await client.send(command);
+    console.log(prefix, `success delete file`);
+    return res;
+  }
 };
-var service = { list: list4 };
-var service_default = service;
+var globalInstance = globalThis;
+if (!globalInstance.__S3_HELPER__)
+  globalInstance.__S3_HELPER__ = new S3Helper();
+var awsS3 = globalInstance.__S3_HELPER__;
+var aws_s3_default = S3Helper;
+var UserPhotoHuntResultSchema = new Schema(
+  {
+    feedback: { type: String, default: null },
+    foundAt: { type: Date, default: Date.now() },
+    score: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+var UserPhotoHuntSchema = new Schema({
+  photoHunt: { type: PhotoHuntForeignSchema, required: true },
+  results: { type: UserPhotoHuntResultSchema, default: null },
+  userChallenge: { type: UserChallengeForeignSchema, required: true },
+  userPublic: { type: UserPublicForeignSchema, required: true }
+});
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
+var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
+var user_photo_hunt_model_default = UserPhotoHuntModel;
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -1020,6 +1069,439 @@ UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
 var user_trivia_model_default = UserTriviaModel;
+
+// _src/services/s3-service/index.ts
+var S3ServiceSet = async (payload, userId, session) => {
+  const userData = await user_model_default.findOne(
+    { _id: userId },
+    { _id: true },
+    { session }
+  );
+  if (!userData) throw new Error("s3.user_empty");
+  const resS3 = await awsS3.put(payload);
+  if (!resS3) throw new Error("s3.failed_upload");
+  const [item] = await s3_model_default.create(
+    [
+      {
+        fileName: resS3.fileName,
+        fileUrl: resS3.fileUrl,
+        fileSize: payload.buffer.length,
+        fileType: payload.mimetype,
+        userId
+      }
+    ],
+    { session }
+  );
+  return item.toObject();
+};
+var S3ServiceGet = async (path) => {
+};
+var S3ServiceDelete = async (key, session) => {
+  const res = await awsS3.delete(key);
+  await s3_model_default.deleteOne({ fileName: key }, { session });
+  return res;
+};
+var S3Service = {
+  set: S3ServiceSet,
+  get: S3ServiceGet,
+  delete: S3ServiceDelete
+};
+var s3_service_default = S3Service;
+
+// _src/plugins/redis/index.ts
+var redis_exports = {};
+__export(redis_exports, {
+  RedisHelper: () => RedisHelper,
+  default: () => redis_default,
+  redis: () => redis
+});
+__reExport(redis_exports, ioredis_star);
+var prefix2 = "\x1B[38;5;196mREDIS:\x1B[0m";
+var RedisHelper = class {
+  status = 0;
+  client = null;
+  subscr = null;
+  messageHandlers = [];
+  constructor() {
+  }
+  init(options) {
+    this.client = new Redis(options);
+    this.subscr = new Redis(options);
+    this.initiate();
+  }
+  getClient() {
+    if (!this.client) throw new Error("Redis client has not ben set yer");
+    return this.client;
+  }
+  getSubscr() {
+    if (!this.subscr) throw new Error("Redis subscribe has not ben set yer");
+    return this.subscr;
+  }
+  initiate() {
+    const client = this.getClient();
+    const subscr = this.getSubscr();
+    this.status = 1;
+    client.on(
+      "connect",
+      () => console.log(prefix2, "Redis connected successfully!")
+    );
+    client.on("error", (err) => console.error("\u274C Redis Error:", err));
+    subscr.on("message", async (channel, message) => {
+      const handlers = this.messageHandlers.filter(
+        (v) => v.channel === channel
+      );
+      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
+      handlers.forEach((handler) => {
+        console.log(
+          prefix2,
+          `message received from ${channel} to id ${handler.id}`
+        );
+        handler.callback(data);
+      });
+    });
+  }
+  async get(key) {
+  }
+  async set(key) {
+  }
+  async del(key) {
+  }
+  async pub(channel, data) {
+    const client = this.getClient();
+    const message = typeof data == "string" ? data : JSON.stringify(data);
+    console.log(prefix2, `message published to ${channel}`);
+    await client.publish(channel, message);
+  }
+  async sub(channel, callback) {
+    if (!this.subscr) return;
+    await this.subscr.subscribe(channel);
+    const handler = {
+      id: randomUUID(),
+      channel,
+      callback
+    };
+    this.messageHandlers.push(handler);
+    console.log(prefix2, `channel ${channel} subscribed with id ${handler.id}`);
+    return () => {
+      const index = this.messageHandlers.findIndex(
+        ({ id }) => id === handler.id
+      );
+      if (index !== -1) this.messageHandlers.splice(index, 1);
+      console.log(
+        prefix2,
+        `channel ${channel} with id ${handler.id} unsubscribed`
+      );
+    };
+  }
+};
+var globalInstance2 = globalThis;
+if (!globalInstance2.__REDIS_HELPER__)
+  globalInstance2.__REDIS_HELPER__ = new RedisHelper();
+var redis = globalInstance2.__REDIS_HELPER__;
+var redis_default = RedisHelper;
+
+// _src/helpers/bonus.ts
+var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
+  return Math.round(maxPoint * (1 - seconds / totalSeconds));
+};
+
+// _src/helpers/service.ts
+var list4 = async (model13, page, limit, filters = {}, sort) => {
+  const skip = (page - 1) * limit;
+  const filter = {
+    ...filters,
+    deletedAt: null
+  };
+  const items = await model13.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
+  const totalItems = await model13.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / limit);
+  return {
+    list: items.map((item) => item.toObject ? item.toObject() : item),
+    page,
+    totalItems,
+    totalPages
+  };
+};
+var service = { list: list4 };
+var service_default = service;
+
+// _src/helpers/index.ts
+var urlToBuffer = async (photoURL) => {
+  const response = await fetch(photoURL);
+  if (!response.ok) throw new Error("Failed to fetch image");
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const mimetype = response.headers.get("content-type") || "application/octet-stream";
+  return { buffer, mimetype };
+};
+
+// _src/services/user-service/index.ts
+var register = async (payload, TID) => {
+  return await db_default.transaction(async (session) => {
+    const { email, name, password: rawPassword } = payload;
+    const userPublic = await verify4(TID, session);
+    if (userPublic.user?.id) throw new Error("user.exists");
+    const userExists = await user_model_default.findOne({ email }, { _id: 1 }).session(
+      session
+    );
+    if (userExists) throw new Error("email taken");
+    const password = await hash(rawPassword, 10);
+    const [user] = await user_model_default.create(
+      [
+        {
+          name,
+          email,
+          password,
+          role: USER_ROLES.Public,
+          provider: [USER_PROVIDERS.Email]
+        }
+      ],
+      { session }
+    );
+    const data = {
+      name: user.name,
+      user: { id: user._id, name: user.name, email: user.email }
+    };
+    await user_public_model_default.updateOne({ code: TID }, { $set: data }, { session });
+    await dataSync(TID, session);
+    return user.toObject();
+  });
+};
+var googleSign = async (payload, TID) => {
+  return await db_default.transaction(async (session) => {
+    const { email, displayName: name, photoURL, phoneNumber: phone } = payload;
+    if (!(email && name)) throw new Error("user.payload_invalid");
+    const user = await Promise.resolve().then(async () => {
+      const userExists = await user_model_default.findOne({ email }, null, { session });
+      if (userExists) {
+        if (!userExists.provider.includes(USER_PROVIDERS.Google)) {
+          userExists.provider.push(USER_PROVIDERS.Google);
+          await userExists.save({ session });
+        }
+        return userExists;
+      }
+      const [user2] = await user_model_default.create(
+        [{ name, email, provider: ["google"] }],
+        { session }
+      );
+      return user2;
+    });
+    const userId = user._id.toString();
+    const userForeign = {
+      id: userId,
+      name,
+      email,
+      photo: user.photo?.fileUrl || null
+    };
+    if (photoURL && !user.photo?.fileUrl) {
+      const res = await urlToBuffer(photoURL);
+      const s3payload = {
+        ...res,
+        filename: `${name}_photo`
+      };
+      const photo = await S3ServiceSet(s3payload, userId, session);
+      userForeign.photo = photo.fileUrl;
+      const s3foreign = {
+        fileName: photo.fileName,
+        fileSize: photo.fileSize,
+        fileUrl: photo.fileUrl
+      };
+      await user_model_default.updateOne(
+        { _id: userId },
+        { $set: { photo: s3foreign } },
+        { session }
+      );
+    }
+    await user_public_model_default.findOneAndUpdate(
+      { code: TID },
+      { $set: { name, phone, user: userForeign } },
+      { session }
+    );
+    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
+    await dataSync(TID, session);
+    const userResult = await user_model_default.findOne({ _id: userId }, null, {
+      session
+    });
+    return userResult?.toObject();
+  });
+};
+var login = async (payload, provider, secret) => {
+  const email = payload.email;
+  const user = await user_model_default.findOne({ email });
+  if (!user) throw new Error("user not found");
+  if (provider == "email") {
+    if (!user.password) throw new Error("user.password_empty");
+    if (!payload.password) throw new Error("login.password_empty");
+    const isPasswordValid = await compare(payload.password, user.password);
+    if (!isPasswordValid) throw new Error("invalid password");
+  }
+  const userPublic = await user_public_model_default.findOne({
+    "user.id": user._id.toString()
+  });
+  if (!userPublic) throw new Error("user_public.not_found");
+  const token = sign({ id: user._id }, secret, {
+    expiresIn: 30 * 24 * 60 * 60
+  });
+  const { _id: id, name } = user;
+  return { id, name, email, TID: userPublic.code, token };
+};
+var profile = async (bearer) => {
+};
+var list5 = async (params) => {
+};
+var create3 = async (payload) => {
+};
+var detail5 = async (id, session) => {
+  const user = await user_model_default.findOne({ _id: id, deletedAt: null }, null, {
+    session
+  });
+  if (!user) throw new Error("user not found");
+  const userForeign = {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    photo: user.photo,
+    provider: user.provider,
+    role: user.role
+  };
+  return userForeign;
+};
+var update3 = async (id, payload) => {
+  return db_default.transaction(async (session) => {
+    await user_model_default.updateOne(
+      { _id: id },
+      { $set: { name: payload.name } },
+      { session, new: true }
+    );
+    const userPublic = await user_public_model_default.findOneAndUpdate(
+      { "user.id": id },
+      { $set: { ...payload, "user.name": payload.name } },
+      { session, new: true }
+    );
+    if (!userPublic) throw new Error("user.not_found");
+    await dataSync(userPublic.code, session);
+    redis.pub("update-user", userPublic);
+    return userPublic.toObject();
+  });
+};
+var updatePassword = async (id, payload) => {
+  const user = await user_model_default.findOne({ _id: id });
+  if (!user) throw new Error("user.not_found");
+  const provider = user.provider;
+  if (payload.old_password && user.password) {
+    const isPasswordValid = await compare(payload.old_password, user.password);
+    if (!isPasswordValid) throw new Error("user.invalid_old_password");
+  } else if (!provider.includes("email")) {
+    provider.push("email");
+  }
+  const password = await hash(payload.new_password, 10);
+  await user_model_default.updateOne({ _id: id }, { $set: { password, provider } });
+  return {};
+};
+var updatePhoto = async (userId, payload) => {
+  return await db_default.transaction(async (session) => {
+    const user = await detail5(userId, session);
+    const userPublic = await user_public_model_default.findOne({ "user.id": userId });
+    if (!userPublic) throw new Error("user.not_found");
+    const oldPhoto = user.photo?.fileName;
+    if (oldPhoto) await S3ServiceDelete(oldPhoto);
+    const res = await S3ServiceSet(payload, userId, session);
+    const photo = {
+      fileName: res.fileName,
+      fileSize: res.fileSize,
+      fileUrl: res.fileUrl
+    };
+    await user_model_default.updateOne(
+      { _id: user.id },
+      { $set: { photo } },
+      { session }
+    );
+    const newUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      photo: res.fileUrl
+    };
+    userPublic.user = newUser;
+    await userPublic.save({ session });
+    redis.pub("update-user", userPublic);
+    return userPublic.toObject();
+  });
+};
+var _delete3 = async (id) => {
+};
+var dataSync = async (TID, session) => {
+  await userSync(TID, session);
+  await userSync2(TID, session);
+};
+var UserService = {
+  register,
+  googleSign,
+  login,
+  profile,
+  list: list5,
+  create: create3,
+  detail: detail5,
+  update: update3,
+  updatePassword,
+  updatePhoto,
+  delete: _delete3
+};
+var user_service_default = UserService;
+
+// _src/services/user-public-service/index.ts
+var verify4 = async (value, session) => {
+  if (!value) throw new Error("token is required");
+  const userPublic = await user_public_model_default.findOneAndUpdate(
+    {
+      $or: [{ "user.id": value }, { code: value }],
+      deletedAt: null
+    },
+    { lastAccessedAt: /* @__PURE__ */ new Date() },
+    { new: true, session }
+  );
+  if (!userPublic) throw new Error("invalid user");
+  return userPublic.toObject();
+};
+var detail6 = async (TID, session) => {
+  const userPublic = await user_public_model_default.findOne(
+    {
+      code: TID,
+      deletedAt: null
+    },
+    null,
+    { session }
+  );
+  if (!userPublic) throw new Error("user_public.not_found");
+  const userPublicFull = {
+    ...userPublic.toObject(),
+    user: null
+  };
+  if (userPublic?.user?.id) {
+    const user = await detail5(userPublic.user.id, session);
+    userPublicFull.user = user;
+  }
+  return userPublicFull;
+};
+var setup2 = async (userId) => {
+  const timestamp = Date.now();
+  const salt = randomBytes(4).toString("hex");
+  const code = createHash("sha256").update(`${timestamp}${salt}`).digest("hex");
+  const payload = { code };
+  if (userId) {
+    const userPublic = await user_public_model_default.findOne({
+      "user.id": userId,
+      deletedAt: null
+    });
+    if (userPublic) return userPublic.toObject();
+    const user2 = await user_model_default.findOne({ _id: userId, deletedAt: null });
+    if (user2) payload.user = { id: user2.id, name: user2.name };
+  }
+  const user = await user_public_model_default.create(payload);
+  return user.toObject();
+};
+var UserPublicService = { verify: verify4, detail: detail6, setup: setup2 };
+var user_public_service_default = UserPublicService;
 
 // _src/services/user-trivia-service/index.ts
 var setup3 = async (userPublic, userChallenge, session) => {
@@ -1134,24 +1616,6 @@ var UserTriviaService = {
   summary: summary2
 };
 var user_trivia_service_default = UserTriviaService;
-var UserPhotoHuntResultSchema = new Schema(
-  {
-    feedback: { type: String, default: null },
-    foundAt: { type: Date, default: Date.now() },
-    score: { type: Number, default: 0 }
-  },
-  { _id: false }
-);
-var UserPhotoHuntSchema = new Schema({
-  photoHunt: { type: PhotoHuntForeignSchema, required: true },
-  results: { type: UserPhotoHuntResultSchema, default: null },
-  userChallenge: { type: UserChallengeForeignSchema, required: true },
-  userPublic: { type: UserPublicForeignSchema, required: true }
-});
-UserPhotoHuntSchema.set("toObject", ToObject);
-UserPhotoHuntSchema.set("toJSON", ToObject);
-var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
 
 // _src/services/user-photo-hunt-service/index.ts
 var setup4 = async (userPublic, userChallenge, session) => {
@@ -1182,7 +1646,7 @@ var details4 = async (ids, TID, hasResult, session) => {
 };
 var submit3 = async (userChallengeId, TID, code, bonus) => {
   return db_default.transaction(async (session) => {
-    const userChallenge = await detail5(userChallengeId, TID);
+    const userChallenge = await detail7(userChallengeId, TID);
     const {
       challenge: { id: challengeId }
     } = userChallenge;
@@ -1254,103 +1718,6 @@ var UserPhotoHuntService = {
   summary: summary3
 };
 var user_photo_hunt_service_default = UserPhotoHuntService;
-
-// _src/helpers/bonus.ts
-var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
-  return Math.round(maxPoint * (1 - seconds / totalSeconds));
-};
-
-// _src/plugins/redis/index.ts
-var redis_exports = {};
-__export(redis_exports, {
-  RedisHelper: () => RedisHelper,
-  default: () => redis_default,
-  redis: () => redis
-});
-__reExport(redis_exports, ioredis_star);
-var prefix = "\x1B[38;5;196mREDIS:\x1B[0m";
-var RedisHelper = class {
-  status = 0;
-  client = null;
-  subscr = null;
-  messageHandlers = [];
-  constructor() {
-  }
-  init(options) {
-    this.client = new Redis(options);
-    this.subscr = new Redis(options);
-    this.initiate();
-  }
-  getClient() {
-    if (!this.client) throw new Error("Redis client has not ben set yer");
-    return this.client;
-  }
-  getSubscr() {
-    if (!this.subscr) throw new Error("Redis subscribe has not ben set yer");
-    return this.subscr;
-  }
-  initiate() {
-    const client = this.getClient();
-    const subscr = this.getSubscr();
-    this.status = 1;
-    client.on(
-      "connect",
-      () => console.log(prefix, "Redis connected successfully!")
-    );
-    client.on("error", (err) => console.error("\u274C Redis Error:", err));
-    subscr.on("message", async (channel, message) => {
-      const handlers = this.messageHandlers.filter(
-        (v) => v.channel === channel
-      );
-      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
-      handlers.forEach((handler) => {
-        console.log(
-          prefix,
-          `message received from ${channel} to id ${handler.id}`
-        );
-        handler.callback(data);
-      });
-    });
-  }
-  async get(key) {
-  }
-  async set(key) {
-  }
-  async del(key) {
-  }
-  async pub(channel, data) {
-    const client = this.getClient();
-    const message = typeof data == "string" ? data : JSON.stringify(data);
-    console.log(prefix, `message published to ${channel}`);
-    await client.publish(channel, message);
-  }
-  async sub(channel, callback) {
-    if (!this.subscr) return;
-    await this.subscr.subscribe(channel);
-    const handler = {
-      id: randomUUID(),
-      channel,
-      callback
-    };
-    this.messageHandlers.push(handler);
-    console.log(prefix, `channel ${channel} subscribed with id ${handler.id}`);
-    return () => {
-      const index = this.messageHandlers.findIndex(
-        ({ id }) => id === handler.id
-      );
-      if (index !== -1) this.messageHandlers.splice(index, 1);
-      console.log(
-        prefix,
-        `channel ${channel} with id ${handler.id} unsubscribed`
-      );
-    };
-  }
-};
-var globalInstance = globalThis;
-if (!globalInstance.__REDIS_HELPER__)
-  globalInstance.__REDIS_HELPER__ = new RedisHelper();
-var redis = globalInstance.__REDIS_HELPER__;
-var redis_default = RedisHelper;
 
 // _src/services/user-challenge-service/index.ts
 var services = {
@@ -1498,7 +1865,7 @@ var setup5 = async (challengeId, TID, setDiscover) => {
   await userChallengeData.save();
   return userChallengeData.toObject();
 };
-var list5 = async (params, TID) => {
+var list6 = async (params, TID) => {
   const { search, status, userStageId } = params;
   const filters = { "userPublic.code": TID };
   if (search) filters["challenge.name"] = { $regex: search, $options: "i" };
@@ -1516,7 +1883,7 @@ var list5 = async (params, TID) => {
     ...rest
   };
 };
-var detail5 = async (id, TID) => {
+var detail7 = async (id, TID) => {
   const data = await user_challenge_model_default.findOne({
     _id: id,
     deletedAt: null,
@@ -1612,8 +1979,8 @@ var userSync2 = async (TID, session) => {
 var UserChallengeService = {
   verify: verify6,
   setup: setup5,
-  list: list5,
-  detail: detail5,
+  list: list6,
+  detail: detail7,
   submit,
   summary,
   init
@@ -1625,16 +1992,16 @@ var services2 = {
     detail: detail2,
     verify: verify2
   },
-  photohunt: { detail: detail6, verify: verify7 },
+  photohunt: { detail: detail8, verify: verify7 },
   trivia: { detail: detail3, verify: verify3 }
 };
 var servicesSetup = {
-  stage: { setup: setup2 },
+  stage: { setup },
   challenge: { setup: setup5 },
   trivia: null,
   photohunt: null
 };
-var list6 = async (params) => {
+var list7 = async (params) => {
   const { page = 1, limit = 10 } = params;
   const skip = (page - 1) * limit;
   const filter = { deletedAt: null };
@@ -1662,7 +2029,7 @@ var generate = async (count) => {
   });
   return qr_model_default.insertMany(items);
 };
-var detail7 = async (id) => {
+var detail9 = async (id) => {
   const item = await qr_model_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("item not found");
   return item.toObject();
@@ -1671,7 +2038,7 @@ var details5 = async (ids) => {
   const items = await qr_model_default.find({ _id: { $in: ids } });
   return items.map((item) => item.toObject());
 };
-var update3 = async (id, payload) => {
+var update4 = async (id, payload) => {
   const { content } = payload;
   const item = await qr_model_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("item not found");
@@ -1684,7 +2051,7 @@ var update3 = async (id, payload) => {
   await item.save();
   return item.toObject();
 };
-var _delete3 = async (id) => {
+var _delete4 = async (id) => {
   const item = await qr_model_default.findOneAndUpdate(
     { _id: id, deletedAt: null },
     { deletedAt: /* @__PURE__ */ new Date() }
@@ -1725,11 +2092,11 @@ var verify8 = async (code, TID) => {
 };
 var QrService = {
   generate,
-  list: list6,
-  detail: detail7,
+  list: list7,
+  detail: detail9,
   details: details5,
-  update: update3,
-  delete: _delete3,
+  update: update4,
+  delete: _delete4,
   deleteMany,
   verify: verify8
 };
@@ -1738,7 +2105,7 @@ var qr_service_default = QrService;
 // _src/services/photo-hunt-service/index.ts
 var createMany2 = async (challenge, payload, session) => {
   if (payload.length === 0) return [];
-  const qrs = (await list6({ hasContent: false, limit: payload.length })).list.map(({ id, code }) => ({
+  const qrs = (await list7({ hasContent: false, limit: payload.length })).list.map(({ id, code }) => ({
     id,
     code
   }));
@@ -1789,7 +2156,7 @@ var updateMany2 = async (challenge, payload, session) => {
     throw new Error("photohunt.sync.update_error");
   return await photo_hunt_model_default.find({ _id: { $in: ids } });
 };
-var detail6 = async (id) => {
+var detail8 = async (id) => {
   const item = await photo_hunt_model_default.findOne({ _id: id });
   if (!item) throw new Error("photo hunt not found");
   return item.toObject();
@@ -1850,333 +2217,7 @@ var verifyCode = async (challengeId, code) => {
   if (!item) throw new Error("photohunt.not_found");
   return item.toObject();
 };
-var PhotoHuntService = { detail: detail6, details: details3, sync: sync2, verify: verify7, verifyCode };
+var PhotoHuntService = { detail: detail8, details: details3, sync: sync2, verify: verify7, verifyCode };
 var photo_hunt_service_default = PhotoHuntService;
-
-// _src/plugins/aws-s3/index.ts
-var aws_s3_exports = {};
-__export(aws_s3_exports, {
-  S3Helper: () => S3Helper,
-  awsS3: () => awsS3,
-  default: () => aws_s3_default
-});
-__reExport(aws_s3_exports, client_s3_star);
-var prefix2 = "\x1B[38;5;165mS3:\x1B[0m";
-var S3Helper = class {
-  status = 0;
-  bucket;
-  client;
-  constructor() {
-    this.bucket = null;
-    this.client = null;
-  }
-  init({ bucket, ...config }) {
-    this.bucket = bucket;
-    this.client = new S3Client(config);
-    this.initiate();
-  }
-  async initiate() {
-    if (!(this.client && this.bucket)) return;
-    this.status = 1;
-    this.client.send(new HeadBucketCommand({ Bucket: this.bucket })).then(() => {
-      console.log(prefix2, "Aws S3 connected successfully!");
-    }).catch((err) => {
-      console.log(prefix2, "\u274C Aws S3 Error:", err.message);
-    });
-  }
-  getClient() {
-    if (!this.client) throw new Error("Aws S3 has not been setup yet");
-    return this.client;
-  }
-  getBucket() {
-    if (!this.bucket) throw new Error("S3 Bucket has not been setup yet");
-    return this.bucket;
-  }
-  async put(payload) {
-    const client = this.getClient();
-    const bucket = this.getBucket();
-    const { buffer, filename, mimetype } = payload;
-    const names = filename.split(".");
-    const ext = names.length > 1 ? "." + names.pop() : "";
-    const unique = Date.now().toString(36);
-    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
-    const config = {
-      Bucket: bucket,
-      Key,
-      Body: buffer,
-      ContentType: mimetype,
-      ACL: "public-read"
-    };
-    const command = new PutObjectCommand(config);
-    const region = await client.config.region();
-    const res = await client.send(command);
-    console.log(prefix2, `success put file`);
-    return {
-      fileName: Key,
-      size: res.Size,
-      fileUrl: `https://${bucket}.s3.${region}.amazonaws.com/${Key}`
-    };
-  }
-  async delete(key) {
-    const client = this.getClient();
-    const bucket = this.getBucket();
-    const config = {
-      Bucket: bucket,
-      Key: key
-    };
-    const command = new DeleteObjectCommand(config);
-    const res = await client.send(command);
-    console.log(prefix2, `success delete file`);
-    return res;
-  }
-};
-var globalInstance2 = globalThis;
-if (!globalInstance2.__S3_HELPER__)
-  globalInstance2.__S3_HELPER__ = new S3Helper();
-var awsS3 = globalInstance2.__S3_HELPER__;
-var aws_s3_default = S3Helper;
-
-// _src/services/s3-service/index.ts
-var S3ServiceSet = async (payload, userId, session) => {
-  const userData = await user_model_default.findOne(
-    { _id: userId },
-    { _id: true },
-    { session }
-  );
-  if (!userData) throw new Error("s3.user_empty");
-  const resS3 = await awsS3.put(payload);
-  if (!resS3) throw new Error("s3.failed_upload");
-  const [item] = await s3_model_default.create(
-    [
-      {
-        fileName: resS3.fileName,
-        fileUrl: resS3.fileUrl,
-        fileSize: payload.buffer.length,
-        fileType: payload.mimetype,
-        userId
-      }
-    ],
-    { session }
-  );
-  return item.toObject();
-};
-var S3ServiceGet = async (path) => {
-};
-var S3ServiceDelete = async (key, session) => {
-  const res = await awsS3.delete(key);
-  await s3_model_default.deleteOne({ fileName: key }, { session });
-  return res;
-};
-var S3Service = {
-  set: S3ServiceSet,
-  get: S3ServiceGet,
-  delete: S3ServiceDelete
-};
-var s3_service_default = S3Service;
-
-// _src/helpers/index.ts
-var urlToBuffer = async (photoURL) => {
-  const response = await fetch(photoURL);
-  if (!response.ok) throw new Error("Failed to fetch image");
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const mimetype = response.headers.get("content-type") || "application/octet-stream";
-  return { buffer, mimetype };
-};
-
-// _src/services/user-service/index.ts
-var register = async (payload, TID) => {
-  return await db_default.transaction(async (session) => {
-    const { email, name, password: rawPassword } = payload;
-    const userPublic = await verify4(TID, session);
-    if (userPublic.user?.id) throw new Error("user.exists");
-    const userExists = await user_model_default.findOne({ email }, { _id: 1 }).session(
-      session
-    );
-    if (userExists) throw new Error("email taken");
-    const password = await hash(rawPassword, 10);
-    const [user] = await user_model_default.create(
-      [
-        {
-          name,
-          email,
-          password,
-          role: USER_ROLES.Public,
-          provider: [USER_PROVIDERS.Email]
-        }
-      ],
-      { session }
-    );
-    const data = {
-      name: user.name,
-      user: { id: user._id, name: user.name, email: user.email }
-    };
-    await user_public_model_default.updateOne({ code: TID }, { $set: data }, { session });
-    await dataSync(TID, session);
-    return user.toObject();
-  });
-};
-var googleSign = async (payload, TID) => {
-  return await db_default.transaction(async (session) => {
-    const { email, displayName: name, photoURL, phoneNumber: phone } = payload;
-    if (!(email && name)) throw new Error("user.payload_invalid");
-    const user = await Promise.resolve().then(async () => {
-      const userExists = await user_model_default.findOne({ email }, null, { session });
-      if (userExists) {
-        if (!userExists.provider.includes(USER_PROVIDERS.Google)) {
-          userExists.provider.push(USER_PROVIDERS.Google);
-          await userExists.save({ session });
-        }
-        return userExists;
-      }
-      const [user2] = await user_model_default.create(
-        [{ name, email, provider: ["google"] }],
-        { session }
-      );
-      return user2;
-    });
-    const userId = user._id.toString();
-    const userForeign = {
-      id: userId,
-      name,
-      email,
-      photo: user.photo?.fileUrl || null
-    };
-    if (photoURL && !user.photo?.fileUrl) {
-      const res = await urlToBuffer(photoURL);
-      const s3payload = {
-        ...res,
-        filename: `${name}_photo`
-      };
-      const photo = await S3ServiceSet(s3payload, userId, session);
-      userForeign.photo = photo.fileUrl;
-      const s3foreign = {
-        fileName: photo.fileName,
-        fileSize: photo.fileSize,
-        fileUrl: photo.fileUrl
-      };
-      await user_model_default.updateOne(
-        { _id: userId },
-        { $set: { photo: s3foreign } },
-        { session }
-      );
-    }
-    await user_public_model_default.findOneAndUpdate(
-      { code: TID },
-      { $set: { name, phone, user: userForeign } },
-      { session }
-    );
-    if (user.provider.includes(USER_PROVIDERS.Google)) return user.toObject();
-    await dataSync(TID, session);
-    const userResult = await user_model_default.findOne({ _id: userId }, null, {
-      session
-    });
-    return userResult?.toObject();
-  });
-};
-var login = async (payload, provider, secret) => {
-  const email = payload.email;
-  const user = await user_model_default.findOne({ email });
-  if (!user) throw new Error("user not found");
-  if (provider == "email") {
-    if (!user.password) throw new Error("user.password_empty");
-    if (!payload.password) throw new Error("login.password_empty");
-    const isPasswordValid = await compare(payload.password, user.password);
-    if (!isPasswordValid) throw new Error("invalid password");
-  }
-  const userPublic = await user_public_model_default.findOne({
-    "user.id": user._id.toString()
-  });
-  if (!userPublic) throw new Error("user_public.not_found");
-  const token = sign({ id: user._id }, secret, {
-    expiresIn: 30 * 24 * 60 * 60
-  });
-  const { _id: id, name } = user;
-  return { id, name, email, TID: userPublic.code, token };
-};
-var profile = async (bearer) => {
-};
-var list7 = async (params) => {
-};
-var create3 = async (payload) => {
-};
-var detail8 = async (id, session) => {
-  const user = await user_model_default.findOne({ _id: id, deletedAt: null }, null, {
-    session
-  });
-  if (!user) throw new Error("user not found");
-  const meta = await verify4(user.id, session);
-  return {
-    ...user.toObject(),
-    meta
-  };
-};
-var update4 = async (id, payload) => {
-  return db_default.transaction(async (session) => {
-    await user_model_default.updateOne(
-      { _id: id },
-      { $set: { name: payload.name } },
-      { session, new: true }
-    );
-    const userPublic = await user_public_model_default.findOneAndUpdate(
-      { "user.id": id },
-      { $set: { ...payload, "user.name": payload.name } },
-      { session, new: true }
-    );
-    if (!userPublic) throw new Error("user.not_found");
-    await dataSync(userPublic.code, session);
-    redis.pub("update-user", userPublic);
-    return userPublic.toObject();
-  });
-};
-var updatePhoto = async (userId, payload) => {
-  return await db_default.transaction(async (session) => {
-    const user = await detail8(userId, session);
-    const userPublic = await user_public_model_default.findOne({ "user.id": userId });
-    if (!userPublic) throw new Error("user.not_found");
-    const oldPhoto = user.photo?.fileName;
-    if (oldPhoto) await S3ServiceDelete(oldPhoto);
-    const res = await S3ServiceSet(payload, userId, session);
-    const photo = {
-      fileName: res.fileName,
-      fileSize: res.fileSize,
-      fileUrl: res.fileUrl
-    };
-    await user_model_default.updateOne(
-      { _id: user.id },
-      { $set: { photo } },
-      { session }
-    );
-    const newUser = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      photo: res.fileUrl
-    };
-    userPublic.user = newUser;
-    await userPublic.save({ session });
-    redis.pub("update-user", userPublic);
-    return userPublic.toObject();
-  });
-};
-var _delete4 = async (id) => {
-};
-var dataSync = async (TID, session) => {
-  await userSync(TID, session);
-  await userSync2(TID, session);
-};
-var UserService = {
-  register,
-  googleSign,
-  login,
-  profile,
-  list: list7,
-  create: create3,
-  detail: detail8,
-  update: update4,
-  updatePhoto,
-  delete: _delete4
-};
-var user_service_default = UserService;
 
 export { challenge_service_default as ChallengeService, leaderboard_service_default as LeaderboardService, photo_hunt_service_default as PhotoHuntService, qr_service_default as QrService, s3_service_default as S3Service, stage_service_default as StageService, trivia_service_default as TriviaService, user_challenge_service_default as UserChallengeService, user_photo_hunt_service_default as UserPhotoHuntService, user_public_service_default as UserPublicService, user_service_default as UserService, user_stage_service_default as UserStageService, user_trivia_service_default as UserTriviaService };

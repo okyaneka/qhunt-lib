@@ -4,8 +4,15 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var mongoose = require('mongoose');
 require('dayjs');
+require('bcryptjs');
+require('jsonwebtoken');
+var client_s3_star = require('@aws-sdk/client-s3');
+var slugify = require('slugify');
 var ioredis_star = require('ioredis');
 var crypto = require('crypto');
+require('@zxing/browser');
+
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
 function _interopNamespace(e) {
   if (e && e.__esModule) return e;
@@ -25,6 +32,8 @@ function _interopNamespace(e) {
   return Object.freeze(n);
 }
 
+var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
+var slugify__default = /*#__PURE__*/_interopDefault(slugify);
 var ioredis_star__namespace = /*#__PURE__*/_interopNamespace(ioredis_star);
 
 var __defProp = Object.defineProperty;
@@ -529,6 +538,106 @@ var UserChallengeSchema = new mongoose.Schema(
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
+
+// _src/plugins/aws-s3/index.ts
+var aws_s3_exports = {};
+__export(aws_s3_exports, {
+  S3Helper: () => S3Helper,
+  awsS3: () => awsS3,
+  default: () => aws_s3_default
+});
+__reExport(aws_s3_exports, client_s3_star__namespace);
+var prefix = "\x1B[38;5;165mS3:\x1B[0m";
+var S3Helper = class {
+  status = 0;
+  bucket;
+  client;
+  constructor() {
+    this.bucket = null;
+    this.client = null;
+  }
+  init({ bucket, ...config }) {
+    this.bucket = bucket;
+    this.client = new client_s3_star.S3Client(config);
+    this.initiate();
+  }
+  async initiate() {
+    if (!(this.client && this.bucket)) return;
+    this.status = 1;
+    this.client.send(new client_s3_star.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+      console.log(prefix, "Aws S3 connected successfully!");
+    }).catch((err) => {
+      console.log(prefix, "\u274C Aws S3 Error:", err.message);
+    });
+  }
+  getClient() {
+    if (!this.client) throw new Error("Aws S3 has not been setup yet");
+    return this.client;
+  }
+  getBucket() {
+    if (!this.bucket) throw new Error("S3 Bucket has not been setup yet");
+    return this.bucket;
+  }
+  async put(payload) {
+    const client = this.getClient();
+    const bucket = this.getBucket();
+    const { buffer, filename, mimetype } = payload;
+    const names = filename.split(".");
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
+    const config = {
+      Bucket: bucket,
+      Key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: "public-read"
+    };
+    const command = new client_s3_star.PutObjectCommand(config);
+    const region = await client.config.region();
+    const res = await client.send(command);
+    console.log(prefix, `success put file`);
+    return {
+      fileName: Key,
+      size: res.Size,
+      fileUrl: `https://${bucket}.s3.${region}.amazonaws.com/${Key}`
+    };
+  }
+  async delete(key) {
+    const client = this.getClient();
+    const bucket = this.getBucket();
+    const config = {
+      Bucket: bucket,
+      Key: key
+    };
+    const command = new client_s3_star.DeleteObjectCommand(config);
+    const res = await client.send(command);
+    console.log(prefix, `success delete file`);
+    return res;
+  }
+};
+var globalInstance = globalThis;
+if (!globalInstance.__S3_HELPER__)
+  globalInstance.__S3_HELPER__ = new S3Helper();
+var awsS3 = globalInstance.__S3_HELPER__;
+var aws_s3_default = S3Helper;
+var UserPhotoHuntResultSchema = new mongoose.Schema(
+  {
+    feedback: { type: String, default: null },
+    foundAt: { type: Date, default: Date.now() },
+    score: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+var UserPhotoHuntSchema = new mongoose.Schema({
+  photoHunt: { type: PhotoHuntForeignSchema, required: true },
+  results: { type: UserPhotoHuntResultSchema, default: null },
+  userChallenge: { type: UserChallengeForeignSchema, required: true },
+  userPublic: { type: UserPublicForeignSchema, required: true }
+});
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
+mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -557,23 +666,6 @@ var UserTriviaSchema = new mongoose.Schema(
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
-var UserPhotoHuntResultSchema = new mongoose.Schema(
-  {
-    feedback: { type: String, default: null },
-    foundAt: { type: Date, default: Date.now() },
-    score: { type: Number, default: 0 }
-  },
-  { _id: false }
-);
-var UserPhotoHuntSchema = new mongoose.Schema({
-  photoHunt: { type: PhotoHuntForeignSchema, required: true },
-  results: { type: UserPhotoHuntResultSchema, default: null },
-  userChallenge: { type: UserChallengeForeignSchema, required: true },
-  userPublic: { type: UserPublicForeignSchema, required: true }
-});
-UserPhotoHuntSchema.set("toObject", ToObject);
-UserPhotoHuntSchema.set("toJSON", ToObject);
-mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -583,7 +675,7 @@ __export(redis_exports, {
   redis: () => redis
 });
 __reExport(redis_exports, ioredis_star__namespace);
-var prefix = "\x1B[38;5;196mREDIS:\x1B[0m";
+var prefix2 = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
   client = null;
@@ -610,7 +702,7 @@ var RedisHelper = class {
     this.status = 1;
     client.on(
       "connect",
-      () => console.log(prefix, "Redis connected successfully!")
+      () => console.log(prefix2, "Redis connected successfully!")
     );
     client.on("error", (err) => console.error("\u274C Redis Error:", err));
     subscr.on("message", async (channel, message) => {
@@ -620,7 +712,7 @@ var RedisHelper = class {
       const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
       handlers.forEach((handler) => {
         console.log(
-          prefix,
+          prefix2,
           `message received from ${channel} to id ${handler.id}`
         );
         handler.callback(data);
@@ -636,7 +728,7 @@ var RedisHelper = class {
   async pub(channel, data) {
     const client = this.getClient();
     const message = typeof data == "string" ? data : JSON.stringify(data);
-    console.log(prefix, `message published to ${channel}`);
+    console.log(prefix2, `message published to ${channel}`);
     await client.publish(channel, message);
   }
   async sub(channel, callback) {
@@ -648,23 +740,23 @@ var RedisHelper = class {
       callback
     };
     this.messageHandlers.push(handler);
-    console.log(prefix, `channel ${channel} subscribed with id ${handler.id}`);
+    console.log(prefix2, `channel ${channel} subscribed with id ${handler.id}`);
     return () => {
       const index = this.messageHandlers.findIndex(
         ({ id }) => id === handler.id
       );
       if (index !== -1) this.messageHandlers.splice(index, 1);
       console.log(
-        prefix,
+        prefix2,
         `channel ${channel} with id ${handler.id} unsubscribed`
       );
     };
   }
 };
-var globalInstance = globalThis;
-if (!globalInstance.__REDIS_HELPER__)
-  globalInstance.__REDIS_HELPER__ = new RedisHelper();
-var redis = globalInstance.__REDIS_HELPER__;
+var globalInstance2 = globalThis;
+if (!globalInstance2.__REDIS_HELPER__)
+  globalInstance2.__REDIS_HELPER__ = new RedisHelper();
+var redis = globalInstance2.__REDIS_HELPER__;
 var redis_default = RedisHelper;
 
 // _src/services/qr-service/index.ts
@@ -741,7 +833,7 @@ var updateMany = async (challenge, payload, session) => {
     throw new Error("photohunt.sync.update_error");
   return await photo_hunt_model_default.find({ _id: { $in: ids } });
 };
-var detail5 = async (id) => {
+var detail6 = async (id) => {
   const item = await photo_hunt_model_default.findOne({ _id: id });
   if (!item) throw new Error("photo hunt not found");
   return item.toObject();
@@ -802,11 +894,11 @@ var verifyCode = async (challengeId, code) => {
   if (!item) throw new Error("photohunt.not_found");
   return item.toObject();
 };
-var PhotoHuntService = { detail: detail5, details: details3, sync, verify: verify4, verifyCode };
+var PhotoHuntService = { detail: detail6, details: details3, sync, verify: verify4, verifyCode };
 var photo_hunt_service_default = PhotoHuntService;
 
 exports.default = photo_hunt_service_default;
-exports.detail = detail5;
+exports.detail = detail6;
 exports.details = details3;
 exports.sync = sync;
 exports.verify = verify4;
