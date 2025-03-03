@@ -14,11 +14,22 @@ export interface UserPayload {
   password: string;
 }
 
+export interface UserPasswordPayload {
+  old_password: string | null;
+  new_password: string;
+  confirm_password: string;
+}
+
 export type UserLoginPayload = Pick<User, "email" | "password">;
 
 export type UserForeign = Pick<User, "id" | "name" | "email"> & {
   photo: string | null;
 };
+
+export type UserForeignFull = Pick<
+  User,
+  "id" | "name" | "email" | "photo" | "provider" | "role"
+>;
 
 export type Auth = Pick<User, "id" | "name" | "email"> & { token: string };
 

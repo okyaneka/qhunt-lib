@@ -2,6 +2,8 @@ import { ClientSession } from "mongoose";
 import UserModel from "~/models/user-model";
 import UserPublicModel from "~/models/user-public-model";
 import { createHash, randomBytes } from "crypto";
+import { UserPublicFull } from "~/types/user-public";
+import { detail as UserServiceDetail } from "../user-service";
 
 export const verify = async (value: string, session?: ClientSession) => {
   if (!value) throw new Error("token is required");
@@ -16,6 +18,34 @@ export const verify = async (value: string, session?: ClientSession) => {
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
+};
+
+export const detail = async (
+  TID: string,
+  session?: ClientSession
+): Promise<UserPublicFull> => {
+  const userPublic = await UserPublicModel.findOne(
+    {
+      code: TID,
+      deletedAt: null,
+    },
+    null,
+    { session }
+  );
+
+  if (!userPublic) throw new Error("user_public.not_found");
+
+  const userPublicFull: UserPublicFull = {
+    ...userPublic.toObject(),
+    user: null,
+  };
+
+  if (userPublic?.user?.id) {
+    const user = await UserServiceDetail(userPublic.user.id, session);
+    userPublicFull.user = user;
+  }
+
+  return userPublicFull;
 };
 
 export const setup = async (userId?: string) => {
@@ -39,6 +69,6 @@ export const setup = async (userId?: string) => {
   return user.toObject();
 };
 
-const UserPublicService = { verify, setup };
+const UserPublicService = { verify, detail, setup };
 
 export default UserPublicService;

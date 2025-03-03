@@ -915,16 +915,20 @@ var list2 = async (params) => {
 };
 var create = async (payload) => {
 };
-var detail6 = async (id, session) => {
+var detail = async (id, session) => {
   const user = await user_model_default.findOne({ _id: id, deletedAt: null }, null, {
     session
   });
   if (!user) throw new Error("user not found");
-  const meta = await verify(user.id, session);
-  return {
-    ...user.toObject(),
-    meta
+  const userForeign = {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    photo: user.photo,
+    provider: user.provider,
+    role: user.role
   };
+  return userForeign;
 };
 var update = async (id, payload) => {
   return db_default.transaction(async (session) => {
@@ -944,9 +948,23 @@ var update = async (id, payload) => {
     return userPublic.toObject();
   });
 };
+var updatePassword = async (id, payload) => {
+  const user = await user_model_default.findOne({ _id: id });
+  if (!user) throw new Error("user.not_found");
+  const provider = user.provider;
+  if (payload.old_password && user.password) {
+    const isPasswordValid = await compare(payload.old_password, user.password);
+    if (!isPasswordValid) throw new Error("user.invalid_old_password");
+  } else if (!provider.includes("email")) {
+    provider.push("email");
+  }
+  const password = await hash(payload.new_password, 10);
+  await user_model_default.updateOne({ _id: id }, { $set: { password, provider } });
+  return {};
+};
 var updatePhoto = async (userId, payload) => {
   return await db_default.transaction(async (session) => {
-    const user = await detail6(userId, session);
+    const user = await detail(userId, session);
     const userPublic = await user_public_model_default.findOne({ "user.id": userId });
     if (!userPublic) throw new Error("user.not_found");
     const oldPhoto = user.photo?.fileName;
@@ -987,11 +1005,12 @@ var UserService = {
   profile,
   list: list2,
   create,
-  detail: detail6,
+  detail,
   update,
+  updatePassword,
   updatePhoto,
   delete: _delete
 };
 var user_service_default = UserService;
 
-export { _delete, create, dataSync, user_service_default as default, detail6 as detail, googleSign, list2 as list, login, profile, register, update, updatePhoto };
+export { _delete, create, dataSync, user_service_default as default, detail, googleSign, list2 as list, login, profile, register, update, updatePassword, updatePhoto };

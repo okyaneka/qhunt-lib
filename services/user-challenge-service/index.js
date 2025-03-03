@@ -4,8 +4,13 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var dayjs = require('dayjs');
 var mongoose = require('mongoose');
+require('bcryptjs');
+require('jsonwebtoken');
+var client_s3_star = require('@aws-sdk/client-s3');
+var slugify = require('slugify');
 var ioredis_star = require('ioredis');
 var crypto = require('crypto');
+require('@zxing/browser');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
@@ -28,6 +33,8 @@ function _interopNamespace(e) {
 }
 
 var dayjs__default = /*#__PURE__*/_interopDefault(dayjs);
+var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
+var slugify__default = /*#__PURE__*/_interopDefault(slugify);
 var ioredis_star__namespace = /*#__PURE__*/_interopNamespace(ioredis_star);
 
 var __defProp = Object.defineProperty;
@@ -518,21 +525,6 @@ UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
 
-// _src/services/user-public-service/index.ts
-var verify3 = async (value, session) => {
-  if (!value) throw new Error("token is required");
-  const userPublic = await user_public_model_default.findOneAndUpdate(
-    {
-      $or: [{ "user.id": value }, { code: value }],
-      deletedAt: null
-    },
-    { lastAccessedAt: /* @__PURE__ */ new Date() },
-    { new: true, session }
-  );
-  if (!userPublic) throw new Error("invalid user");
-  return userPublic.toObject();
-};
-
 // _src/services/user-stage-service/index.ts
 var initResults = () => ({
   baseScore: 0,
@@ -640,25 +632,162 @@ var submitState = async (id, TID, session) => {
 var UserStageService = { list: list2, detail: detail3, setup, verify: verify4, submitState };
 var user_stage_service_default = UserStageService;
 
-// _src/helpers/service.ts
-var list3 = async (model13, page, limit, filters = {}, sort) => {
-  const skip = (page - 1) * limit;
-  const filter = {
-    ...filters,
-    deletedAt: null
-  };
-  const items = await model13.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
-  const totalItems = await model13.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / limit);
-  return {
-    list: items.map((item) => item.toObject ? item.toObject() : item),
-    page,
-    totalItems,
-    totalPages
-  };
+// _src/plugins/aws-s3/index.ts
+var aws_s3_exports = {};
+__export(aws_s3_exports, {
+  S3Helper: () => S3Helper,
+  awsS3: () => awsS3,
+  default: () => aws_s3_default
+});
+__reExport(aws_s3_exports, client_s3_star__namespace);
+var prefix = "\x1B[38;5;165mS3:\x1B[0m";
+var S3Helper = class {
+  status = 0;
+  bucket;
+  client;
+  constructor() {
+    this.bucket = null;
+    this.client = null;
+  }
+  init({ bucket, ...config }) {
+    this.bucket = bucket;
+    this.client = new client_s3_star.S3Client(config);
+    this.initiate();
+  }
+  async initiate() {
+    if (!(this.client && this.bucket)) return;
+    this.status = 1;
+    this.client.send(new client_s3_star.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+      console.log(prefix, "Aws S3 connected successfully!");
+    }).catch((err) => {
+      console.log(prefix, "\u274C Aws S3 Error:", err.message);
+    });
+  }
+  getClient() {
+    if (!this.client) throw new Error("Aws S3 has not been setup yet");
+    return this.client;
+  }
+  getBucket() {
+    if (!this.bucket) throw new Error("S3 Bucket has not been setup yet");
+    return this.bucket;
+  }
+  async put(payload) {
+    const client = this.getClient();
+    const bucket = this.getBucket();
+    const { buffer, filename, mimetype } = payload;
+    const names = filename.split(".");
+    const ext = names.length > 1 ? "." + names.pop() : "";
+    const unique = Date.now().toString(36);
+    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
+    const config = {
+      Bucket: bucket,
+      Key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: "public-read"
+    };
+    const command = new client_s3_star.PutObjectCommand(config);
+    const region = await client.config.region();
+    const res = await client.send(command);
+    console.log(prefix, `success put file`);
+    return {
+      fileName: Key,
+      size: res.Size,
+      fileUrl: `https://${bucket}.s3.${region}.amazonaws.com/${Key}`
+    };
+  }
+  async delete(key) {
+    const client = this.getClient();
+    const bucket = this.getBucket();
+    const config = {
+      Bucket: bucket,
+      Key: key
+    };
+    const command = new client_s3_star.DeleteObjectCommand(config);
+    const res = await client.send(command);
+    console.log(prefix, `success delete file`);
+    return res;
+  }
 };
-var service = { list: list3 };
-var service_default = service;
+var globalInstance = globalThis;
+if (!globalInstance.__S3_HELPER__)
+  globalInstance.__S3_HELPER__ = new S3Helper();
+var awsS3 = globalInstance.__S3_HELPER__;
+var aws_s3_default = S3Helper;
+var QrForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrContentSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(QR_CONTENT_TYPES),
+      required: true
+    },
+    refId: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrLocationSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "" },
+    longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new mongoose.Schema(
+  {
+    code: { type: String, required: true, unique: true, index: true },
+    status: {
+      type: String,
+      enum: Object.values(QR_STATUS),
+      required: true
+    },
+    content: { type: QrContentSchema, default: null },
+    location: { type: QrLocationSchema, default: null },
+    accessCount: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
+mongoose.models.Qr || mongoose.model("Qr", QrSchema);
+
+// _src/models/photo-hunt-model/index.ts
+var PhotoHuntForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new mongoose.Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var photo_hunt_model_default = PhotoHuntModel;
 var TriviaOptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true },
@@ -697,15 +826,24 @@ TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
 var TriviaModel = mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
 var trivia_model_default = TriviaModel;
-
-// _src/services/trivia-service/index.ts
-var details = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
-    throw new Error("challenge.not_trivia_type_error");
-  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
+var UserPhotoHuntResultSchema = new mongoose.Schema(
+  {
+    feedback: { type: String, default: null },
+    foundAt: { type: Date, default: Date.now() },
+    score: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+var UserPhotoHuntSchema = new mongoose.Schema({
+  photoHunt: { type: PhotoHuntForeignSchema, required: true },
+  results: { type: UserPhotoHuntResultSchema, default: null },
+  userChallenge: { type: UserChallengeForeignSchema, required: true },
+  userPublic: { type: UserPublicForeignSchema, required: true }
+});
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
+var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
+var user_photo_hunt_model_default = UserPhotoHuntModel;
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -735,6 +873,147 @@ UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
 var user_trivia_model_default = UserTriviaModel;
+
+// _src/plugins/redis/index.ts
+var redis_exports = {};
+__export(redis_exports, {
+  RedisHelper: () => RedisHelper,
+  default: () => redis_default,
+  redis: () => redis
+});
+__reExport(redis_exports, ioredis_star__namespace);
+var prefix2 = "\x1B[38;5;196mREDIS:\x1B[0m";
+var RedisHelper = class {
+  status = 0;
+  client = null;
+  subscr = null;
+  messageHandlers = [];
+  constructor() {
+  }
+  init(options) {
+    this.client = new ioredis_star.Redis(options);
+    this.subscr = new ioredis_star.Redis(options);
+    this.initiate();
+  }
+  getClient() {
+    if (!this.client) throw new Error("Redis client has not ben set yer");
+    return this.client;
+  }
+  getSubscr() {
+    if (!this.subscr) throw new Error("Redis subscribe has not ben set yer");
+    return this.subscr;
+  }
+  initiate() {
+    const client = this.getClient();
+    const subscr = this.getSubscr();
+    this.status = 1;
+    client.on(
+      "connect",
+      () => console.log(prefix2, "Redis connected successfully!")
+    );
+    client.on("error", (err) => console.error("\u274C Redis Error:", err));
+    subscr.on("message", async (channel, message) => {
+      const handlers = this.messageHandlers.filter(
+        (v) => v.channel === channel
+      );
+      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
+      handlers.forEach((handler) => {
+        console.log(
+          prefix2,
+          `message received from ${channel} to id ${handler.id}`
+        );
+        handler.callback(data);
+      });
+    });
+  }
+  async get(key) {
+  }
+  async set(key) {
+  }
+  async del(key) {
+  }
+  async pub(channel, data) {
+    const client = this.getClient();
+    const message = typeof data == "string" ? data : JSON.stringify(data);
+    console.log(prefix2, `message published to ${channel}`);
+    await client.publish(channel, message);
+  }
+  async sub(channel, callback) {
+    if (!this.subscr) return;
+    await this.subscr.subscribe(channel);
+    const handler = {
+      id: crypto.randomUUID(),
+      channel,
+      callback
+    };
+    this.messageHandlers.push(handler);
+    console.log(prefix2, `channel ${channel} subscribed with id ${handler.id}`);
+    return () => {
+      const index = this.messageHandlers.findIndex(
+        ({ id }) => id === handler.id
+      );
+      if (index !== -1) this.messageHandlers.splice(index, 1);
+      console.log(
+        prefix2,
+        `channel ${channel} with id ${handler.id} unsubscribed`
+      );
+    };
+  }
+};
+var globalInstance2 = globalThis;
+if (!globalInstance2.__REDIS_HELPER__)
+  globalInstance2.__REDIS_HELPER__ = new RedisHelper();
+var redis = globalInstance2.__REDIS_HELPER__;
+var redis_default = RedisHelper;
+
+// _src/helpers/bonus.ts
+var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
+  return Math.round(maxPoint * (1 - seconds / totalSeconds));
+};
+
+// _src/helpers/service.ts
+var list3 = async (model13, page, limit, filters = {}, sort) => {
+  const skip = (page - 1) * limit;
+  const filter = {
+    ...filters,
+    deletedAt: null
+  };
+  const items = await model13.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
+  const totalItems = await model13.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / limit);
+  return {
+    list: items.map((item) => item.toObject ? item.toObject() : item),
+    page,
+    totalItems,
+    totalPages
+  };
+};
+var service = { list: list3 };
+var service_default = service;
+
+// _src/services/user-public-service/index.ts
+var verify3 = async (value, session) => {
+  if (!value) throw new Error("token is required");
+  const userPublic = await user_public_model_default.findOneAndUpdate(
+    {
+      $or: [{ "user.id": value }, { code: value }],
+      deletedAt: null
+    },
+    { lastAccessedAt: /* @__PURE__ */ new Date() },
+    { new: true, session }
+  );
+  if (!userPublic) throw new Error("invalid user");
+  return userPublic.toObject();
+};
+
+// _src/services/trivia-service/index.ts
+var details = async (challengeId) => {
+  const challenge = await detail2(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
+    throw new Error("challenge.not_trivia_type_error");
+  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
 
 // _src/services/user-trivia-service/index.ts
 var setup2 = async (userPublic, userChallenge, session) => {
@@ -815,100 +1094,6 @@ var summary2 = async (userChallengeId, TID, session) => {
   }).session(session || null);
   return summary4;
 };
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(QR_CONTENT_TYPES),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new mongoose.Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new mongoose.Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QR_STATUS),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-mongoose.models.Qr || mongoose.model("Qr", QrSchema);
-
-// _src/models/photo-hunt-model/index.ts
-var PhotoHuntForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new mongoose.Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
-
-// _src/models/user-photo-hunt-model/index.ts
-var UserPhotoHuntResultSchema = new mongoose.Schema(
-  {
-    feedback: { type: String, default: null },
-    foundAt: { type: Date, default: Date.now() },
-    score: { type: Number, default: 0 }
-  },
-  { _id: false }
-);
-var UserPhotoHuntSchema = new mongoose.Schema({
-  photoHunt: { type: PhotoHuntForeignSchema, required: true },
-  results: { type: UserPhotoHuntResultSchema, default: null },
-  userChallenge: { type: UserChallengeForeignSchema, required: true },
-  userPublic: { type: UserPublicForeignSchema, required: true }
-});
-UserPhotoHuntSchema.set("toObject", ToObject);
-UserPhotoHuntSchema.set("toJSON", ToObject);
-var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
 
 // _src/services/photo-hunt-service/index.ts
 var details3 = async (challengeId) => {
@@ -989,103 +1174,6 @@ var summary3 = async (userChallengeId, TID, session) => {
   }).session(session || null);
   return summary4;
 };
-
-// _src/helpers/bonus.ts
-var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
-  return Math.round(maxPoint * (1 - seconds / totalSeconds));
-};
-
-// _src/plugins/redis/index.ts
-var redis_exports = {};
-__export(redis_exports, {
-  RedisHelper: () => RedisHelper,
-  default: () => redis_default,
-  redis: () => redis
-});
-__reExport(redis_exports, ioredis_star__namespace);
-var prefix = "\x1B[38;5;196mREDIS:\x1B[0m";
-var RedisHelper = class {
-  status = 0;
-  client = null;
-  subscr = null;
-  messageHandlers = [];
-  constructor() {
-  }
-  init(options) {
-    this.client = new ioredis_star.Redis(options);
-    this.subscr = new ioredis_star.Redis(options);
-    this.initiate();
-  }
-  getClient() {
-    if (!this.client) throw new Error("Redis client has not ben set yer");
-    return this.client;
-  }
-  getSubscr() {
-    if (!this.subscr) throw new Error("Redis subscribe has not ben set yer");
-    return this.subscr;
-  }
-  initiate() {
-    const client = this.getClient();
-    const subscr = this.getSubscr();
-    this.status = 1;
-    client.on(
-      "connect",
-      () => console.log(prefix, "Redis connected successfully!")
-    );
-    client.on("error", (err) => console.error("\u274C Redis Error:", err));
-    subscr.on("message", async (channel, message) => {
-      const handlers = this.messageHandlers.filter(
-        (v) => v.channel === channel
-      );
-      const data = await Promise.resolve().then(() => JSON.parse(message)).catch(() => message);
-      handlers.forEach((handler) => {
-        console.log(
-          prefix,
-          `message received from ${channel} to id ${handler.id}`
-        );
-        handler.callback(data);
-      });
-    });
-  }
-  async get(key) {
-  }
-  async set(key) {
-  }
-  async del(key) {
-  }
-  async pub(channel, data) {
-    const client = this.getClient();
-    const message = typeof data == "string" ? data : JSON.stringify(data);
-    console.log(prefix, `message published to ${channel}`);
-    await client.publish(channel, message);
-  }
-  async sub(channel, callback) {
-    if (!this.subscr) return;
-    await this.subscr.subscribe(channel);
-    const handler = {
-      id: crypto.randomUUID(),
-      channel,
-      callback
-    };
-    this.messageHandlers.push(handler);
-    console.log(prefix, `channel ${channel} subscribed with id ${handler.id}`);
-    return () => {
-      const index = this.messageHandlers.findIndex(
-        ({ id }) => id === handler.id
-      );
-      if (index !== -1) this.messageHandlers.splice(index, 1);
-      console.log(
-        prefix,
-        `channel ${channel} with id ${handler.id} unsubscribed`
-      );
-    };
-  }
-};
-var globalInstance = globalThis;
-if (!globalInstance.__REDIS_HELPER__)
-  globalInstance.__REDIS_HELPER__ = new RedisHelper();
-var redis = globalInstance.__REDIS_HELPER__;
-var redis_default = RedisHelper;
 
 // _src/services/user-challenge-service/index.ts
 var services = {
@@ -1251,7 +1339,7 @@ var list5 = async (params, TID) => {
     ...rest
   };
 };
-var detail6 = async (id, TID) => {
+var detail7 = async (id, TID) => {
   const data = await user_challenge_model_default.findOne({
     _id: id,
     deletedAt: null,
@@ -1332,7 +1420,7 @@ var summary = async (userStageId, TID, session) => {
     totalScore: { $sum: "$results.totalScore" }
   }).session(session || null);
 };
-var userSync = async (TID, session) => {
+var userSync2 = async (TID, session) => {
   const userPublicData = await verify3(TID, session);
   const userPublic = {
     code: userPublicData.code,
@@ -1348,7 +1436,7 @@ var UserChallengeService = {
   verify: verify7,
   setup: setup3,
   list: list5,
-  detail: detail6,
+  detail: detail7,
   submit,
   summary,
   init
@@ -1356,10 +1444,10 @@ var UserChallengeService = {
 var user_challenge_service_default = UserChallengeService;
 
 exports.default = user_challenge_service_default;
-exports.detail = detail6;
+exports.detail = detail7;
 exports.init = init;
 exports.list = list5;
 exports.setup = setup3;
 exports.submit = submit;
 exports.summary = summary;
-exports.userSync = userSync;
+exports.userSync = userSync2;
