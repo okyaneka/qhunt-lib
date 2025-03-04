@@ -1,4 +1,4 @@
-import UserPhotoHuntModel from "~/models/user-photo-hunt-model";
+import UserPhotoHuntModel from "~/models/user-photohunt-model";
 import {
   UserChallengeForeign,
   UserPhotoHuntResult,
@@ -8,7 +8,7 @@ import {
 import {
   details as PhotoHuntDetails,
   verifyCode as PhotoHuntVerifyCode,
-} from "../photo-hunt-service";
+} from "../photohunt-service";
 import { ClientSession } from "mongoose";
 import {
   submit as UserChallengeSubmit,

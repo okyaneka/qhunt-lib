@@ -1,5 +1,5 @@
 import { ScoreSummary } from "~";
-import { PhotoHuntForeign } from "./photo-hunt";
+import { PhotoHuntForeign } from "./photohunt";
 import { UserChallengeForeign } from "./user-challenge";
 import { UserPublicForeign } from "./user-public";
 import { CHALLENGE_TYPES } from "~/constants";

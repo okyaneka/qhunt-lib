@@ -1,5 +1,5 @@
 import QrModel from "~/models/qr-model";
-import PhotoHuntModel from "~/models/photo-hunt-model";
+import PhotoHuntModel from "~/models/photohunt-model";
 import { IdName } from "~";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
