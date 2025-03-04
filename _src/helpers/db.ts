@@ -1,10 +1,11 @@
 import { startSession, ClientSession } from "mongoose";
 
 export const transaction = async <T>(
-  operation: (session: ClientSession) => Promise<T>
+  operation: (session: ClientSession) => Promise<T>,
+  clientSession?: ClientSession
 ): Promise<T> => {
-  const session = await startSession();
-  session.startTransaction();
+  const session = clientSession ?? (await startSession());
+  clientSession ?? session.startTransaction();
 
   return await operation(session)
     .then(async (res) => {
