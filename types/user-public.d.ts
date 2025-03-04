@@ -1,4 +1,4 @@
-import { Timestamps, ValueOf } from "..";
+import { Timestamps, ValueOf } from "../index";
 import { UserForeign, UserForeignFull } from "./user";
 import { USER_PUBLIC_GENDER } from "../constants";
 export type UserPublicGender = ValueOf<typeof USER_PUBLIC_GENDER>;

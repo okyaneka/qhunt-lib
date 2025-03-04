@@ -1,5 +1,5 @@
-import { ScoreSummary } from "..";
-import { PhotoHuntForeign } from "./photo-hunt";
+import { ScoreSummary } from "../index";
+import { PhotoHuntForeign } from "./photohunt";
 import { UserChallengeForeign } from "./user-challenge";
 import { UserPublicForeign } from "./user-public";
 import { CHALLENGE_TYPES } from "../constants";
@@ -20,4 +20,4 @@ export interface UserPhotoHunt {
     photoHunt: PhotoHuntForeign;
     results: UserPhotoHuntResult | null;
 }
-//# sourceMappingURL=user-photo-hunt.d.ts.map
+//# sourceMappingURL=user-photohunt.d.ts.map

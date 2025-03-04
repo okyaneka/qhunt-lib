@@ -7,9 +7,9 @@ var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
 };
 var bonus = { timeBonus };
 var bonus_default = bonus;
-var transaction = async (operation) => {
-  const session = await startSession();
-  session.startTransaction();
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;

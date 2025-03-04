@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams, S3Foreign, ValueOf } from "..";
+import { Timestamps, DefaultListParams, S3Foreign, ValueOf } from "../index";
 import { USER_PROVIDERS, USER_ROLES } from "../constants";
 export type UserProvider = ValueOf<typeof USER_PROVIDERS>;
 export type UserRole = ValueOf<typeof USER_ROLES>;

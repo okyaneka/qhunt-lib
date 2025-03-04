@@ -1,5 +1,5 @@
 import { STAGE_STATUS } from "../constants";
-import { DefaultListParams, Periode, Timestamps, ValueOf } from "..";
+import { DefaultListParams, Periode, QrForeign, Timestamps, ValueOf } from "../index";
 export type StageStatus = ValueOf<typeof STAGE_STATUS>;
 export interface StageSettings {
     periode: Periode | null;
@@ -27,5 +27,6 @@ export interface Stage extends Timestamps {
     status: StageStatus;
     contents: string[];
     settings: StageSettings;
+    qr: QrForeign | null;
 }
 //# sourceMappingURL=stage.d.ts.map

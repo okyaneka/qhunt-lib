@@ -1,4 +1,4 @@
-import { Timestamps } from "..";
+import { Timestamps } from "../index";
 export interface S3Payload {
     buffer: Buffer;
     mimetype: string;

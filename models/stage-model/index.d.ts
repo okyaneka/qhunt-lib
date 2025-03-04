@@ -1,4 +1,4 @@
-import { Stage, StageForeign, StageSettingsForeign } from "../..";
+import { Stage, StageForeign, StageSettingsForeign } from "../../index";
 import { Model, Schema } from "mongoose";
 export declare const StageSettingsForeignSchema: Schema<StageSettingsForeign, Model<StageSettingsForeign, any, any, any, import("mongoose").Document<unknown, any, StageSettingsForeign> & StageSettingsForeign & {
     _id: import("mongoose").Types.ObjectId;

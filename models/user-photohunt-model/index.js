@@ -2,7 +2,7 @@
 
 var mongoose = require('mongoose');
 
-// _src/models/user-photo-hunt-model/index.ts
+// _src/models/user-photohunt-model/index.ts
 var IdNameSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -74,13 +74,6 @@ var USER_PUBLIC_GENDER = {
 };
 
 // _src/models/qr-model/index.ts
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
 var QrContentSchema = new mongoose.Schema(
   {
     type: {
@@ -97,6 +90,14 @@ var QrLocationSchema = new mongoose.Schema(
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
     latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
   },
   { _id: false, versionKey: false }
 );
@@ -121,7 +122,7 @@ QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
 mongoose.models.Qr || mongoose.model("Qr", QrSchema);
 
-// _src/models/photo-hunt-model/index.ts
+// _src/models/photohunt-model/index.ts
 var PhotoHuntForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -193,6 +194,7 @@ var ChallengeSchema = new mongoose.Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -335,6 +337,7 @@ var StageSchema = new mongoose.Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -422,7 +425,7 @@ UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
 
-// _src/models/user-photo-hunt-model/index.ts
+// _src/models/user-photohunt-model/index.ts
 var UserPhotoHuntResultSchema = new mongoose.Schema(
   {
     feedback: { type: String, default: null },
@@ -440,6 +443,6 @@ var UserPhotoHuntSchema = new mongoose.Schema({
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
+var user_photohunt_model_default = UserPhotoHuntModel;
 
-module.exports = user_photo_hunt_model_default;
+module.exports = user_photohunt_model_default;

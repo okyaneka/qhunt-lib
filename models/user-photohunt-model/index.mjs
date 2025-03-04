@@ -1,6 +1,6 @@
 import { Schema, models, model } from 'mongoose';
 
-// _src/models/user-photo-hunt-model/index.ts
+// _src/models/user-photohunt-model/index.ts
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -72,13 +72,6 @@ var USER_PUBLIC_GENDER = {
 };
 
 // _src/models/qr-model/index.ts
-var QrForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
 var QrContentSchema = new Schema(
   {
     type: {
@@ -95,6 +88,14 @@ var QrLocationSchema = new Schema(
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
     latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
   },
   { _id: false, versionKey: false }
 );
@@ -119,7 +120,7 @@ QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
 models.Qr || model("Qr", QrSchema);
 
-// _src/models/photo-hunt-model/index.ts
+// _src/models/photohunt-model/index.ts
 var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -191,6 +192,7 @@ var ChallengeSchema = new Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -333,6 +335,7 @@ var StageSchema = new Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -420,7 +423,7 @@ UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 
-// _src/models/user-photo-hunt-model/index.ts
+// _src/models/user-photohunt-model/index.ts
 var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
@@ -438,6 +441,6 @@ var UserPhotoHuntSchema = new Schema({
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
+var user_photohunt_model_default = UserPhotoHuntModel;
 
-export { user_photo_hunt_model_default as default };
+export { user_photohunt_model_default as default };

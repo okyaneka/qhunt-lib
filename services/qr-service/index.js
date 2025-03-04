@@ -53,9 +53,9 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-var transaction = async (operation) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await mongoose.startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;
@@ -66,6 +66,8 @@ var transaction = async (operation) => {
     session.endSession();
   });
 };
+var db = { transaction };
+var db_default = db;
 
 // _src/constants/index.ts
 var PUBLISHING_STATUS = {
@@ -135,6 +137,54 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+var QrContentSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(QR_CONTENT_TYPES),
+      required: true
+    },
+    refId: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrLocationSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "" },
+    longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new mongoose.Schema(
+  {
+    code: { type: String, required: true, unique: true, index: true },
+    status: {
+      type: String,
+      enum: Object.values(QR_STATUS),
+      required: true
+    },
+    content: { type: QrContentSchema, default: null },
+    location: { type: QrLocationSchema, default: null },
+    accessCount: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
+var QrModel = mongoose.models.Qr || mongoose.model("Qr", QrSchema);
+var qr_model_default = QrModel;
 
 // _src/models/challenge-model/index.ts
 var ChallengeSettingsSchema = new mongoose.Schema(
@@ -183,6 +233,7 @@ var ChallengeSchema = new mongoose.Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -225,6 +276,7 @@ var StageSchema = new mongoose.Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -233,160 +285,6 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = mongoose.models.Stage || mongoose.model("Stage", StageSchema);
 var stage_model_default = StageModel;
-
-// _src/services/stage-service/index.ts
-var isUsed = async (ids, id) => {
-  const filter = {
-    _id: { $in: ids },
-    deletedAt: null,
-    stage: { $ne: null }
-  };
-  if (id) filter["stage.id"] = { $ne: id };
-  const used = (await challenge_model_default.find(filter)).map((item) => item.id);
-  if (used.length)
-    throw new Error(
-      `challenge${used.length > 1 ? "s" : ""} ${used.join(", ")} ${used.length > 1 ? "are" : "is"} used`
-    );
-};
-var list = async (params) => {
-  const skip = (params.page - 1) * params.limit;
-  const filter = {
-    deletedAt: null,
-    name: { $regex: params.search, $options: "i" }
-  };
-  const items = await stage_model_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
-  const totalItems = await stage_model_default.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
-  return {
-    list: items.map((item) => item.toObject()),
-    page: params.page,
-    totalItems,
-    totalPages
-  };
-};
-var create = async (payload) => {
-  await isUsed(payload.contents);
-  const contents = await challenge_model_default.find({
-    _id: { $in: payload.contents }
-  });
-  const stage = await stage_model_default.create({
-    ...payload,
-    contents: contents.map((item) => item.id)
-  });
-  const sync = contents.map((item) => {
-    item.stage = { id: stage.id, name: stage.name };
-    return item.save();
-  });
-  await Promise.all(sync);
-  return stage.toObject();
-};
-var detail = async (id) => {
-  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("stage not found");
-  return item.toObject();
-};
-var update = async (id, payload) => {
-  return await transaction(async (session) => {
-    await isUsed(payload.contents, id);
-    const stage = await stage_model_default.findOne({ _id: id, deletedAt: null });
-    if (!stage) throw new Error("stage not found");
-    const contents = (await challenge_model_default.find({
-      _id: { $in: payload.contents },
-      deletedAt: null
-    })).map((item) => item.id);
-    await challenge_model_default.updateMany(
-      { "stage.id": stage.id },
-      { $set: { stage: null } },
-      { session }
-    );
-    await challenge_model_default.updateMany(
-      { _id: { $in: contents } },
-      { $set: { stage: { id: stage.id, name: stage.name } } },
-      { session }
-    );
-    Object.assign(stage, { ...payload, contents });
-    await stage.save({ session });
-    return stage.toObject();
-  });
-};
-var _delete = async (id) => {
-  const item = await stage_model_default.findOneAndUpdate(
-    { _id: id, deletedAt: null },
-    { $set: { deletedAt: Date.now() } }
-  );
-  if (!item) throw new Error("stage not found");
-  return item;
-};
-var verify = async (id) => {
-  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("stage not found");
-  if (item.status !== STAGE_STATUS.Publish)
-    throw new Error("stage not published yet");
-  return item.toObject();
-};
-var StageService = { list, create, detail, update, delete: _delete, verify };
-var stage_service_default = StageService;
-
-// _src/services/challenge-service/index.ts
-var detail2 = async (id) => {
-  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("challenge not found");
-  return item.toObject();
-};
-var verify2 = async (id) => {
-  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("challenge not found");
-  if (item.status !== CHALLENGE_STATUS.Publish)
-    throw new Error("challenge not published yet");
-  return item.toObject();
-};
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(QR_CONTENT_TYPES),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new mongoose.Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new mongoose.Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QR_STATUS),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-var QrModel = mongoose.models.Qr || mongoose.model("Qr", QrSchema);
-var qr_model_default = QrModel;
 var PhotoHuntForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -412,23 +310,28 @@ var PhotoHuntSchema = new mongoose.Schema(
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
-
-// _src/services/photo-hunt-service/index.ts
-var detail3 = async (id) => {
-  const item = await photo_hunt_model_default.findOne({ _id: id });
-  if (!item) throw new Error("photo hunt not found");
-  return item.toObject();
-};
-var details = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
-    throw new Error("challenge.not_photohunt_type_error");
-  const items = await photo_hunt_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-var verify3 = async (id) => {
-};
+var photohunt_model_default = PhotoHuntModel;
+var S3ForeignSchema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    userId: { type: String, required: true }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+mongoose.models.S3 || mongoose.model("S3", S3Schema);
 var TriviaOptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true },
@@ -467,45 +370,6 @@ TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
 var TriviaModel = mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
 var trivia_model_default = TriviaModel;
-
-// _src/services/trivia-service/index.ts
-var detail4 = async (id) => {
-  const item = await trivia_model_default.findOne({ _id: id });
-  if (!item) throw new Error("trivia not found");
-  return item;
-};
-var details2 = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
-    throw new Error("challenge.not_trivia_type_error");
-  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-var verify4 = async (id) => {
-};
-var S3ForeignSchema = new mongoose.Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var S3Schema = new mongoose.Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true },
-    fileType: { type: String, required: true },
-    userId: { type: String, required: true }
-  },
-  { timestamps: true }
-);
-S3Schema.set("toObject", ToObject);
-S3Schema.set("toJSON", ToObject);
-mongoose.models.S3 || mongoose.model("S3", S3Schema);
-
-// _src/models/user-model/index.ts
 var ToObject2 = {
   transform: (doc, ret) => {
     const { _id, __v, password, ...rest } = ret;
@@ -666,6 +530,298 @@ UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
+var UserPhotoHuntResultSchema = new mongoose.Schema(
+  {
+    feedback: { type: String, default: null },
+    foundAt: { type: Date, default: Date.now() },
+    score: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+var UserPhotoHuntSchema = new mongoose.Schema({
+  photoHunt: { type: PhotoHuntForeignSchema, required: true },
+  results: { type: UserPhotoHuntResultSchema, default: null },
+  userChallenge: { type: UserChallengeForeignSchema, required: true },
+  userPublic: { type: UserPublicForeignSchema, required: true }
+});
+UserPhotoHuntSchema.set("toObject", ToObject);
+UserPhotoHuntSchema.set("toJSON", ToObject);
+var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
+var user_photohunt_model_default = UserPhotoHuntModel;
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+var UserTriviaResultSchema = new mongoose.Schema(
+  {
+    answer: { type: String, default: null },
+    feedback: { type: String, default: null },
+    isCorrect: { type: Boolean, required: true },
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var UserTriviaSchema = new mongoose.Schema(
+  {
+    userPublic: { type: UserPublicForeignSchema, required: true },
+    userChallenge: { type: UserChallengeForeignSchema, required: true },
+    trivia: { type: TriviaForeignSchema, required: true },
+    results: { type: UserTriviaResultSchema, default: null }
+  },
+  { timestamps: true }
+);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
+var UserTriviaModel = mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
+var user_trivia_model_default = UserTriviaModel;
+
+// _src/services/stage-service/index.ts
+var isUsed = async (ids, id) => {
+  const filter = {
+    _id: { $in: ids },
+    deletedAt: null,
+    stage: { $ne: null }
+  };
+  if (id) filter["stage.id"] = { $ne: id };
+  const used = (await challenge_model_default.find(filter)).map((item) => item.id);
+  if (used.length)
+    throw new Error(
+      `challenge${used.length > 1 ? "s" : ""} ${used.join(", ")} ${used.length > 1 ? "are" : "is"} used`
+    );
+};
+var list = async (params) => {
+  const { page = 1, limit = 10, search = "" } = params;
+  const skip = (page - 1) * limit;
+  const filter = {
+    deletedAt: null,
+    name: { $regex: search, $options: "i" }
+  };
+  const items = await stage_model_default.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const totalItems = await stage_model_default.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / limit);
+  return {
+    list: items.map((item) => item.toObject()),
+    page,
+    totalItems,
+    totalPages
+  };
+};
+var create = async (payload) => {
+  await isUsed(payload.contents);
+  const contents = await challenge_model_default.find({
+    _id: { $in: payload.contents }
+  });
+  const stage = await stage_model_default.create({
+    ...payload,
+    contents: contents.map((item) => item.id)
+  });
+  const sync = contents.map((item) => {
+    item.stage = { id: stage.id, name: stage.name };
+    return item.save();
+  });
+  await Promise.all(sync);
+  return stage.toObject();
+};
+var detail = async (id, session) => {
+  const item = await stage_model_default.findOne({ _id: id, deletedAt: null }, null, {
+    session
+  });
+  if (!item) throw new Error("stage not found");
+  return item.toObject();
+};
+var StageUpdate = async (id, payload) => {
+  return await transaction(async (session) => {
+    await isUsed(payload.contents, id);
+    const stage = await stage_model_default.findOne({ _id: id, deletedAt: null });
+    if (!stage) throw new Error("stage not found");
+    const contents = (await challenge_model_default.find({
+      _id: { $in: payload.contents },
+      deletedAt: null
+    })).map((item) => item.id);
+    await challenge_model_default.updateMany(
+      { "stage.id": stage.id },
+      { $set: { stage: null } },
+      { session }
+    );
+    await challenge_model_default.updateMany(
+      { _id: { $in: contents } },
+      { $set: { stage: { id: stage.id, name: stage.name } } },
+      { session }
+    );
+    Object.assign(stage, { ...payload, contents });
+    await stage.save({ session });
+    return stage.toObject();
+  });
+};
+var _delete = async (id) => {
+  const item = await stage_model_default.findOneAndUpdate(
+    { _id: id, deletedAt: null },
+    { $set: { deletedAt: Date.now() } }
+  );
+  if (!item) throw new Error("stage not found");
+  return item;
+};
+var verify = async (id) => {
+  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("stage not found");
+  if (item.status !== STAGE_STATUS.Publish)
+    throw new Error("stage not published yet");
+  return item.toObject();
+};
+var StagePublish = async (id) => {
+  return db_default.transaction(async (session) => {
+    const stage = await stage_model_default.findOne(
+      { _id: id, deletedAt: null },
+      { _id: true, contents: true, qr: true },
+      { session }
+    );
+    if (!stage) throw new Error("stage.not_found");
+    const challenges = await challenge_model_default.find(
+      { _id: { $in: stage.contents }, qr: null, deletedAt: null },
+      { _id: true },
+      { session }
+    );
+    const qrs = await QrGenerate(
+      challenges.length + (stage.qr ? 0 : 1),
+      session
+    );
+    if (!stage.qr) {
+      const qr = qrs.pop();
+      if (!qr) throw new Error("qr.not_enough");
+      const stageQr = {
+        id: qr.id,
+        code: qr.code,
+        location: qr.location
+      };
+      const qrContent = {
+        type: "stage",
+        refId: stage.id
+      };
+      await stage_model_default.updateOne(
+        { _id: stage.id },
+        { $set: { qr: stageQr, status: "publish" } },
+        { session }
+      );
+      await qr_model_default.updateOne(
+        { _id: qr.id },
+        { $set: { content: qrContent, status: "publish" } },
+        session
+      );
+    }
+    const { bulkChallenges, bulkQr } = challenges.reduce(
+      (acc, cur) => {
+        const qr = qrs.pop();
+        if (!qr) throw new Error("qr.not_enough");
+        const qrForeign = {
+          id: qr?.id,
+          code: qr?.code,
+          location: qr?.location
+        };
+        acc.bulkChallenges.push({
+          updateOne: {
+            filter: { _id: cur.id },
+            update: { $set: { qr: qrForeign, status: "publish" } }
+          }
+        });
+        acc.bulkQr.push({
+          updateOne: {
+            filter: { _id: qr.id },
+            update: {
+              $set: {
+                content: { type: "challenge", refId: cur.id },
+                status: "publish"
+              }
+            }
+          }
+        });
+        return acc;
+      },
+      { bulkChallenges: [], bulkQr: [] }
+    );
+    await challenge_model_default.bulkWrite(bulkChallenges, { session });
+    await qr_model_default.bulkWrite(bulkQr, { session });
+    const newStage = await stage_model_default.findById(stage.id, null, { session });
+    const newChallenges = await challenge_model_default.find(
+      { _id: { $in: newStage?.contents }, deletedAt: null },
+      null,
+      { session }
+    );
+    if (!newStage) throw new Error("stage.not_found");
+    return {
+      stage: newStage.toObject(),
+      challenges: newChallenges.map((item) => item.toObject())
+    };
+  });
+};
+var StageDetailFull = async (id) => {
+  const stage = await detail(id);
+  const challenges = await ChallengeDetails(stage.contents);
+  return { stage, challenges };
+};
+var StageService = {
+  list,
+  create,
+  detail,
+  update: StageUpdate,
+  delete: _delete,
+  verify,
+  publish: StagePublish,
+  detailFull: StageDetailFull
+};
+var stage_service_default = StageService;
+
+// _src/services/challenge-service/index.ts
+var detail2 = async (id) => {
+  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  return item.toObject();
+};
+var ChallengeDetails = async (ids) => {
+  const items = await challenge_model_default.find({ _id: { $in: ids } });
+  return items.map((item) => item.toObject());
+};
+var verify2 = async (id) => {
+  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  if (item.status !== CHALLENGE_STATUS.Publish)
+    throw new Error("challenge not published yet");
+  return item.toObject();
+};
+
+// _src/services/photohunt-service/index.ts
+var detail3 = async (id) => {
+  const item = await photohunt_model_default.findOne({ _id: id });
+  if (!item) throw new Error("photo hunt not found");
+  return item.toObject();
+};
+var details = async (challengeId) => {
+  const challenge = await detail2(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
+    throw new Error("challenge.not_photohunt_type_error");
+  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+var verify3 = async (id) => {
+};
+
+// _src/services/trivia-service/index.ts
+var detail4 = async (id) => {
+  const item = await trivia_model_default.findOne({ _id: id });
+  if (!item) throw new Error("trivia not found");
+  return item;
+};
+var details2 = async (challengeId) => {
+  const challenge = await detail2(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
+    throw new Error("challenge.not_trivia_type_error");
+  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+var verify4 = async (id) => {
+};
 
 // _src/services/user-stage-service/index.ts
 var initResults = () => ({
@@ -712,7 +868,7 @@ var setup = async (stageId, TID) => {
     console.timeEnd("queryTime");
   });
 };
-var list3 = async (params, TID) => {
+var list2 = async (params, TID) => {
   const skip = (params.page - 1) * params.limit;
   const filter = {
     deletedAt: null,
@@ -771,7 +927,7 @@ var submitState = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
-var UserStageService = { list: list3, detail: detail5, setup, verify: verify6, submitState };
+var UserStageService = { list: list2, detail: detail5, setup, verify: verify6, submitState };
 var user_stage_service_default = UserStageService;
 
 // _src/plugins/aws-s3/index.ts
@@ -856,53 +1012,6 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
-var UserPhotoHuntResultSchema = new mongoose.Schema(
-  {
-    feedback: { type: String, default: null },
-    foundAt: { type: Date, default: Date.now() },
-    score: { type: Number, default: 0 }
-  },
-  { _id: false }
-);
-var UserPhotoHuntSchema = new mongoose.Schema({
-  photoHunt: { type: PhotoHuntForeignSchema, required: true },
-  results: { type: UserPhotoHuntResultSchema, default: null },
-  userChallenge: { type: UserChallengeForeignSchema, required: true },
-  userPublic: { type: UserPublicForeignSchema, required: true }
-});
-UserPhotoHuntSchema.set("toObject", ToObject);
-UserPhotoHuntSchema.set("toJSON", ToObject);
-var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
-var ToObject3 = {
-  transform: (doc, ret) => {
-    const { _id, __v, userPublic, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var UserTriviaResultSchema = new mongoose.Schema(
-  {
-    answer: { type: String, default: null },
-    feedback: { type: String, default: null },
-    isCorrect: { type: Boolean, required: true },
-    baseScore: { type: Number, required: true },
-    bonus: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var UserTriviaSchema = new mongoose.Schema(
-  {
-    userPublic: { type: UserPublicForeignSchema, required: true },
-    userChallenge: { type: UserChallengeForeignSchema, required: true },
-    trivia: { type: TriviaForeignSchema, required: true },
-    results: { type: UserTriviaResultSchema, default: null }
-  },
-  { timestamps: true }
-);
-UserTriviaSchema.set("toJSON", ToObject3);
-UserTriviaSchema.set("toObject", ToObject3);
-var UserTriviaModel = mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
-var user_trivia_model_default = UserTriviaModel;
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -1091,7 +1200,7 @@ var summary2 = async (userChallengeId, TID, session) => {
   return summary4;
 };
 
-// _src/services/user-photo-hunt-service/index.ts
+// _src/services/user-photohunt-service/index.ts
 var setup3 = async (userPublic, userChallenge, session) => {
   const items = await details(userChallenge.challengeId);
   const payload = items.map(({ id, hint }) => {
@@ -1101,13 +1210,13 @@ var setup3 = async (userPublic, userChallenge, session) => {
       photoHunt: { id, hint }
     };
   });
-  return await user_photo_hunt_model_default.insertMany(payload, { session });
+  return await user_photohunt_model_default.insertMany(payload, { session });
 };
 var details4 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_model_default.find(
+  const data = await user_photohunt_model_default.find(
     {
       ...filter,
       _id: { $in: ids },
@@ -1124,7 +1233,7 @@ var submitEmpties2 = async (userChallengeId, TID, session) => {
     foundAt: null,
     score: 0
   };
-  return await user_photo_hunt_model_default.updateMany(
+  return await user_photohunt_model_default.updateMany(
     {
       "userChallenge.id": userChallengeId,
       "userPublic.code": TID,
@@ -1135,7 +1244,7 @@ var submitEmpties2 = async (userChallengeId, TID, session) => {
   );
 };
 var summary3 = async (userChallengeId, TID, session) => {
-  const [summary4] = await user_photo_hunt_model_default.aggregate().match({
+  const [summary4] = await user_photohunt_model_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
   }).group({
@@ -1326,7 +1435,7 @@ var servicesSetup = {
   trivia: null,
   photohunt: null
 };
-var list2 = async (params) => {
+var list3 = async (params) => {
   const { page = 1, limit = 10 } = params;
   const skip = (page - 1) * limit;
   const filter = { deletedAt: null };
@@ -1344,7 +1453,7 @@ var list2 = async (params) => {
     totalPages
   };
 };
-var generate = async (count) => {
+var QrGenerate = async (count, session) => {
   const items = new Array(count).fill({}).map(() => {
     const salt = Math.floor(Math.random() * Math.pow(16, 8)).toString(16).padStart(8, "0");
     return {
@@ -1352,7 +1461,7 @@ var generate = async (count) => {
       status: QR_STATUS.Draft
     };
   });
-  return qr_model_default.insertMany(items);
+  return qr_model_default.insertMany(items, { session });
 };
 var detail8 = async (id) => {
   const item = await qr_model_default.findOne({ _id: id, deletedAt: null });
@@ -1363,18 +1472,22 @@ var details5 = async (ids) => {
   const items = await qr_model_default.find({ _id: { $in: ids } });
   return items.map((item) => item.toObject());
 };
-var update2 = async (id, payload) => {
-  const { content } = payload;
-  const item = await qr_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("item not found");
-  if (content) {
-    const service = services2[content.type];
-    const action = payload.status === QR_STATUS.Draft ? "detail" : "verify";
-    await service[action](content.refId);
-  }
-  Object.assign(item, payload);
-  await item.save();
-  return item.toObject();
+var QrUpdate = async (id, payload, session) => {
+  return db_default.transaction(async (session2) => {
+    const { content } = payload;
+    const item = await qr_model_default.findOne({ _id: id, deletedAt: null }, null, {
+      session: session2
+    });
+    if (!item) throw new Error("item not found");
+    if (content) {
+      const service = services2[content.type];
+      const action = payload.status === QR_STATUS.Draft ? "detail" : "verify";
+      await service[action](content.refId);
+    }
+    Object.assign(item, payload);
+    await item.save({ session: session2 });
+    return item.toObject();
+  }, session);
 };
 var _delete2 = async (id) => {
   const item = await qr_model_default.findOneAndUpdate(
@@ -1416,23 +1529,23 @@ var verify8 = async (code, TID) => {
   return content;
 };
 var QrService = {
-  generate,
-  list: list2,
+  generate: QrGenerate,
+  list: list3,
   detail: detail8,
   details: details5,
-  update: update2,
+  update: QrUpdate,
   delete: _delete2,
   deleteMany,
   verify: verify8
 };
 var qr_service_default = QrService;
 
+exports.QrGenerate = QrGenerate;
+exports.QrUpdate = QrUpdate;
 exports._delete = _delete2;
 exports.default = qr_service_default;
 exports.deleteMany = deleteMany;
 exports.detail = detail8;
 exports.details = details5;
-exports.generate = generate;
-exports.list = list2;
-exports.update = update2;
+exports.list = list3;
 exports.verify = verify8;

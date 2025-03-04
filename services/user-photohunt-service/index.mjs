@@ -1,41 +1,14 @@
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-var mongoose = require('mongoose');
-var dayjs = require('dayjs');
-require('bcryptjs');
-require('jsonwebtoken');
-var client_s3_star = require('@aws-sdk/client-s3');
-var slugify = require('slugify');
-var ioredis_star = require('ioredis');
-var crypto = require('crypto');
-require('@zxing/browser');
-
-function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
-
-function _interopNamespace(e) {
-  if (e && e.__esModule) return e;
-  var n = Object.create(null);
-  if (e) {
-    Object.keys(e).forEach(function (k) {
-      if (k !== 'default') {
-        var d = Object.getOwnPropertyDescriptor(e, k);
-        Object.defineProperty(n, k, d.get ? d : {
-          enumerable: true,
-          get: function () { return e[k]; }
-        });
-      }
-    });
-  }
-  n.default = e;
-  return Object.freeze(n);
-}
-
-var dayjs__default = /*#__PURE__*/_interopDefault(dayjs);
-var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
-var slugify__default = /*#__PURE__*/_interopDefault(slugify);
-var ioredis_star__namespace = /*#__PURE__*/_interopNamespace(ioredis_star);
+import { Schema, models, model, startSession } from 'mongoose';
+import dayjs from 'dayjs';
+import 'bcryptjs';
+import 'jsonwebtoken';
+import * as client_s3_star from '@aws-sdk/client-s3';
+import { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import slugify from 'slugify';
+import * as ioredis_star from 'ioredis';
+import { Redis } from 'ioredis';
+import { randomUUID } from 'crypto';
+import '@zxing/browser';
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -54,21 +27,21 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-var IdNameSchema = new mongoose.Schema(
+var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true }
   },
   { _id: false, versionKey: false }
 );
-var PeriodSchema = new mongoose.Schema(
+var PeriodSchema = new Schema(
   {
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true }
   },
   { _id: false }
 );
-var FeedbackSchema = new mongoose.Schema(
+var FeedbackSchema = new Schema(
   {
     positive: { type: String, default: "" },
     negative: { type: String, default: "" }
@@ -125,14 +98,7 @@ var USER_PUBLIC_GENDER = {
 };
 
 // _src/models/qr-model/index.ts
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new mongoose.Schema(
+var QrContentSchema = new Schema(
   {
     type: {
       type: String,
@@ -143,7 +109,7 @@ var QrContentSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrLocationSchema = new mongoose.Schema(
+var QrLocationSchema = new Schema(
   {
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
@@ -151,7 +117,15 @@ var QrLocationSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrSchema = new mongoose.Schema(
+var QrForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new Schema(
   {
     code: { type: String, required: true, unique: true, index: true },
     status: {
@@ -170,17 +144,17 @@ var QrSchema = new mongoose.Schema(
 );
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
-mongoose.models.Qr || mongoose.model("Qr", QrSchema);
+models.Qr || model("Qr", QrSchema);
 
-// _src/models/photo-hunt-model/index.ts
-var PhotoHuntForeignSchema = new mongoose.Schema(
+// _src/models/photohunt-model/index.ts
+var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     hint: { type: String, required: true }
   },
   { _id: false }
 );
-var PhotoHuntSchema = new mongoose.Schema(
+var PhotoHuntSchema = new Schema(
   {
     hint: { type: String, default: "" },
     score: { type: Number, default: 0 },
@@ -197,9 +171,9 @@ var PhotoHuntSchema = new mongoose.Schema(
 );
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
-var ChallengeSettingsSchema = new mongoose.Schema(
+var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var photohunt_model_default = PhotoHuntModel;
+var ChallengeSettingsSchema = new Schema(
   {
     type: {
       type: String,
@@ -212,7 +186,7 @@ var ChallengeSettingsSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var ChallengeSettingsForeignSchema = new mongoose.Schema(
+var ChallengeSettingsForeignSchema = new Schema(
   {
     type: {
       type: String,
@@ -223,7 +197,7 @@ var ChallengeSettingsForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var ChallengeForeignSchema = new mongoose.Schema(
+var ChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -232,7 +206,7 @@ var ChallengeForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var ChallengeSchema = new mongoose.Schema(
+var ChallengeSchema = new Schema(
   {
     name: { type: String, required: true },
     stage: { type: IdNameSchema, default: null },
@@ -245,15 +219,16 @@ var ChallengeSchema = new mongoose.Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
-var ChallengeModel = mongoose.models.Challenge || mongoose.model("Challenge", ChallengeSchema);
+var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 var challenge_model_default = ChallengeModel;
-var S3ForeignSchema = new mongoose.Schema(
+var S3ForeignSchema = new Schema(
   {
     fileName: { type: String, required: true },
     fileUrl: { type: String, required: true },
@@ -261,7 +236,7 @@ var S3ForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var S3Schema = new mongoose.Schema(
+var S3Schema = new Schema(
   {
     fileName: { type: String, required: true },
     fileUrl: { type: String, required: true },
@@ -273,7 +248,7 @@ var S3Schema = new mongoose.Schema(
 );
 S3Schema.set("toObject", ToObject);
 S3Schema.set("toJSON", ToObject);
-mongoose.models.S3 || mongoose.model("S3", S3Schema);
+models.S3 || model("S3", S3Schema);
 
 // _src/models/user-model/index.ts
 var ToObject2 = {
@@ -282,7 +257,7 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
-var UserForeignSchema = new mongoose.Schema(
+var UserForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" },
@@ -291,7 +266,7 @@ var UserForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserSchema = new mongoose.Schema(
+var UserSchema = new Schema(
   {
     name: { type: String, default: "" },
     role: {
@@ -315,10 +290,10 @@ var UserSchema = new mongoose.Schema(
 );
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
-mongoose.models.User || mongoose.model("User", UserSchema);
+models.User || model("User", UserSchema);
 
 // _src/models/user-public-model/index.ts
-var UserPublicForeignSchema = new mongoose.Schema(
+var UserPublicForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -326,7 +301,7 @@ var UserPublicForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserPublicSchema = new mongoose.Schema(
+var UserPublicSchema = new Schema(
   {
     user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
@@ -345,7 +320,7 @@ var UserPublicSchema = new mongoose.Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
+var UserPublicModel = models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
 var user_public_model_default = UserPublicModel;
 
 // _src/types/user-stage.ts
@@ -355,7 +330,7 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   UserStageStatus2["End"] = "end";
   return UserStageStatus2;
 })(UserStageStatus || {});
-var StageSettingsSchema = new mongoose.Schema(
+var StageSettingsSchema = new Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -363,13 +338,13 @@ var StageSettingsSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new mongoose.Schema(
+var StageSettingsForeignSchema = new Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new mongoose.Schema(
+var StageForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -378,7 +353,7 @@ var StageForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var StageSchema = new mongoose.Schema(
+var StageSchema = new Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
@@ -389,17 +364,18 @@ var StageSchema = new mongoose.Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = mongoose.models.Stage || mongoose.model("Stage", StageSchema);
+var StageModel = models.Stage || model("Stage", StageSchema);
 var stage_model_default = StageModel;
 
 // _src/models/user-stage-model/index.ts
-var UserStageForeignSchema = new mongoose.Schema(
+var UserStageForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -407,7 +383,7 @@ var UserStageForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserStageResultSchema = new mongoose.Schema(
+var UserStageResultSchema = new Schema(
   {
     baseScore: { type: Number, required: true },
     challengeBonus: { type: Number, required: true },
@@ -416,7 +392,7 @@ var UserStageResultSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserStageSchema = new mongoose.Schema(
+var UserStageSchema = new Schema(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -432,11 +408,11 @@ var UserStageSchema = new mongoose.Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-var UserStageModel = mongoose.models.UserStage || mongoose.model("UserStage", UserStageSchema, "usersStage");
+var UserStageModel = models.UserStage || model("UserStage", UserStageSchema, "usersStage");
 var user_stage_model_default = UserStageModel;
 
 // _src/models/user-challenge-model/index.ts
-var UserChallengeForeignSchema = new mongoose.Schema(
+var UserChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     challengeId: { type: String, required: true },
@@ -444,7 +420,7 @@ var UserChallengeForeignSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserChallengeResultSchema = new mongoose.Schema(
+var UserChallengeResultSchema = new Schema(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
@@ -457,7 +433,7 @@ var UserChallengeResultSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserChallengeSchema = new mongoose.Schema(
+var UserChallengeSchema = new Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
@@ -476,11 +452,11 @@ var UserChallengeSchema = new mongoose.Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-var UserChallengeModel = mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
+var UserChallengeModel = models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
 
-// _src/models/user-photo-hunt-model/index.ts
-var UserPhotoHuntResultSchema = new mongoose.Schema(
+// _src/models/user-photohunt-model/index.ts
+var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
     foundAt: { type: Date, default: Date.now() },
@@ -488,7 +464,7 @@ var UserPhotoHuntResultSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-var UserPhotoHuntSchema = new mongoose.Schema({
+var UserPhotoHuntSchema = new Schema({
   photoHunt: { type: PhotoHuntForeignSchema, required: true },
   results: { type: UserPhotoHuntResultSchema, default: null },
   userChallenge: { type: UserChallengeForeignSchema, required: true },
@@ -496,11 +472,11 @@ var UserPhotoHuntSchema = new mongoose.Schema({
 });
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
-var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
-var transaction = async (operation) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
+var user_photohunt_model_default = UserPhotoHuntModel;
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;
@@ -513,6 +489,73 @@ var transaction = async (operation) => {
 };
 var db = { transaction };
 var db_default = db;
+var TriviaOptionSchema = new Schema(
+  {
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 }
+  },
+  { _id: false, versionKey: false }
+);
+var TriviaForeignOptionSchema = new Schema(
+  {
+    text: { type: String, required: true }
+  },
+  { _id: false }
+);
+var TriviaForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true }
+  },
+  { _id: false }
+);
+var TriviaSchema = new Schema(
+  {
+    challenge: { type: IdNameSchema, default: null },
+    question: { type: String, required: true },
+    feedback: { type: FeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+var TriviaModel = models.Trivia || model("Trivia", TriviaSchema);
+var trivia_model_default = TriviaModel;
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+var UserTriviaResultSchema = new Schema(
+  {
+    answer: { type: String, default: null },
+    feedback: { type: String, default: null },
+    isCorrect: { type: Boolean, required: true },
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var UserTriviaSchema = new Schema(
+  {
+    userPublic: { type: UserPublicForeignSchema, required: true },
+    userChallenge: { type: UserChallengeForeignSchema, required: true },
+    trivia: { type: TriviaForeignSchema, required: true },
+    results: { type: UserTriviaResultSchema, default: null }
+  },
+  { timestamps: true }
+);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
+var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+var user_trivia_model_default = UserTriviaModel;
 
 // _src/services/stage-service/index.ts
 var verify = async (id) => {
@@ -529,44 +572,6 @@ var detail2 = async (id) => {
   if (!item) throw new Error("challenge not found");
   return item.toObject();
 };
-var TriviaOptionSchema = new mongoose.Schema(
-  {
-    text: { type: String, required: true },
-    isCorrect: { type: Boolean, default: false },
-    point: { type: Number, default: 0 }
-  },
-  { _id: false, versionKey: false }
-);
-var TriviaForeignOptionSchema = new mongoose.Schema(
-  {
-    text: { type: String, required: true }
-  },
-  { _id: false }
-);
-var TriviaForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    question: { type: String, required: true },
-    allowMultiple: { type: Boolean, required: true },
-    options: { type: [TriviaForeignOptionSchema], required: true }
-  },
-  { _id: false }
-);
-var TriviaSchema = new mongoose.Schema(
-  {
-    challenge: { type: IdNameSchema, default: null },
-    question: { type: String, required: true },
-    feedback: { type: FeedbackSchema, default: {} },
-    allowMultiple: { type: Boolean, default: false },
-    options: { type: [TriviaOptionSchema], required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-TriviaSchema.set("toObject", ToObject);
-TriviaSchema.set("toJSON", ToObject);
-var TriviaModel = mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
-var trivia_model_default = TriviaModel;
 
 // _src/services/trivia-service/index.ts
 var details = async (challengeId) => {
@@ -691,7 +696,7 @@ __export(aws_s3_exports, {
   awsS3: () => awsS3,
   default: () => aws_s3_default
 });
-__reExport(aws_s3_exports, client_s3_star__namespace);
+__reExport(aws_s3_exports, client_s3_star);
 var prefix = "\x1B[38;5;165mS3:\x1B[0m";
 var S3Helper = class {
   status = 0;
@@ -703,13 +708,13 @@ var S3Helper = class {
   }
   init({ bucket, ...config }) {
     this.bucket = bucket;
-    this.client = new client_s3_star.S3Client(config);
+    this.client = new S3Client(config);
     this.initiate();
   }
   async initiate() {
     if (!(this.client && this.bucket)) return;
     this.status = 1;
-    this.client.send(new client_s3_star.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+    this.client.send(new HeadBucketCommand({ Bucket: this.bucket })).then(() => {
       console.log(prefix, "Aws S3 connected successfully!");
     }).catch((err) => {
       console.log(prefix, "\u274C Aws S3 Error:", err.message);
@@ -730,7 +735,7 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
+    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
     const config = {
       Bucket: bucket,
       Key,
@@ -738,7 +743,7 @@ var S3Helper = class {
       ContentType: mimetype,
       ACL: "public-read"
     };
-    const command = new client_s3_star.PutObjectCommand(config);
+    const command = new PutObjectCommand(config);
     const region = await client.config.region();
     const res = await client.send(command);
     console.log(prefix, `success put file`);
@@ -755,7 +760,7 @@ var S3Helper = class {
       Bucket: bucket,
       Key: key
     };
-    const command = new client_s3_star.DeleteObjectCommand(config);
+    const command = new DeleteObjectCommand(config);
     const res = await client.send(command);
     console.log(prefix, `success delete file`);
     return res;
@@ -766,35 +771,6 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
-var ToObject3 = {
-  transform: (doc, ret) => {
-    const { _id, __v, userPublic, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var UserTriviaResultSchema = new mongoose.Schema(
-  {
-    answer: { type: String, default: null },
-    feedback: { type: String, default: null },
-    isCorrect: { type: Boolean, required: true },
-    baseScore: { type: Number, required: true },
-    bonus: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var UserTriviaSchema = new mongoose.Schema(
-  {
-    userPublic: { type: UserPublicForeignSchema, required: true },
-    userChallenge: { type: UserChallengeForeignSchema, required: true },
-    trivia: { type: TriviaForeignSchema, required: true },
-    results: { type: UserTriviaResultSchema, default: null }
-  },
-  { timestamps: true }
-);
-UserTriviaSchema.set("toJSON", ToObject3);
-UserTriviaSchema.set("toObject", ToObject3);
-var UserTriviaModel = mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
-var user_trivia_model_default = UserTriviaModel;
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -803,7 +779,7 @@ __export(redis_exports, {
   default: () => redis_default,
   redis: () => redis
 });
-__reExport(redis_exports, ioredis_star__namespace);
+__reExport(redis_exports, ioredis_star);
 var prefix2 = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
@@ -813,8 +789,8 @@ var RedisHelper = class {
   constructor() {
   }
   init(options) {
-    this.client = new ioredis_star.Redis(options);
-    this.subscr = new ioredis_star.Redis(options);
+    this.client = new Redis(options);
+    this.subscr = new Redis(options);
     this.initiate();
   }
   getClient() {
@@ -864,7 +840,7 @@ var RedisHelper = class {
     if (!this.subscr) return;
     await this.subscr.subscribe(channel);
     const handler = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       channel,
       callback
     };
@@ -1104,7 +1080,7 @@ var submit = async (id, TID, session, forceFinish) => {
     if (contents.length)
       await services[challengeType].submitEmpties(id, TID, session);
     const timeUsed = Math.min(
-      dayjs__default.default().diff(dayjs__default.default(results.startAt), "seconds"),
+      dayjs().diff(dayjs(results.startAt), "seconds"),
       userChallenge.settings.duration
     );
     const bonus = timeBonus(
@@ -1146,16 +1122,16 @@ var summary = async (userStageId, TID, session) => {
   }).session(session || null);
 };
 
-// _src/services/photo-hunt-service/index.ts
+// _src/services/photohunt-service/index.ts
 var details4 = async (challengeId) => {
   const challenge = await detail2(challengeId);
   if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
     throw new Error("challenge.not_photohunt_type_error");
-  const items = await photo_hunt_model_default.find({ _id: { $in: challenge.contents } });
+  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
   return items.map((item) => item.toObject());
 };
 var verifyCode = async (challengeId, code) => {
-  const item = await photo_hunt_model_default.findOne({
+  const item = await photohunt_model_default.findOne({
     "challenge.id": challengeId,
     "qr.code": code
   });
@@ -1163,7 +1139,7 @@ var verifyCode = async (challengeId, code) => {
   return item.toObject();
 };
 
-// _src/services/user-photo-hunt-service/index.ts
+// _src/services/user-photohunt-service/index.ts
 var setup3 = async (userPublic, userChallenge, session) => {
   const items = await details4(userChallenge.challengeId);
   const payload = items.map(({ id, hint }) => {
@@ -1173,13 +1149,13 @@ var setup3 = async (userPublic, userChallenge, session) => {
       photoHunt: { id, hint }
     };
   });
-  return await user_photo_hunt_model_default.insertMany(payload, { session });
+  return await user_photohunt_model_default.insertMany(payload, { session });
 };
 var details3 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_model_default.find(
+  const data = await user_photohunt_model_default.find(
     {
       ...filter,
       _id: { $in: ids },
@@ -1197,7 +1173,7 @@ var submit2 = async (userChallengeId, TID, code, bonus) => {
       challenge: { id: challengeId }
     } = userChallenge;
     const photoHunt = await verifyCode(challengeId, code);
-    const userPhotoHunt = await user_photo_hunt_model_default.findOne({
+    const userPhotoHunt = await user_photohunt_model_default.findOne({
       "photoHunt.id": photoHunt.id,
       "userPublic.code": TID
     });
@@ -1219,7 +1195,7 @@ var submitEmpties2 = async (userChallengeId, TID, session) => {
     foundAt: null,
     score: 0
   };
-  return await user_photo_hunt_model_default.updateMany(
+  return await user_photohunt_model_default.updateMany(
     {
       "userChallenge.id": userChallengeId,
       "userPublic.code": TID,
@@ -1230,7 +1206,7 @@ var submitEmpties2 = async (userChallengeId, TID, session) => {
   );
 };
 var summary3 = async (userChallengeId, TID, session) => {
-  const [summary4] = await user_photo_hunt_model_default.aggregate().match({
+  const [summary4] = await user_photohunt_model_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
   }).group({
@@ -1263,11 +1239,6 @@ var UserPhotoHuntService = {
   submitEmpties: submitEmpties2,
   summary: summary3
 };
-var user_photo_hunt_service_default = UserPhotoHuntService;
+var user_photohunt_service_default = UserPhotoHuntService;
 
-exports.default = user_photo_hunt_service_default;
-exports.details = details3;
-exports.setup = setup3;
-exports.submit = submit2;
-exports.submitEmpties = submitEmpties2;
-exports.summary = summary3;
+export { user_photohunt_service_default as default, details3 as details, setup3 as setup, submit2 as submit, submitEmpties2 as submitEmpties, summary3 as summary };

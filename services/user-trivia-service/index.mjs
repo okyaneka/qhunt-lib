@@ -27,9 +27,9 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-var transaction = async (operation) => {
-  const session = await startSession();
-  session.startTransaction();
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;
@@ -111,6 +111,53 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+var QrContentSchema = new Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(QR_CONTENT_TYPES),
+      required: true
+    },
+    refId: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrLocationSchema = new Schema(
+  {
+    label: { type: String, default: "" },
+    longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new Schema(
+  {
+    code: { type: String, required: true, unique: true, index: true },
+    status: {
+      type: String,
+      enum: Object.values(QR_STATUS),
+      required: true
+    },
+    content: { type: QrContentSchema, default: null },
+    location: { type: QrLocationSchema, default: null },
+    accessCount: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
+models.Qr || model("Qr", QrSchema);
 
 // _src/models/challenge-model/index.ts
 var ChallengeSettingsSchema = new Schema(
@@ -159,6 +206,7 @@ var ChallengeSchema = new Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -201,6 +249,7 @@ var StageSchema = new Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -209,72 +258,39 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = models.Stage || model("Stage", StageSchema);
 var stage_model_default = StageModel;
-
-// _src/services/stage-service/index.ts
-var verify = async (id) => {
-  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("stage not found");
-  if (item.status !== STAGE_STATUS.Publish)
-    throw new Error("stage not published yet");
-  return item.toObject();
-};
-
-// _src/services/challenge-service/index.ts
-var detail2 = async (id) => {
-  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("challenge not found");
-  return item.toObject();
-};
-var TriviaOptionSchema = new Schema(
-  {
-    text: { type: String, required: true },
-    isCorrect: { type: Boolean, default: false },
-    point: { type: Number, default: 0 }
-  },
-  { _id: false, versionKey: false }
-);
-var TriviaForeignOptionSchema = new Schema(
-  {
-    text: { type: String, required: true }
-  },
-  { _id: false }
-);
-var TriviaForeignSchema = new Schema(
+var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
-    question: { type: String, required: true },
-    allowMultiple: { type: Boolean, required: true },
-    options: { type: [TriviaForeignOptionSchema], required: true }
+    hint: { type: String, required: true }
   },
   { _id: false }
 );
-var TriviaSchema = new Schema(
+var PhotoHuntSchema = new Schema(
   {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
     challenge: { type: IdNameSchema, default: null },
-    question: { type: String, required: true },
-    feedback: { type: FeedbackSchema, default: {} },
-    allowMultiple: { type: Boolean, default: false },
-    options: { type: [TriviaOptionSchema], required: true },
-    deletedAt: { type: Date, default: null }
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
   },
   { timestamps: true }
 );
-TriviaSchema.set("toObject", ToObject);
-TriviaSchema.set("toJSON", ToObject);
-var TriviaModel = models.Trivia || model("Trivia", TriviaSchema);
-var trivia_model_default = TriviaModel;
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var photohunt_model_default = PhotoHuntModel;
 
-// _src/services/trivia-service/index.ts
-var detail3 = async (id) => {
-  const item = await trivia_model_default.findOne({ _id: id });
-  if (!item) throw new Error("trivia not found");
-  return item;
-};
+// _src/services/photohunt-service/index.ts
 var details = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
-    throw new Error("challenge.not_trivia_type_error");
-  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
+  const challenge = await detail(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
+    throw new Error("challenge.not_photohunt_type_error");
+  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
   return items.map((item) => item.toObject());
 };
 var S3ForeignSchema = new Schema(
@@ -461,37 +477,6 @@ UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
 
-// _src/models/user-trivia-model/index.ts
-var ToObject3 = {
-  transform: (doc, ret) => {
-    const { _id, __v, userPublic, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
-};
-var UserTriviaResultSchema = new Schema(
-  {
-    answer: { type: String, default: null },
-    feedback: { type: String, default: null },
-    isCorrect: { type: Boolean, required: true },
-    baseScore: { type: Number, required: true },
-    bonus: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var UserTriviaSchema = new Schema(
-  {
-    userPublic: { type: UserPublicForeignSchema, required: true },
-    userChallenge: { type: UserChallengeForeignSchema, required: true },
-    trivia: { type: TriviaForeignSchema, required: true },
-    results: { type: UserTriviaResultSchema, default: null }
-  },
-  { timestamps: true }
-);
-UserTriviaSchema.set("toJSON", ToObject3);
-UserTriviaSchema.set("toObject", ToObject3);
-var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
-var user_trivia_model_default = UserTriviaModel;
-
 // _src/services/user-stage-service/index.ts
 var initResults = () => ({
   baseScore: 0,
@@ -562,7 +547,7 @@ var list = async (params, TID) => {
     totalPages
   };
 };
-var detail4 = async (id, TID) => {
+var detail2 = async (id, TID) => {
   const item = await user_stage_model_default.findOne({
     _id: id,
     deletedAt: null,
@@ -596,7 +581,7 @@ var submitState = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
-var UserStageService = { list, detail: detail4, setup, verify: verify3, submitState };
+var UserStageService = { list, detail: detail2, setup, verify: verify3, submitState };
 var user_stage_service_default = UserStageService;
 
 // _src/plugins/aws-s3/index.ts
@@ -681,80 +666,44 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
-var QrForeignSchema = new Schema(
+var TriviaOptionSchema = new Schema(
   {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 }
   },
   { _id: false, versionKey: false }
 );
-var QrContentSchema = new Schema(
+var TriviaForeignOptionSchema = new Schema(
   {
-    type: {
-      type: String,
-      enum: Object.values(QR_CONTENT_TYPES),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QR_STATUS),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-models.Qr || model("Qr", QrSchema);
-
-// _src/models/photo-hunt-model/index.ts
-var PhotoHuntForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
+    text: { type: String, required: true }
   },
   { _id: false }
 );
-var PhotoHuntSchema = new Schema(
+var TriviaForeignSchema = new Schema(
   {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true }
+  },
+  { _id: false }
+);
+var TriviaSchema = new Schema(
+  {
     challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
+    question: { type: String, required: true },
+    feedback: { type: FeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+var TriviaModel = models.Trivia || model("Trivia", TriviaSchema);
+var trivia_model_default = TriviaModel;
 var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
@@ -772,7 +721,36 @@ var UserPhotoHuntSchema = new Schema({
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
+var user_photohunt_model_default = UserPhotoHuntModel;
+var ToObject3 = {
+  transform: (doc, ret) => {
+    const { _id, __v, userPublic, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+var UserTriviaResultSchema = new Schema(
+  {
+    answer: { type: String, default: null },
+    feedback: { type: String, default: null },
+    isCorrect: { type: Boolean, required: true },
+    baseScore: { type: Number, required: true },
+    bonus: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var UserTriviaSchema = new Schema(
+  {
+    userPublic: { type: UserPublicForeignSchema, required: true },
+    userChallenge: { type: UserChallengeForeignSchema, required: true },
+    trivia: { type: TriviaForeignSchema, required: true },
+    results: { type: UserTriviaResultSchema, default: null }
+  },
+  { timestamps: true }
+);
+UserTriviaSchema.set("toJSON", ToObject3);
+UserTriviaSchema.set("toObject", ToObject3);
+var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+var user_trivia_model_default = UserTriviaModel;
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -886,18 +864,9 @@ var verify2 = async (value, session) => {
   return userPublic.toObject();
 };
 
-// _src/services/photo-hunt-service/index.ts
-var details2 = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
-    throw new Error("challenge.not_photohunt_type_error");
-  const items = await photo_hunt_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-
-// _src/services/user-photo-hunt-service/index.ts
-var setup3 = async (userPublic, userChallenge, session) => {
-  const items = await details2(userChallenge.challengeId);
+// _src/services/user-photohunt-service/index.ts
+var setup2 = async (userPublic, userChallenge, session) => {
+  const items = await details(userChallenge.challengeId);
   const payload = items.map(({ id, hint }) => {
     return {
       userPublic,
@@ -905,13 +874,13 @@ var setup3 = async (userPublic, userChallenge, session) => {
       photoHunt: { id, hint }
     };
   });
-  return await user_photo_hunt_model_default.insertMany(payload, { session });
+  return await user_photohunt_model_default.insertMany(payload, { session });
 };
-var details3 = async (ids, TID, hasResult, session) => {
+var details2 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photo_hunt_model_default.find(
+  const data = await user_photohunt_model_default.find(
     {
       ...filter,
       _id: { $in: ids },
@@ -928,7 +897,7 @@ var submitEmpties = async (userChallengeId, TID, session) => {
     foundAt: null,
     score: 0
   };
-  return await user_photo_hunt_model_default.updateMany(
+  return await user_photohunt_model_default.updateMany(
     {
       "userChallenge.id": userChallengeId,
       "userPublic.code": TID,
@@ -939,7 +908,7 @@ var submitEmpties = async (userChallengeId, TID, session) => {
   );
 };
 var summary2 = async (userChallengeId, TID, session) => {
-  const [summary4] = await user_photo_hunt_model_default.aggregate().match({
+  const [summary4] = await user_photohunt_model_default.aggregate().match({
     "userChallenge.id": userChallengeId,
     "userPublic.code": TID
   }).group({
@@ -969,14 +938,14 @@ var summary2 = async (userChallengeId, TID, session) => {
 // _src/services/user-challenge-service/index.ts
 var services = {
   [CHALLENGE_TYPES.Trivia]: {
-    setup: setup4,
-    details: details4,
+    setup: setup3,
+    details: details3,
     submitEmpties: submitEmpties2,
     summary: summary3
   },
   [CHALLENGE_TYPES.PhotoHunt]: {
-    setup: setup3,
-    details: details3,
+    setup: setup2,
+    details: details2,
     submitEmpties,
     summary: summary2
   }
@@ -1110,6 +1079,36 @@ var summary = async (userStageId, TID, session) => {
   }).session(session || null);
 };
 
+// _src/services/stage-service/index.ts
+var verify = async (id) => {
+  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("stage not found");
+  if (item.status !== STAGE_STATUS.Publish)
+    throw new Error("stage not published yet");
+  return item.toObject();
+};
+
+// _src/services/challenge-service/index.ts
+var detail = async (id) => {
+  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("challenge not found");
+  return item.toObject();
+};
+
+// _src/services/trivia-service/index.ts
+var detail7 = async (id) => {
+  const item = await trivia_model_default.findOne({ _id: id });
+  if (!item) throw new Error("trivia not found");
+  return item;
+};
+var details4 = async (challengeId) => {
+  const challenge = await detail(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
+    throw new Error("challenge.not_trivia_type_error");
+  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+
 // _src/services/user-trivia-service/index.ts
 var verify7 = async (triviaId, TID) => {
   const item = await user_trivia_model_default.findOne({
@@ -1120,8 +1119,8 @@ var verify7 = async (triviaId, TID) => {
   if (!item) throw new Error("user trivia not found");
   return item;
 };
-var setup4 = async (userPublic, userChallenge, session) => {
-  const trivias = await details(userChallenge.challengeId);
+var setup3 = async (userPublic, userChallenge, session) => {
+  const trivias = await details4(userChallenge.challengeId);
   const payload = trivias.map((item) => {
     const trivia = {
       id: item.id,
@@ -1137,7 +1136,7 @@ var setup4 = async (userPublic, userChallenge, session) => {
   });
   return await user_trivia_model_default.insertMany(payload, { session });
 };
-var details4 = async (ids, TID, hasResult, session) => {
+var details3 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
@@ -1160,7 +1159,7 @@ var submit2 = async (id, TID, answer = null, bonus) => {
     });
     if (!userTrivia) throw new Error("user trivia not found");
     if (userTrivia.results) return userTrivia.toObject();
-    const trivia = await detail3(userTrivia.trivia.id);
+    const trivia = await detail7(userTrivia.trivia.id);
     const selectedAnswer = trivia.options.find((v) => v.text == answer);
     const isCorrect = Boolean(selectedAnswer?.isCorrect);
     const baseScore = selectedAnswer?.point || 0;
@@ -1225,12 +1224,12 @@ var summary3 = async (userChallengeId, TID, session) => {
   return summary4;
 };
 var UserTriviaService = {
-  setup: setup4,
-  details: details4,
+  setup: setup3,
+  details: details3,
   submit: submit2,
   submitEmpties: submitEmpties2,
   summary: summary3
 };
 var user_trivia_service_default = UserTriviaService;
 
-export { user_trivia_service_default as default, details4 as details, setup4 as setup, submit2 as submit, submitEmpties2 as submitEmpties, summary3 as summary, verify7 as verify };
+export { user_trivia_service_default as default, details3 as details, setup3 as setup, submit2 as submit, submitEmpties2 as submitEmpties, summary3 as summary, verify7 as verify };

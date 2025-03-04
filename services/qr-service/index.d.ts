@@ -1,63 +1,64 @@
-import { QrListParams, QrPayload, QrUpdatePayload } from "../..";
+import { QrListParams, QrPayload, QrUpdatePayload } from "../../index";
+import { ClientSession } from "mongoose";
 export declare const list: (params: Partial<QrListParams>) => Promise<{
-    list: (import("../..").Qr & {
+    list: (import("../../index").Qr & {
         _id: import("mongoose").Types.ObjectId;
     })[];
     page: number | undefined;
     totalItems: number;
     totalPages: number;
 }>;
-export declare const generate: (count: number) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../..").Qr> & import("../..").Qr & {
+export declare const QrGenerate: (count: number, session?: ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../../index").Qr> & import("../../index").Qr & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, Omit<QrPayload, "_id">>[]>;
-export declare const detail: (id: string) => Promise<import("../..").Qr & {
+}, Omit<QrPayload[], "_id">>[]>;
+export declare const detail: (id: string) => Promise<import("../../index").Qr & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const details: (ids: string[]) => Promise<(import("../..").Qr & {
+export declare const details: (ids: string[]) => Promise<(import("../../index").Qr & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
-export declare const update: (id: string, payload: QrUpdatePayload) => Promise<import("../..").Qr & {
+export declare const QrUpdate: (id: string, payload: QrUpdatePayload, session?: ClientSession) => Promise<import("../../index").Qr & {
     _id: import("mongoose").Types.ObjectId;
 }>;
-export declare const _delete: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../..").Qr> & import("../..").Qr & {
+export declare const _delete: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../../index").Qr> & import("../../index").Qr & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
 }>;
 export declare const deleteMany: (ids: string[]) => Promise<import("mongoose").UpdateWriteOpResult>;
-export declare const verify: (code: string, TID: string) => Promise<import("../..").QrContent>;
+export declare const verify: (code: string, TID: string) => Promise<import("../../index").QrContent>;
 declare const QrService: {
-    generate: (count: number) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../..").Qr> & import("../..").Qr & {
+    readonly generate: (count: number, session?: ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../../index").Qr> & import("../../index").Qr & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
-    }, Omit<QrPayload, "_id">>[]>;
-    list: (params: Partial<QrListParams>) => Promise<{
-        list: (import("../..").Qr & {
+    }, Omit<QrPayload[], "_id">>[]>;
+    readonly list: (params: Partial<QrListParams>) => Promise<{
+        list: (import("../../index").Qr & {
             _id: import("mongoose").Types.ObjectId;
         })[];
         page: number | undefined;
         totalItems: number;
         totalPages: number;
     }>;
-    detail: (id: string) => Promise<import("../..").Qr & {
+    readonly detail: (id: string) => Promise<import("../../index").Qr & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    details: (ids: string[]) => Promise<(import("../..").Qr & {
+    readonly details: (ids: string[]) => Promise<(import("../../index").Qr & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
-    update: (id: string, payload: QrUpdatePayload) => Promise<import("../..").Qr & {
+    readonly update: (id: string, payload: QrUpdatePayload, session?: ClientSession) => Promise<import("../../index").Qr & {
         _id: import("mongoose").Types.ObjectId;
     }>;
-    delete: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../..").Qr> & import("../..").Qr & {
+    readonly delete: (id: string) => Promise<import("mongoose").Document<unknown, {}, import("../../index").Qr> & import("../../index").Qr & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
     }>;
-    deleteMany: (ids: string[]) => Promise<import("mongoose").UpdateWriteOpResult>;
-    verify: (code: string, TID: string) => Promise<import("../..").QrContent>;
+    readonly deleteMany: (ids: string[]) => Promise<import("mongoose").UpdateWriteOpResult>;
+    readonly verify: (code: string, TID: string) => Promise<import("../../index").QrContent>;
 };
 export default QrService;
 //# sourceMappingURL=index.d.ts.map

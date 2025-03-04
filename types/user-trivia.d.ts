@@ -1,4 +1,4 @@
-import { ScoreSummary } from "..";
+import { ScoreSummary } from "../index";
 import { TriviaForeign } from "./trivia";
 import { UserChallengeForeign } from "./user-challenge";
 import { UserPublicForeign } from "./user-public";

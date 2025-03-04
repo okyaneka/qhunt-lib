@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { Trivia, TriviaForeign, TriviaForeignOption } from "../..";
+import { Trivia, TriviaForeign, TriviaForeignOption } from "../../index";
 export declare const TriviaForeignOptionSchema: Schema<TriviaForeignOption, Model<TriviaForeignOption, any, any, any, import("mongoose").Document<unknown, any, TriviaForeignOption> & TriviaForeignOption & {
     _id: import("mongoose").Types.ObjectId;
 } & {

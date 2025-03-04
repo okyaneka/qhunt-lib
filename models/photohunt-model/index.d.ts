@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { PhotoHunt, PhotoHuntForeign } from "../..";
+import { PhotoHunt, PhotoHuntForeign } from "../../index";
 export declare const PhotoHuntForeignSchema: Schema<PhotoHuntForeign, Model<PhotoHuntForeign, any, any, any, import("mongoose").Document<unknown, any, PhotoHuntForeign> & PhotoHuntForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {

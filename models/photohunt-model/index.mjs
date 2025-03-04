@@ -1,25 +1,21 @@
-'use strict';
+import { Schema, models, model } from 'mongoose';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
-var mongoose = require('mongoose');
-
-// _src/models/photo-hunt-model/index.ts
-var IdNameSchema = new mongoose.Schema(
+// _src/models/photohunt-model/index.ts
+var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true }
   },
   { _id: false, versionKey: false }
 );
-new mongoose.Schema(
+new Schema(
   {
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true }
   },
   { _id: false }
 );
-new mongoose.Schema(
+new Schema(
   {
     positive: { type: String, default: "" },
     negative: { type: String, default: "" }
@@ -48,14 +44,7 @@ var QR_CONTENT_TYPES = {
 var QR_STATUS = PUBLISHING_STATUS;
 
 // _src/models/qr-model/index.ts
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new mongoose.Schema(
+var QrContentSchema = new Schema(
   {
     type: {
       type: String,
@@ -66,7 +55,7 @@ var QrContentSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrLocationSchema = new mongoose.Schema(
+var QrLocationSchema = new Schema(
   {
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
@@ -74,7 +63,15 @@ var QrLocationSchema = new mongoose.Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrSchema = new mongoose.Schema(
+var QrForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new Schema(
   {
     code: { type: String, required: true, unique: true, index: true },
     status: {
@@ -93,17 +90,17 @@ var QrSchema = new mongoose.Schema(
 );
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
-mongoose.models.Qr || mongoose.model("Qr", QrSchema);
+models.Qr || model("Qr", QrSchema);
 
-// _src/models/photo-hunt-model/index.ts
-var PhotoHuntForeignSchema = new mongoose.Schema(
+// _src/models/photohunt-model/index.ts
+var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
     hint: { type: String, required: true }
   },
   { _id: false }
 );
-var PhotoHuntSchema = new mongoose.Schema(
+var PhotoHuntSchema = new Schema(
   {
     hint: { type: String, default: "" },
     score: { type: Number, default: 0 },
@@ -120,8 +117,7 @@ var PhotoHuntSchema = new mongoose.Schema(
 );
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
+var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var photohunt_model_default = PhotoHuntModel;
 
-exports.PhotoHuntForeignSchema = PhotoHuntForeignSchema;
-exports.default = photo_hunt_model_default;
+export { PhotoHuntForeignSchema, photohunt_model_default as default };

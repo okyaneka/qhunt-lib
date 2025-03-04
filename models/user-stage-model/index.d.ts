@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { UserStage, UserStageForeign, UserStageResult } from "../..";
+import { UserStage, UserStageForeign, UserStageResult } from "../../index";
 export declare const UserStageForeignSchema: Schema<UserStageForeign, Model<UserStageForeign, any, any, any, import("mongoose").Document<unknown, any, UserStageForeign> & UserStageForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {
