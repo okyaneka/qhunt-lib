@@ -5,18 +5,20 @@ import {
 import {
   detail as PhotoHuntDetail,
   verify as PhotoHuntVerify,
-} from "../photo-hunt-service";
+} from "../photohunt-service";
 import { detail as StageDetail, verify as StageVerify } from "../stage-service";
 import {
   detail as TriviaDetail,
   verify as TriviaVerify,
 } from "../trivia-service";
-import { QrListParams, QrPayload, QrUpdatePayload } from "~";
+import { QrListParams, QrPayload, QrUpdatePayload } from "~/index";
 import { setup as UserChallengeSetup } from "../user-challenge-service";
 import { setup as UserStageSetup } from "../user-stage-service";
 import { QR_STATUS } from "~/constants";
 import { createHash } from "crypto";
 import QrModel from "~/models/qr-model";
+import { db } from "~/helpers";
+import { ClientSession } from "mongoose";
 
 const services = {
   stage: { detail: StageDetail, verify: StageVerify },
@@ -60,7 +62,7 @@ export const list = async (params: Partial<QrListParams>) => {
   };
 };
 
-export const generate = async (count: number) => {
+export const QrGenerate = async (count: number, session?: ClientSession) => {
   const items = new Array(count).fill({}).map<QrPayload>(() => {
     const salt = Math.floor(Math.random() * Math.pow(16, 8))
       .toString(16)
@@ -71,7 +73,7 @@ export const generate = async (count: number) => {
     };
   });
 
-  return QrModel.insertMany(items);
+  return QrModel.insertMany(items, { session });
 };
 
 export const detail = async (id: string) => {
@@ -85,20 +87,28 @@ export const details = async (ids: string[]) => {
   return items.map((item) => item.toObject());
 };
 
-export const update = async (id: string, payload: QrUpdatePayload) => {
-  const { content } = payload;
-  const item = await QrModel.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("item not found");
+export const QrUpdate = async (
+  id: string,
+  payload: QrUpdatePayload,
+  session?: ClientSession
+) => {
+  return db.transaction(async (session) => {
+    const { content } = payload;
+    const item = await QrModel.findOne({ _id: id, deletedAt: null }, null, {
+      session,
+    });
+    if (!item) throw new Error("item not found");
 
-  if (content) {
-    const service = services[content.type];
-    const action = payload.status === QR_STATUS.Draft ? "detail" : "verify";
-    await service[action](content.refId);
-  }
+    if (content) {
+      const service = services[content.type];
+      const action = payload.status === QR_STATUS.Draft ? "detail" : "verify";
+      await service[action](content.refId);
+    }
 
-  Object.assign(item, payload);
-  await item.save();
-  return item.toObject();
+    Object.assign(item, payload);
+    await item.save({ session });
+    return item.toObject();
+  }, session);
 };
 
 export const _delete = async (id: string) => {
@@ -148,14 +158,14 @@ export const verify = async (code: string, TID: string) => {
 };
 
 const QrService = {
-  generate,
+  generate: QrGenerate,
   list,
   detail,
   details,
-  update,
+  update: QrUpdate,
   delete: _delete,
   deleteMany,
   verify,
-};
+} as const;
 
 export default QrService;

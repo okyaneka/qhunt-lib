@@ -1,12 +1,13 @@
 import db from "~/helpers/db";
-import { ChallengeListParams, ChallengePayload } from "~";
+import { ChallengeListParams, ChallengePayload } from "~/index";
 import { detail as StageDetail } from "../stage-service";
 import ChallengeModel from "~/models/challenge-model";
 import StageModel from "~/models/stage-model";
 import { CHALLENGE_STATUS } from "~/constants";
 
-export const list = async (params: ChallengeListParams) => {
-  const skip = (params.page - 1) * params.limit;
+export const list = async (params: Partial<ChallengeListParams>) => {
+  const { page = 1, limit = 10 } = params;
+  const skip = (page - 1) * limit;
   const filter: any = { deletedAt: null };
 
   if (params.stageId === "null") filter["stage"] = null;
@@ -14,15 +15,15 @@ export const list = async (params: ChallengeListParams) => {
   if (params.type) filter["settings.type"] = params.type;
   const list = await ChallengeModel.find(filter)
     .skip(skip)
-    .limit(params.limit)
+    .limit(limit)
     .sort({ createdAt: -1 });
 
   const totalItems = await ChallengeModel.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
+  const totalPages = Math.ceil(totalItems / limit);
 
   return {
     list: list.map((item) => item.toObject()),
-    page: params.page,
+    page: page,
     totalItems,
     totalPages,
   };
@@ -31,7 +32,7 @@ export const list = async (params: ChallengeListParams) => {
 export const create = async (payload: ChallengePayload) => {
   return db.transaction(async (session) => {
     const { stageId, ...value } = payload;
-    const stageData = stageId ? await StageDetail(stageId) : null;
+    const stageData = stageId ? await StageDetail(stageId, session) : null;
     const stage = stageData ? { id: stageData.id, name: stageData.name } : null;
 
     const [item] = await ChallengeModel.create([{ ...value, stage }], {
@@ -62,16 +63,10 @@ export const detail = async (id: string) => {
   return item.toObject();
 };
 
-// export const detailContent = async (id: string) => {
-//   const item = await ChallengeModel.findOne({ _id: id, deletedAt: null });
-//   if (!item) throw new Error("challenge not found");
-
-//   const services = {
-//     [ChallengeTypeValues.Trivia]: TriviaService,
-//   };
-
-//   return await services[item.settings.type].content(item);
-// };
+export const ChallengeDetails = async (ids: string[]) => {
+  const items = await ChallengeModel.find({ _id: { $in: ids } });
+  return items.map((item) => item.toObject());
+};
 
 export const update = async (id: string, payload: ChallengePayload) => {
   return await db.transaction(async (session) => {
@@ -144,6 +139,7 @@ const ChallengeService = {
   list,
   create,
   detail,
+  details: ChallengeDetails,
   // detailContent,
   update,
   updateContent,
