@@ -1,4 +1,4 @@
-import { IdName, ValueOf } from "..";
+import { IdName, ValueOf } from "../index";
 import { UserPublicForeign } from "./user-public";
 import { LEADERBOARD_MODE } from "../constants";
 export type LeaderboardMode = ValueOf<typeof LEADERBOARD_MODE>;

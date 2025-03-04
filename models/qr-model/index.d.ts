@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { Qr, QrForeign } from "../..";
+import { Qr, QrForeign } from "../../index";
 export declare const QrForeignSchema: Schema<QrForeign, Model<QrForeign, any, any, any, import("mongoose").Document<unknown, any, QrForeign> & QrForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {

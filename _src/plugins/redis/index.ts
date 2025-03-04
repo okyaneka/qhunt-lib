@@ -1,5 +1,5 @@
 import { Redis, RedisOptions } from "ioredis";
-import { RedisChannel, RedisKey } from "~";
+import { RedisChannel, RedisKey } from "~/index";
 import { randomUUID } from "crypto";
 
 type RedisCallback<T> = (data: T) => Promise<any> | any;

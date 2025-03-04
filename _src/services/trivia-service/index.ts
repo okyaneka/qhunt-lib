@@ -3,8 +3,8 @@ import {
   updateContent as ChallengeUpdateContent,
 } from "../challenge-service";
 import TriviaModel from "~/models/trivia-model";
-import { TriviaPayload } from "~";
-import { IdName } from "~";
+import { TriviaPayload } from "~/index";
+import { IdName } from "~/index";
 import { ClientSession } from "mongoose";
 import { transaction } from "~/helpers/db";
 import { CHALLENGE_TYPES } from "~/constants";

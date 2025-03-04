@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { UserPublic, UserPublicForeign } from "../..";
+import { UserPublic, UserPublicForeign } from "../../index";
 export declare const UserPublicForeignSchema: Schema<UserPublicForeign, Model<UserPublicForeign, any, any, any, import("mongoose").Document<unknown, any, UserPublicForeign> & UserPublicForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {

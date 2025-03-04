@@ -1,5 +1,5 @@
 import { RedisOptions } from "ioredis";
-import { RedisChannel, RedisKey } from "../..";
+import { RedisChannel, RedisKey } from "../../index";
 type RedisCallback<T> = (data: T) => Promise<any> | any;
 export declare class RedisHelper {
     status: number;

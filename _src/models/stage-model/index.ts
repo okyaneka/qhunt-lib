@@ -1,7 +1,8 @@
 import { PeriodSchema, ToObject } from "~/helpers/model";
-import { Stage, StageForeign, StageSettingsForeign } from "~";
+import { Stage, StageForeign, StageSettingsForeign } from "~/index";
 import { Model, model, models, Schema } from "mongoose";
 import { STAGE_STATUS } from "~/constants";
+import { QrForeignSchema } from "../qr-model";
 
 const StageSettingsSchema = new Schema<Stage["settings"]>(
   {
@@ -40,6 +41,7 @@ const StageSchema = new Schema<Stage>(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

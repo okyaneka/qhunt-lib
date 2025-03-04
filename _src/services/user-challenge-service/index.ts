@@ -12,7 +12,7 @@ import {
   UserPublicForeign,
   ChallengeForeign,
   ChallengeSettingsForeign,
-} from "~";
+} from "~/index";
 import { verify as UserPublicVerify } from "../user-public-service";
 import UserStageService from "../user-stage-service";
 import StageService from "../stage-service";
@@ -28,7 +28,7 @@ import {
   setup as UserPhotoHuntSetup,
   submitEmpties as UserPhotoHuntSubmitEmpties,
   summary as UserPhotoHuntSummary,
-} from "~/services/user-photo-hunt-service";
+} from "~/services/user-photohunt-service";
 import { ClientSession } from "mongoose";
 import { timeBonus } from "~/helpers/bonus";
 import { CHALLENGE_TYPES, USER_CHALLENGE_STATUS } from "~/constants";

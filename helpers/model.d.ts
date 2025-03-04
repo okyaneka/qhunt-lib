@@ -1,5 +1,5 @@
 import { Schema, ToObjectOptions } from "mongoose";
-import { Feedback, IdName, Periode } from "..";
+import { Feedback, IdName, Periode } from "../index";
 export declare const IdNameSchema: Schema<IdName, import("mongoose").Model<IdName, any, any, any, import("mongoose").Document<unknown, any, IdName> & IdName & {
     _id: import("mongoose").Types.ObjectId;
 } & {

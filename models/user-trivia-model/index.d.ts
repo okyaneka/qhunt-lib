@@ -1,5 +1,5 @@
 import { Model } from "mongoose";
-import { UserTrivia } from "../..";
+import { UserTrivia } from "../../index";
 declare const UserTriviaModel: Model<UserTrivia, {}, {}, {}, import("mongoose").Document<unknown, {}, UserTrivia> & UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 } & {

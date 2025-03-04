@@ -1,11 +1,11 @@
-import { UserChallengeForeign, UserPublicForeign, UserTriviaSummary, TriviaForeign } from "../..";
+import { UserChallengeForeign, UserPublicForeign, UserTriviaSummary, TriviaForeign } from "../../index";
 import { ClientSession } from "mongoose";
-export declare const verify: (triviaId: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../..").UserTrivia> & import("../..").UserTrivia & {
+export declare const verify: (triviaId: string, TID: string) => Promise<import("mongoose").Document<unknown, {}, import("../../index").UserTrivia> & import("../../index").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
 }>;
-export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, session?: ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../..").UserTrivia> & import("../..").UserTrivia & {
+export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, session?: ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../../index").UserTrivia> & import("../../index").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
@@ -14,16 +14,16 @@ export declare const setup: (userPublic: UserPublicForeign, userChallenge: UserC
     userChallenge: UserChallengeForeign;
     trivia: TriviaForeign;
 }[], "_id">>[]>;
-export declare const details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../..").UserTrivia & {
+export declare const details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../../index").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 })[]>;
-export declare const submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../..").UserTrivia & {
+export declare const submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../../index").UserTrivia & {
     _id: import("mongoose").Types.ObjectId;
 }>;
 export declare const submitEmpties: (userChallengeId: string, TID: string, session?: ClientSession) => Promise<import("mongoose").UpdateWriteOpResult>;
 export declare const summary: (userChallengeId: string, TID: string, session?: ClientSession) => Promise<UserTriviaSummary>;
 declare const UserTriviaService: {
-    readonly setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, session?: ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../..").UserTrivia> & import("../..").UserTrivia & {
+    readonly setup: (userPublic: UserPublicForeign, userChallenge: UserChallengeForeign, session?: ClientSession) => Promise<import("mongoose").MergeType<import("mongoose").Document<unknown, {}, import("../../index").UserTrivia> & import("../../index").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     } & {
         __v: number;
@@ -32,10 +32,10 @@ declare const UserTriviaService: {
         userChallenge: UserChallengeForeign;
         trivia: TriviaForeign;
     }[], "_id">>[]>;
-    readonly details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../..").UserTrivia & {
+    readonly details: (ids: string[], TID: string, hasResult?: boolean, session?: ClientSession) => Promise<(import("../../index").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     })[]>;
-    readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../..").UserTrivia & {
+    readonly submit: (id: string, TID: string, answer?: string | null, bonus?: number) => Promise<import("../../index").UserTrivia & {
         _id: import("mongoose").Types.ObjectId;
     }>;
     readonly submitEmpties: (userChallengeId: string, TID: string, session?: ClientSession) => Promise<import("mongoose").UpdateWriteOpResult>;

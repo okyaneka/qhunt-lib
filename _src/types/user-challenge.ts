@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams, ValueOf, ScoreSummary } from "~";
+import { Timestamps, DefaultListParams, ValueOf, ScoreSummary } from "~/index";
 import { ChallengeForeign, ChallengeSettingsForeign } from "./challenge";
 import { UserPublicForeign } from "./user-public";
 import { UserStageForeign } from "./user-stage";

@@ -1,6 +1,10 @@
 import { Model, model, models, Schema } from "mongoose";
 import { ToObject } from "~/helpers/model";
-import { UserChallenge, UserChallengeForeign, UserChallengeResult } from "~";
+import {
+  UserChallenge,
+  UserChallengeForeign,
+  UserChallengeResult,
+} from "~/index";
 import {
   ChallengeForeignSchema,
   ChallengeSettingsForeignSchema,

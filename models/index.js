@@ -72,6 +72,54 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+var QrContentSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(QR_CONTENT_TYPES),
+      required: true
+    },
+    refId: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrLocationSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "" },
+    longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new mongoose.Schema(
+  {
+    code: { type: String, required: true, unique: true, index: true },
+    status: {
+      type: String,
+      enum: Object.values(QR_STATUS),
+      required: true
+    },
+    content: { type: QrContentSchema, default: null },
+    location: { type: QrLocationSchema, default: null },
+    accessCount: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
+var QrModel = mongoose.models.Qr || mongoose.model("Qr", QrSchema);
+var qr_model_default = QrModel;
 
 // _src/models/challenge-model/index.ts
 var ChallengeSettingsSchema = new mongoose.Schema(
@@ -120,6 +168,7 @@ var ChallengeSchema = new mongoose.Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -128,55 +177,6 @@ ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 var ChallengeModel = mongoose.models.Challenge || mongoose.model("Challenge", ChallengeSchema);
 var challenge_model_default = ChallengeModel;
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(QR_CONTENT_TYPES),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new mongoose.Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new mongoose.Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QR_STATUS),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-var QrModel = mongoose.models.Qr || mongoose.model("Qr", QrSchema);
-var qr_model_default = QrModel;
-
-// _src/models/photo-hunt-model/index.ts
 var PhotoHuntForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -202,7 +202,7 @@ var PhotoHuntSchema = new mongoose.Schema(
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
+var photohunt_model_default = PhotoHuntModel;
 var S3ForeignSchema = new mongoose.Schema(
   {
     fileName: { type: String, required: true },
@@ -259,6 +259,7 @@ var StageSchema = new mongoose.Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -483,7 +484,7 @@ var UserPhotoHuntSchema = new mongoose.Schema({
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 var UserPhotoHuntModel = mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
+var user_photohunt_model_default = UserPhotoHuntModel;
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -515,14 +516,14 @@ var UserTriviaModel = mongoose.models.UserTrivia || mongoose.model("UserTrivia",
 var user_trivia_model_default = UserTriviaModel;
 
 exports.ChallengeModel = challenge_model_default;
-exports.PhotoHuntModel = photo_hunt_model_default;
+exports.PhotoHuntModel = photohunt_model_default;
 exports.QrModel = qr_model_default;
 exports.S3Model = s3_model_default;
 exports.StageModel = stage_model_default;
 exports.TriviaModel = trivia_model_default;
 exports.UserChallengeModel = user_challenge_model_default;
 exports.UserModel = user_model_default;
-exports.UserPhotoHuntModel = user_photo_hunt_model_default;
+exports.UserPhotoHuntModel = user_photohunt_model_default;
 exports.UserPublicModel = user_public_model_default;
 exports.UserStageModel = user_stage_model_default;
 exports.UserTriviaModel = user_trivia_model_default;

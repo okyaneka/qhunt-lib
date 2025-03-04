@@ -47,13 +47,6 @@ var QR_CONTENT_TYPES = {
 var QR_STATUS = PUBLISHING_STATUS;
 
 // _src/models/qr-model/index.ts
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
 var QrContentSchema = new mongoose.Schema(
   {
     type: {
@@ -70,6 +63,14 @@ var QrLocationSchema = new mongoose.Schema(
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
     latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
   },
   { _id: false, versionKey: false }
 );

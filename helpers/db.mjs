@@ -1,9 +1,9 @@
 import { startSession } from 'mongoose';
 
 // _src/helpers/db.ts
-var transaction = async (operation) => {
-  const session = await startSession();
-  session.startTransaction();
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;

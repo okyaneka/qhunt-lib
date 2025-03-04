@@ -70,6 +70,54 @@ var ToObject = {
     return { id: _id.toString(), ...rest };
   }
 };
+var QrContentSchema = new Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(QR_CONTENT_TYPES),
+      required: true
+    },
+    refId: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrLocationSchema = new Schema(
+  {
+    label: { type: String, default: "" },
+    longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new Schema(
+  {
+    code: { type: String, required: true, unique: true, index: true },
+    status: {
+      type: String,
+      enum: Object.values(QR_STATUS),
+      required: true
+    },
+    content: { type: QrContentSchema, default: null },
+    location: { type: QrLocationSchema, default: null },
+    accessCount: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
+var QrModel = models.Qr || model("Qr", QrSchema);
+var qr_model_default = QrModel;
 
 // _src/models/challenge-model/index.ts
 var ChallengeSettingsSchema = new Schema(
@@ -118,6 +166,7 @@ var ChallengeSchema = new Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -126,55 +175,6 @@ ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 var challenge_model_default = ChallengeModel;
-var QrForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(QR_CONTENT_TYPES),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QR_STATUS),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-var QrModel = models.Qr || model("Qr", QrSchema);
-var qr_model_default = QrModel;
-
-// _src/models/photo-hunt-model/index.ts
 var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -200,7 +200,7 @@ var PhotoHuntSchema = new Schema(
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photo_hunt_model_default = PhotoHuntModel;
+var photohunt_model_default = PhotoHuntModel;
 var S3ForeignSchema = new Schema(
   {
     fileName: { type: String, required: true },
@@ -257,6 +257,7 @@ var StageSchema = new Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -481,7 +482,7 @@ var UserPhotoHuntSchema = new Schema({
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
 var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photo_hunt_model_default = UserPhotoHuntModel;
+var user_photohunt_model_default = UserPhotoHuntModel;
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -512,4 +513,4 @@ UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
 var user_trivia_model_default = UserTriviaModel;
 
-export { challenge_model_default as ChallengeModel, photo_hunt_model_default as PhotoHuntModel, qr_model_default as QrModel, s3_model_default as S3Model, stage_model_default as StageModel, trivia_model_default as TriviaModel, user_challenge_model_default as UserChallengeModel, user_model_default as UserModel, user_photo_hunt_model_default as UserPhotoHuntModel, user_public_model_default as UserPublicModel, user_stage_model_default as UserStageModel, user_trivia_model_default as UserTriviaModel };
+export { challenge_model_default as ChallengeModel, photohunt_model_default as PhotoHuntModel, qr_model_default as QrModel, s3_model_default as S3Model, stage_model_default as StageModel, trivia_model_default as TriviaModel, user_challenge_model_default as UserChallengeModel, user_model_default as UserModel, user_photohunt_model_default as UserPhotoHuntModel, user_public_model_default as UserPublicModel, user_stage_model_default as UserStageModel, user_trivia_model_default as UserTriviaModel };

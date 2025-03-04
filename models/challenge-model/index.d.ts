@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { Challenge, ChallengeForeign, ChallengeSettingsForeign } from "../..";
+import { Challenge, ChallengeForeign, ChallengeSettingsForeign } from "../../index";
 export declare const ChallengeSettingsForeignSchema: Schema<ChallengeSettingsForeign, Model<ChallengeSettingsForeign, any, any, any, import("mongoose").Document<unknown, any, ChallengeSettingsForeign> & ChallengeSettingsForeign & {
     _id: import("mongoose").Types.ObjectId;
 } & {

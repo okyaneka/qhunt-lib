@@ -1,5 +1,5 @@
 import { Model, Schema } from "mongoose";
-import { User, UserForeign } from "../..";
+import { User, UserForeign } from "../../index";
 export declare const UserForeignSchema: Schema<UserForeign, Model<UserForeign, any, any, any, import("mongoose").Document<unknown, any, UserForeign> & Pick<User, "email" | "id" | "name"> & {
     photo: string | null;
 } & {

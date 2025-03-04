@@ -1,5 +1,5 @@
 import { Schema, ToObjectOptions } from "mongoose";
-import { Feedback, IdName, Periode } from "~";
+import { Feedback, IdName, Periode } from "~/index";
 
 export const IdNameSchema = new Schema<IdName>(
   {

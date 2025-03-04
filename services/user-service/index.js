@@ -8,9 +8,9 @@ var mongoose = require('mongoose');
 require('dayjs');
 var ioredis_star = require('ioredis');
 var crypto = require('crypto');
+require('@zxing/browser');
 var client_s3_star = require('@aws-sdk/client-s3');
 var slugify = require('slugify');
-require('@zxing/browser');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
@@ -53,9 +53,9 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-var transaction = async (operation) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await mongoose.startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;
@@ -256,6 +256,55 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
   UserStageStatus2["End"] = "end";
   return UserStageStatus2;
 })(UserStageStatus || {});
+var QrContentSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(QR_CONTENT_TYPES),
+      required: true
+    },
+    refId: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrLocationSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "" },
+    longitude: { type: Number, required: true },
+    latitude: { type: Number, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var QrForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null }
+  },
+  { _id: false, versionKey: false }
+);
+var QrSchema = new mongoose.Schema(
+  {
+    code: { type: String, required: true, unique: true, index: true },
+    status: {
+      type: String,
+      enum: Object.values(QR_STATUS),
+      required: true
+    },
+    content: { type: QrContentSchema, default: null },
+    location: { type: QrLocationSchema, default: null },
+    accessCount: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+QrSchema.set("toObject", ToObject);
+QrSchema.set("toJSON", ToObject);
+mongoose.models.Qr || mongoose.model("Qr", QrSchema);
+
+// _src/models/stage-model/index.ts
 var StageSettingsSchema = new mongoose.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
@@ -290,6 +339,7 @@ var StageSchema = new mongoose.Schema(
     },
     settings: { type: StageSettingsSchema, required: true },
     contents: { type: [String], default: [] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -380,6 +430,7 @@ var ChallengeSchema = new mongoose.Schema(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
@@ -387,6 +438,68 @@ var ChallengeSchema = new mongoose.Schema(
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 mongoose.models.Challenge || mongoose.model("Challenge", ChallengeSchema);
+var PhotoHuntForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new mongoose.Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var TriviaOptionSchema = new mongoose.Schema(
+  {
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 }
+  },
+  { _id: false, versionKey: false }
+);
+var TriviaForeignOptionSchema = new mongoose.Schema(
+  {
+    text: { type: String, required: true }
+  },
+  { _id: false }
+);
+var TriviaForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true }
+  },
+  { _id: false }
+);
+var TriviaSchema = new mongoose.Schema(
+  {
+    challenge: { type: IdNameSchema, default: null },
+    question: { type: String, required: true },
+    feedback: { type: FeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
 var UserChallengeForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -429,43 +542,6 @@ UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
-var TriviaOptionSchema = new mongoose.Schema(
-  {
-    text: { type: String, required: true },
-    isCorrect: { type: Boolean, default: false },
-    point: { type: Number, default: 0 }
-  },
-  { _id: false, versionKey: false }
-);
-var TriviaForeignOptionSchema = new mongoose.Schema(
-  {
-    text: { type: String, required: true }
-  },
-  { _id: false }
-);
-var TriviaForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    question: { type: String, required: true },
-    allowMultiple: { type: Boolean, required: true },
-    options: { type: [TriviaForeignOptionSchema], required: true }
-  },
-  { _id: false }
-);
-var TriviaSchema = new mongoose.Schema(
-  {
-    challenge: { type: IdNameSchema, default: null },
-    question: { type: String, required: true },
-    feedback: { type: FeedbackSchema, default: {} },
-    allowMultiple: { type: Boolean, default: false },
-    options: { type: [TriviaOptionSchema], required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-TriviaSchema.set("toObject", ToObject);
-TriviaSchema.set("toJSON", ToObject);
-mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -494,81 +570,6 @@ var UserTriviaSchema = new mongoose.Schema(
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
-var QrForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrContentSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(QR_CONTENT_TYPES),
-      required: true
-    },
-    refId: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrLocationSchema = new mongoose.Schema(
-  {
-    label: { type: String, default: "" },
-    longitude: { type: Number, required: true },
-    latitude: { type: Number, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var QrSchema = new mongoose.Schema(
-  {
-    code: { type: String, required: true, unique: true, index: true },
-    status: {
-      type: String,
-      enum: Object.values(QR_STATUS),
-      required: true
-    },
-    content: { type: QrContentSchema, default: null },
-    location: { type: QrLocationSchema, default: null },
-    accessCount: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-QrSchema.set("toObject", ToObject);
-QrSchema.set("toJSON", ToObject);
-mongoose.models.Qr || mongoose.model("Qr", QrSchema);
-
-// _src/models/photo-hunt-model/index.ts
-var PhotoHuntForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new mongoose.Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-
-// _src/models/user-photo-hunt-model/index.ts
 var UserPhotoHuntResultSchema = new mongoose.Schema(
   {
     feedback: { type: String, default: null },
@@ -689,6 +690,16 @@ var userSync = async (TID, session) => {
     { "userPublic.code": TID },
     { userPublic }
   );
+};
+
+// _src/helpers/index.ts
+var urlToBuffer = async (photoURL) => {
+  const response = await fetch(photoURL);
+  if (!response.ok) throw new Error("Failed to fetch image");
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const mimetype = response.headers.get("content-type") || "application/octet-stream";
+  return { buffer, mimetype };
 };
 
 // _src/services/user-stage-service/index.ts
@@ -815,16 +826,6 @@ var S3ServiceDelete = async (key, session) => {
   return res;
 };
 
-// _src/helpers/index.ts
-var urlToBuffer = async (photoURL) => {
-  const response = await fetch(photoURL);
-  if (!response.ok) throw new Error("Failed to fetch image");
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const mimetype = response.headers.get("content-type") || "application/octet-stream";
-  return { buffer, mimetype };
-};
-
 // _src/services/user-service/index.ts
 var register = async (payload, TID) => {
   return await db_default.transaction(async (session) => {
@@ -937,7 +938,7 @@ var login = async (payload, provider, secret) => {
 };
 var profile = async (bearer) => {
 };
-var list2 = async (params) => {
+var list = async (params) => {
 };
 var create = async (payload) => {
 };
@@ -1029,7 +1030,7 @@ var UserService = {
   googleSign,
   login,
   profile,
-  list: list2,
+  list,
   create,
   detail,
   update,
@@ -1045,7 +1046,7 @@ exports.dataSync = dataSync;
 exports.default = user_service_default;
 exports.detail = detail;
 exports.googleSign = googleSign;
-exports.list = list2;
+exports.list = list;
 exports.login = login;
 exports.profile = profile;
 exports.register = register;

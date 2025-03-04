@@ -1,5 +1,5 @@
 import { QR_CONTENT_TYPES, QR_STATUS } from "~/constants";
-import { DefaultListParams, Timestamps, ValueOf } from "~";
+import { DefaultListParams, Timestamps, ValueOf } from "~/index";
 
 export type QrStatus = ValueOf<typeof QR_STATUS>;
 export type QrContentType = ValueOf<typeof QR_CONTENT_TYPES>;
@@ -40,10 +40,7 @@ export interface QrDeleteBulkPayload {
   ids: string[];
 }
 
-export interface QrForeign {
-  id: string;
-  code: string;
-}
+export type QrForeign = Pick<Qr, "id" | "code" | "location">;
 
 export interface Qr extends Timestamps {
   id: string;

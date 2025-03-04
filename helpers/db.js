@@ -5,9 +5,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var mongoose = require('mongoose');
 
 // _src/helpers/db.ts
-var transaction = async (operation) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await mongoose.startSession();
+  clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
     return res;

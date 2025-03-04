@@ -1,4 +1,4 @@
-import { Timestamps, DefaultListParams } from "~";
+import { Timestamps, DefaultListParams } from "~/index";
 import { UserPublicForeign } from "./user-public";
 import { StageForeign } from "./stage";
 

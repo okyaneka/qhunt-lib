@@ -1,6 +1,11 @@
 import { Model, model, models, Schema } from "mongoose";
 import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
-import { Trivia, TriviaForeign, TriviaForeignOption, TriviaOption } from "~";
+import {
+  Trivia,
+  TriviaForeign,
+  TriviaForeignOption,
+  TriviaOption,
+} from "~/index";
 
 const TriviaOptionSchema = new Schema<TriviaOption>(
   {

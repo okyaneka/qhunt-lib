@@ -1,4 +1,4 @@
-import { DefaultListParams, Feedback, Timestamps, ValueOf } from "..";
+import { DefaultListParams, Feedback, QrForeign, Timestamps, ValueOf } from "../index";
 import { Stage } from "./stage";
 import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "../constants";
 export type ChallengeStatus = ValueOf<typeof CHALLENGE_STATUS>;
@@ -31,5 +31,6 @@ export interface Challenge extends Timestamps {
     status: ChallengeStatus;
     settings: ChallengeSettings;
     contents: string[];
+    qr: QrForeign | null;
 }
 //# sourceMappingURL=challenge.d.ts.map
