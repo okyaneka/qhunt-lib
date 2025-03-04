@@ -1,4 +1,4 @@
-import { DefaultListParams, Feedback, Timestamps, ValueOf } from "~";
+import { DefaultListParams, Feedback, QrForeign, Timestamps, ValueOf } from "~";
 import { Stage } from "./stage";
 import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/constants";
 
@@ -44,4 +44,5 @@ export interface Challenge extends Timestamps {
   status: ChallengeStatus;
   settings: ChallengeSettings;
   contents: string[];
+  qr: QrForeign | null;
 }

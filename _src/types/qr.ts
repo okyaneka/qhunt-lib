@@ -40,10 +40,7 @@ export interface QrDeleteBulkPayload {
   ids: string[];
 }
 
-export interface QrForeign {
-  id: string;
-  code: string;
-}
+export type QrForeign = Pick<Qr, "id" | "code" | "location">;
 
 export interface Qr extends Timestamps {
   id: string;

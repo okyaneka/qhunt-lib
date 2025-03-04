@@ -7,6 +7,7 @@ import {
 } from "~";
 import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/constants";
 import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
+import { QrForeignSchema } from "../qr-model";
 
 const ChallengeSettingsSchema = new Schema<ChallengeSettings>(
   {
@@ -58,6 +59,7 @@ const ChallengeSchema = new Schema<Challenge>(
     order: { type: Number, default: null },
     settings: { type: ChallengeSettingsSchema, default: null },
     contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

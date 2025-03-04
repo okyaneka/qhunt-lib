@@ -3,14 +3,6 @@ import { ToObject } from "~/helpers/model";
 import { Qr, QrContent, QrForeign, QrLocation } from "~";
 import { QR_CONTENT_TYPES, QR_STATUS } from "~/constants";
 
-export const QrForeignSchema = new Schema<QrForeign>(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true, index: true },
-  },
-  { _id: false, versionKey: false }
-);
-
 const QrContentSchema = new Schema<QrContent>(
   {
     type: {
@@ -28,6 +20,15 @@ const QrLocationSchema = new Schema<QrLocation>(
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
     latitude: { type: Number, required: true },
+  },
+  { _id: false, versionKey: false }
+);
+
+export const QrForeignSchema = new Schema<QrForeign>(
+  {
+    id: { type: String, required: true },
+    code: { type: String, required: true, index: true },
+    location: { type: QrLocationSchema, default: null },
   },
   { _id: false, versionKey: false }
 );
