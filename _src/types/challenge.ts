@@ -1,4 +1,10 @@
-import { DefaultListParams, Feedback, QrForeign, Timestamps, ValueOf } from "~";
+import {
+  DefaultListParams,
+  Feedback,
+  QrForeign,
+  Timestamps,
+  ValueOf,
+} from "~/index";
 import { Stage } from "./stage";
 import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/constants";
 

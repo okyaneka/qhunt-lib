@@ -1,5 +1,5 @@
 import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
-import { UserTrivia, UserTriviaResult } from "~";
+import { UserTrivia, UserTriviaResult } from "~/index";
 import { UserPublicForeignSchema } from "../user-public-model";
 import { UserChallengeForeignSchema } from "../user-challenge-model";
 import { TriviaForeignSchema } from "../trivia-model";

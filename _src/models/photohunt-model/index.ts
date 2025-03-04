@@ -1,5 +1,5 @@
 import { model, Model, models, Schema } from "mongoose";
-import { PhotoHunt, PhotoHuntForeign } from "~";
+import { PhotoHunt, PhotoHuntForeign } from "~/index";
 import { IdNameSchema, ToObject } from "~/helpers/model";
 import { QrForeignSchema } from "../qr-model";
 import { PHOTO_HUNT_STATUS } from "~/constants";

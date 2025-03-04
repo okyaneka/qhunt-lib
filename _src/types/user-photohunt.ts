@@ -1,4 +1,4 @@
-import { ScoreSummary } from "~";
+import { ScoreSummary } from "~/index";
 import { PhotoHuntForeign } from "./photohunt";
 import { UserChallengeForeign } from "./user-challenge";
 import { UserPublicForeign } from "./user-public";

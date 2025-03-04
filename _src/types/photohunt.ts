@@ -1,4 +1,4 @@
-import { IdName, Timestamps, ValueOf } from "~";
+import { IdName, Timestamps, ValueOf } from "~/index";
 import { QrForeign } from "./qr";
 import { PHOTO_HUNT_STATUS } from "~/constants";
 

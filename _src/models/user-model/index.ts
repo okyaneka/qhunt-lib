@@ -1,5 +1,5 @@
 import { Model, model, models, Schema, ToObjectOptions } from "mongoose";
-import { User, UserForeign } from "~";
+import { User, UserForeign } from "~/index";
 import { S3ForeignSchema } from "../s3-model";
 import { USER_PROVIDERS, USER_ROLES } from "~/constants";
 

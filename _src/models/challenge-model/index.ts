@@ -4,7 +4,7 @@ import {
   ChallengeForeign,
   ChallengeSettings,
   ChallengeSettingsForeign,
-} from "~";
+} from "~/index";
 import { CHALLENGE_STATUS, CHALLENGE_TYPES } from "~/constants";
 import { FeedbackSchema, IdNameSchema, ToObject } from "~/helpers/model";
 import { QrForeignSchema } from "../qr-model";

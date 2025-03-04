@@ -1,10 +1,10 @@
 import QrModel from "~/models/qr-model";
 import PhotoHuntModel from "~/models/photohunt-model";
-import { IdName } from "~";
+import { IdName, QrForeign } from "~/index";
 import { transaction } from "~/helpers/db";
 import { ClientSession } from "mongoose";
-import { QrContent, PhotoHuntPayload } from "~";
-import { list as QrServiceList } from "../qr-service";
+import { QrContent, PhotoHuntPayload } from "~/index";
+import { QrGenerate } from "../qr-service";
 import {
   detail as ChallengeDetail,
   updateContent as ChallengeUpdateContent,
@@ -18,11 +18,12 @@ const createMany = async (
 ) => {
   if (payload.length === 0) return [];
 
-  const qrs = (
-    await QrServiceList({ hasContent: false, limit: payload.length })
-  ).list.map(({ id, code }) => ({
-    id,
-    code,
+  const qrs: QrForeign[] = await (
+    await QrGenerate(payload.length, session)
+  ).map((item) => ({
+    id: item._id.toString(),
+    code: item.code,
+    location: item.location,
   }));
 
   if (qrs.length !== payload.length)

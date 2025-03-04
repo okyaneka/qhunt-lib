@@ -9,7 +9,7 @@ import {
   UserLoginPayload,
   UserForeignFull,
   UserPasswordPayload,
-} from "~";
+} from "~/index";
 import { compare, hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 import db from "~/helpers/db";

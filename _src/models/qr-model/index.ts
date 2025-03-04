@@ -1,6 +1,6 @@
 import { Model, model, models, Schema } from "mongoose";
 import { ToObject } from "~/helpers/model";
-import { Qr, QrContent, QrForeign, QrLocation } from "~";
+import { Qr, QrContent, QrForeign, QrLocation } from "~/index";
 import { QR_CONTENT_TYPES, QR_STATUS } from "~/constants";
 
 const QrContentSchema = new Schema<QrContent>(

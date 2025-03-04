@@ -4,7 +4,7 @@ import {
   UserTriviaResult,
   UserTriviaSummary,
   TriviaForeign,
-} from "~";
+} from "~/index";
 import {
   details as TriviaServiceDetails,
   detail as TriviaServiceDetail,

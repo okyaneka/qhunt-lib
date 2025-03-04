@@ -1,5 +1,11 @@
 import { STAGE_STATUS } from "~/constants";
-import { DefaultListParams, Periode, QrForeign, Timestamps, ValueOf } from "~";
+import {
+  DefaultListParams,
+  Periode,
+  QrForeign,
+  Timestamps,
+  ValueOf,
+} from "~/index";
 
 export type StageStatus = ValueOf<typeof STAGE_STATUS>;
 

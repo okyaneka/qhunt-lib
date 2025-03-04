@@ -1,4 +1,4 @@
-import { IdName, ValueOf } from "~";
+import { IdName, ValueOf } from "~/index";
 import { UserPublicForeign } from "./user-public";
 import { LEADERBOARD_MODE } from "~/constants";
 

@@ -1,5 +1,5 @@
 import { model, Model, models, Schema } from "mongoose";
-import { UserPhotoHunt, UserPhotoHuntResult } from "~";
+import { UserPhotoHunt, UserPhotoHuntResult } from "~/index";
 import { PhotoHuntForeignSchema } from "../photohunt-model";
 import { UserChallengeForeignSchema } from "../user-challenge-model";
 import { UserPublicForeignSchema } from "../user-public-model";

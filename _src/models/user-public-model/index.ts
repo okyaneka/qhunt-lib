@@ -1,5 +1,5 @@
 import { Model, model, models, Schema } from "mongoose";
-import { UserPublic, UserPublicForeign } from "~";
+import { UserPublic, UserPublicForeign } from "~/index";
 import { ToObject } from "~/helpers/model";
 import { UserForeignSchema } from "../user-model";
 import { USER_PUBLIC_GENDER } from "~/constants";

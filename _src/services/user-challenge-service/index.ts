@@ -12,7 +12,7 @@ import {
   UserPublicForeign,
   ChallengeForeign,
   ChallengeSettingsForeign,
-} from "~";
+} from "~/index";
 import { verify as UserPublicVerify } from "../user-public-service";
 import UserStageService from "../user-stage-service";
 import StageService from "../stage-service";

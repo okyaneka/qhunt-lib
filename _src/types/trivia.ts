@@ -1,4 +1,4 @@
-import { Feedback, IdName, Timestamps } from "~";
+import { Feedback, IdName, Timestamps } from "~/index";
 
 export interface TriviaOption {
   text: string;

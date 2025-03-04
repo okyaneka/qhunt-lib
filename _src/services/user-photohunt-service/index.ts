@@ -4,7 +4,7 @@ import {
   UserPhotoHuntResult,
   UserPhotoHuntSummary,
   UserPublicForeign,
-} from "~";
+} from "~/index";
 import {
   details as PhotoHuntDetails,
   verifyCode as PhotoHuntVerifyCode,
