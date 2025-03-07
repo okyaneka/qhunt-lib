@@ -1,16 +1,3 @@
-import {
-  detail as ChallengeDetail,
-  verify as ChallengeVerify,
-} from "../challenge-service";
-import {
-  detail as PhotoHuntDetail,
-  verify as PhotoHuntVerify,
-} from "../photohunt-service";
-import { detail as StageDetail, verify as StageVerify } from "../stage-service";
-import {
-  detail as TriviaDetail,
-  verify as TriviaVerify,
-} from "../trivia-service";
 import { QrListParams, QrPayload, QrUpdatePayload } from "~/index";
 import { setup as UserChallengeSetup } from "../user-challenge-service";
 import { setup as UserStageSetup } from "../user-stage-service";
@@ -20,15 +7,7 @@ import QrModel from "~/models/qr-model";
 import { db } from "~/helpers";
 import { ClientSession } from "mongoose";
 
-const services = {
-  stage: { detail: StageDetail, verify: StageVerify },
-  challenge: {
-    detail: ChallengeDetail,
-    verify: ChallengeVerify,
-  },
-  photohunt: { detail: PhotoHuntDetail, verify: PhotoHuntVerify },
-  trivia: { detail: TriviaDetail, verify: TriviaVerify },
-} as const;
+// ENHANCE: tambah validasi kalau konten exist
 
 const servicesSetup = {
   stage: { setup: UserStageSetup },
@@ -93,17 +72,10 @@ export const QrUpdate = async (
   session?: ClientSession
 ) => {
   return db.transaction(async (session) => {
-    const { content } = payload;
     const item = await QrModel.findOne({ _id: id, deletedAt: null }, null, {
       session,
     });
     if (!item) throw new Error("item not found");
-
-    if (content) {
-      const service = services[content.type];
-      const action = payload.status === QR_STATUS.Draft ? "detail" : "verify";
-      await service[action](content.refId);
-    }
 
     Object.assign(item, payload);
     await item.save({ session });
