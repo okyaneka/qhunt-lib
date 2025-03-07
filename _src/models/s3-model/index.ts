@@ -17,7 +17,7 @@ const S3Schema = new Schema<S3>(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true },
+    userId: { type: String, default: null },
   },
   { timestamps: true }
 );

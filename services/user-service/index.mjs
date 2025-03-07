@@ -85,7 +85,7 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -412,68 +412,6 @@ var ChallengeSchema = new Schema(
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 models.Challenge || model("Challenge", ChallengeSchema);
-var PhotoHuntForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var TriviaOptionSchema = new Schema(
-  {
-    text: { type: String, required: true },
-    isCorrect: { type: Boolean, default: false },
-    point: { type: Number, default: 0 }
-  },
-  { _id: false, versionKey: false }
-);
-var TriviaForeignOptionSchema = new Schema(
-  {
-    text: { type: String, required: true }
-  },
-  { _id: false }
-);
-var TriviaForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    question: { type: String, required: true },
-    allowMultiple: { type: Boolean, required: true },
-    options: { type: [TriviaForeignOptionSchema], required: true }
-  },
-  { _id: false }
-);
-var TriviaSchema = new Schema(
-  {
-    challenge: { type: IdNameSchema, default: null },
-    question: { type: String, required: true },
-    feedback: { type: FeedbackSchema, default: {} },
-    allowMultiple: { type: Boolean, default: false },
-    options: { type: [TriviaOptionSchema], required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-TriviaSchema.set("toObject", ToObject);
-TriviaSchema.set("toJSON", ToObject);
-models.Trivia || model("Trivia", TriviaSchema);
 var UserChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -516,6 +454,43 @@ UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 var UserChallengeModel = models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 var user_challenge_model_default = UserChallengeModel;
+var TriviaOptionSchema = new Schema(
+  {
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 }
+  },
+  { _id: false, versionKey: false }
+);
+var TriviaForeignOptionSchema = new Schema(
+  {
+    text: { type: String, required: true }
+  },
+  { _id: false }
+);
+var TriviaForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true }
+  },
+  { _id: false }
+);
+var TriviaSchema = new Schema(
+  {
+    challenge: { type: IdNameSchema, default: null },
+    question: { type: String, required: true },
+    feedback: { type: FeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+models.Trivia || model("Trivia", TriviaSchema);
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -544,6 +519,33 @@ var UserTriviaSchema = new Schema(
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+var PhotoHuntForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+
+// _src/models/user-photohunt-model/index.ts
 var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
@@ -733,7 +735,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -777,7 +780,7 @@ var S3ServiceSet = async (payload, userId, session) => {
     { _id: true },
     { session }
   );
-  if (!userData) throw new Error("s3.user_empty");
+  if (userId && !userData) throw new Error("s3.user_empty");
   const resS3 = await awsS3.put(payload);
   if (!resS3) throw new Error("s3.failed_upload");
   const [item] = await s3_model_default.create(
@@ -787,7 +790,7 @@ var S3ServiceSet = async (payload, userId, session) => {
         fileUrl: resS3.fileUrl,
         fileSize: payload.buffer.length,
         fileType: payload.mimetype,
-        userId
+        userId: userId ?? null
       }
     ],
     { session }

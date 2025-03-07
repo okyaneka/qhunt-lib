@@ -66,3 +66,11 @@ export const REDIS_CHANNELS = {
   Leaderboard: "leaderboard",
   UpdateUser: "update-user",
 } as const;
+
+export const FEATURE_STATUS = PUBLISHING_STATUS;
+
+export const FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info",
+} as const;

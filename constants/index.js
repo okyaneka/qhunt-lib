@@ -47,9 +47,17 @@ var REDIS_CHANNELS = {
   Leaderboard: "leaderboard",
   UpdateUser: "update-user"
 };
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
+};
 
 exports.CHALLENGE_STATUS = CHALLENGE_STATUS;
 exports.CHALLENGE_TYPES = CHALLENGE_TYPES;
+exports.FEATURE_STATUS = FEATURE_STATUS;
+exports.FEATURE_TYPES = FEATURE_TYPES;
 exports.LEADERBOARD_MODE = LEADERBOARD_MODE;
 exports.PHOTO_HUNT_STATUS = PHOTO_HUNT_STATUS;
 exports.PUBLISHING_STATUS = PUBLISHING_STATUS;

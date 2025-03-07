@@ -68,4 +68,13 @@ export declare const REDIS_CHANNELS: {
     readonly Leaderboard: "leaderboard";
     readonly UpdateUser: "update-user";
 };
+export declare const FEATURE_STATUS: {
+    readonly Draft: "draft";
+    readonly Publish: "publish";
+};
+export declare const FEATURE_TYPES: {
+    readonly Event: "event";
+    readonly Patch: "patch";
+    readonly Info: "info";
+};
 //# sourceMappingURL=index.d.ts.map

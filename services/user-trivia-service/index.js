@@ -285,41 +285,6 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = mongoose.models.Stage || mongoose.model("Stage", StageSchema);
 var stage_model_default = StageModel;
-var PhotoHuntForeignSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new mongoose.Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photohunt_model_default = PhotoHuntModel;
-
-// _src/services/photohunt-service/index.ts
-var details = async (challengeId) => {
-  const challenge = await detail(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
-    throw new Error("challenge.not_photohunt_type_error");
-  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
 var S3ForeignSchema = new mongoose.Schema(
   {
     fileName: { type: String, required: true },
@@ -334,7 +299,7 @@ var S3Schema = new mongoose.Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -574,7 +539,7 @@ var list = async (params, TID) => {
     totalPages
   };
 };
-var detail2 = async (id, TID) => {
+var detail = async (id, TID) => {
   const item = await user_stage_model_default.findOne({
     _id: id,
     deletedAt: null,
@@ -608,7 +573,7 @@ var submitState = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
-var UserStageService = { list, detail: detail2, setup, verify: verify3, submitState };
+var UserStageService = { list, detail, setup, verify: verify3, submitState };
 var user_stage_service_default = UserStageService;
 
 // _src/plugins/aws-s3/index.ts
@@ -657,7 +622,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify__default.default(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -693,6 +659,32 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
+var PhotoHuntForeignSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new mongoose.Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var photohunt_model_default = PhotoHuntModel;
 var TriviaOptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true },
@@ -889,6 +881,15 @@ var verify2 = async (value, session) => {
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
+};
+
+// _src/services/photohunt-service/index.ts
+var details = async (challengeId) => {
+  const challenge = await detail3(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
+    throw new Error("challenge.not_photohunt_type_error");
+  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
 };
 
 // _src/services/user-photohunt-service/index.ts
@@ -1116,20 +1117,20 @@ var verify = async (id) => {
 };
 
 // _src/services/challenge-service/index.ts
-var detail = async (id) => {
+var detail3 = async (id) => {
   const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
 };
 
 // _src/services/trivia-service/index.ts
-var detail7 = async (id) => {
+var detail6 = async (id) => {
   const item = await trivia_model_default.findOne({ _id: id });
   if (!item) throw new Error("trivia not found");
   return item;
 };
 var details4 = async (challengeId) => {
-  const challenge = await detail(challengeId);
+  const challenge = await detail3(challengeId);
   if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
     throw new Error("challenge.not_trivia_type_error");
   const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
@@ -1137,7 +1138,7 @@ var details4 = async (challengeId) => {
 };
 
 // _src/services/user-trivia-service/index.ts
-var verify7 = async (triviaId, TID) => {
+var verify5 = async (triviaId, TID) => {
   const item = await user_trivia_model_default.findOne({
     "userPublic.code": TID,
     "trivia.id": triviaId,
@@ -1186,7 +1187,7 @@ var submit2 = async (id, TID, answer = null, bonus) => {
     });
     if (!userTrivia) throw new Error("user trivia not found");
     if (userTrivia.results) return userTrivia.toObject();
-    const trivia = await detail7(userTrivia.trivia.id);
+    const trivia = await detail6(userTrivia.trivia.id);
     const selectedAnswer = trivia.options.find((v) => v.text == answer);
     const isCorrect = Boolean(selectedAnswer?.isCorrect);
     const baseScore = selectedAnswer?.point || 0;
@@ -1265,4 +1266,4 @@ exports.setup = setup3;
 exports.submit = submit2;
 exports.submitEmpties = submitEmpties2;
 exports.summary = summary3;
-exports.verify = verify7;
+exports.verify = verify5;

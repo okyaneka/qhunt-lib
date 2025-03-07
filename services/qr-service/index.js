@@ -2,8 +2,8 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var mongoose = require('mongoose');
 require('dayjs');
+var mongoose = require('mongoose');
 require('bcryptjs');
 require('jsonwebtoken');
 var client_s3_star = require('@aws-sdk/client-s3');
@@ -325,7 +325,7 @@ var S3Schema = new mongoose.Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -791,38 +791,6 @@ var verify2 = async (id) => {
   return item.toObject();
 };
 
-// _src/services/photohunt-service/index.ts
-var detail3 = async (id) => {
-  const item = await photohunt_model_default.findOne({ _id: id });
-  if (!item) throw new Error("photo hunt not found");
-  return item.toObject();
-};
-var details = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
-    throw new Error("challenge.not_photohunt_type_error");
-  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-var verify3 = async (id) => {
-};
-
-// _src/services/trivia-service/index.ts
-var detail4 = async (id) => {
-  const item = await trivia_model_default.findOne({ _id: id });
-  if (!item) throw new Error("trivia not found");
-  return item;
-};
-var details2 = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
-    throw new Error("challenge.not_trivia_type_error");
-  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-var verify4 = async (id) => {
-};
-
 // _src/services/user-stage-service/index.ts
 var initResults = () => ({
   baseScore: 0,
@@ -830,7 +798,7 @@ var initResults = () => ({
   bonus: 0,
   totalScore: 0
 });
-var verify6 = async (stageId, TID) => {
+var verify4 = async (stageId, TID) => {
   return await user_stage_model_default.findOne({
     "userPublic.code": TID,
     "stage.id": stageId
@@ -839,9 +807,9 @@ var verify6 = async (stageId, TID) => {
 var setup = async (stageId, TID) => {
   return transaction(async (session) => {
     console.time("queryTime");
-    const exist = await verify6(stageId, TID);
+    const exist = await verify4(stageId, TID);
     if (exist) return exist;
-    const userPublicData = await verify5(TID);
+    const userPublicData = await verify3(TID);
     const stageData = await verify(stageId);
     const userPublic = {
       code: userPublicData.code,
@@ -893,7 +861,7 @@ var list2 = async (params, TID) => {
     totalPages
   };
 };
-var detail5 = async (id, TID) => {
+var detail3 = async (id, TID) => {
   const item = await user_stage_model_default.findOne({
     _id: id,
     deletedAt: null,
@@ -927,7 +895,7 @@ var submitState = async (id, TID, session) => {
   await item.save({ session });
   return item.toObject();
 };
-var UserStageService = { list: list2, detail: detail5, setup, verify: verify6, submitState };
+var UserStageService = { list: list2, detail: detail3, setup, verify: verify4, submitState };
 var user_stage_service_default = UserStageService;
 
 // _src/plugins/aws-s3/index.ts
@@ -976,7 +944,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify__default.default(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -1106,7 +1075,7 @@ var redis = globalInstance2.__REDIS_HELPER__;
 var redis_default = RedisHelper;
 
 // _src/services/user-public-service/index.ts
-var verify5 = async (value, session) => {
+var verify3 = async (value, session) => {
   if (!value) throw new Error("token is required");
   const userPublic = await user_public_model_default.findOneAndUpdate(
     {
@@ -1120,9 +1089,18 @@ var verify5 = async (value, session) => {
   return userPublic.toObject();
 };
 
+// _src/services/trivia-service/index.ts
+var details = async (challengeId) => {
+  const challenge = await detail2(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
+    throw new Error("challenge.not_trivia_type_error");
+  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+
 // _src/services/user-trivia-service/index.ts
 var setup2 = async (userPublic, userChallenge, session) => {
-  const trivias = await details2(userChallenge.challengeId);
+  const trivias = await details(userChallenge.challengeId);
   const payload = trivias.map((item) => {
     const trivia = {
       id: item.id,
@@ -1138,7 +1116,7 @@ var setup2 = async (userPublic, userChallenge, session) => {
   });
   return await user_trivia_model_default.insertMany(payload, { session });
 };
-var details3 = async (ids, TID, hasResult, session) => {
+var details2 = async (ids, TID, hasResult, session) => {
   const filter = {};
   if (hasResult !== undefined)
     filter.results = hasResult ? { $ne: null } : null;
@@ -1200,9 +1178,18 @@ var summary2 = async (userChallengeId, TID, session) => {
   return summary4;
 };
 
+// _src/services/photohunt-service/index.ts
+var details3 = async (challengeId) => {
+  const challenge = await detail2(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
+    throw new Error("challenge.not_photohunt_type_error");
+  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
+};
+
 // _src/services/user-photohunt-service/index.ts
 var setup3 = async (userPublic, userChallenge, session) => {
-  const items = await details(userChallenge.challengeId);
+  const items = await details3(userChallenge.challengeId);
   const payload = items.map(({ id, hint }) => {
     return {
       userPublic,
@@ -1275,7 +1262,7 @@ var summary3 = async (userChallengeId, TID, session) => {
 var services = {
   [CHALLENGE_TYPES.Trivia]: {
     setup: setup2,
-    details: details3,
+    details: details2,
     submitEmpties,
     summary: summary2
   },
@@ -1286,7 +1273,7 @@ var services = {
     summary: summary3
   }
 };
-var verify7 = async (challengeId, TID, setDiscover) => {
+var verify5 = async (challengeId, TID, setDiscover) => {
   const item = await user_challenge_model_default.findOne({
     "userPublic.code": TID,
     "challenge.id": challengeId,
@@ -1350,9 +1337,9 @@ var init = async (stage, userStage, session) => {
   );
 };
 var setup4 = async (challengeId, TID, setDiscover) => {
-  const exist = await verify7(challengeId, TID, setDiscover);
+  const exist = await verify5(challengeId, TID, setDiscover);
   if (exist) return exist;
-  const userPublicData = await verify5(TID);
+  const userPublicData = await verify3(TID);
   const challengeData = await verify2(challengeId);
   const stageId = challengeData.stage?.id;
   const userStageData = stageId && await user_stage_service_default.verify(stageId, TID);
@@ -1361,7 +1348,7 @@ var setup4 = async (challengeId, TID, setDiscover) => {
     if (!stageData.settings.canStartFromChallenges)
       throw new Error("user stage has not been found yet");
     await user_stage_service_default.setup(stageId, TID);
-    const result = await verify7(challengeId, TID, setDiscover);
+    const result = await verify5(challengeId, TID, setDiscover);
     if (result) return result;
     throw new Error("challenge setup error");
   }
@@ -1420,15 +1407,6 @@ var summary = async (userStageId, TID, session) => {
     totalScore: { $sum: "$results.totalScore" }
   }).session(session || null);
 };
-var services2 = {
-  stage: { detail, verify },
-  challenge: {
-    detail: detail2,
-    verify: verify2
-  },
-  photohunt: { detail: detail3, verify: verify3 },
-  trivia: { detail: detail4, verify: verify4 }
-};
 var servicesSetup = {
   stage: { setup },
   challenge: { setup: setup4 },
@@ -1463,7 +1441,7 @@ var QrGenerate = async (count, session) => {
   });
   return qr_model_default.insertMany(items, { session });
 };
-var detail8 = async (id) => {
+var detail7 = async (id) => {
   const item = await qr_model_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("item not found");
   return item.toObject();
@@ -1474,16 +1452,10 @@ var details5 = async (ids) => {
 };
 var QrUpdate = async (id, payload, session) => {
   return db_default.transaction(async (session2) => {
-    const { content } = payload;
     const item = await qr_model_default.findOne({ _id: id, deletedAt: null }, null, {
       session: session2
     });
     if (!item) throw new Error("item not found");
-    if (content) {
-      const service = services2[content.type];
-      const action = payload.status === QR_STATUS.Draft ? "detail" : "verify";
-      await service[action](content.refId);
-    }
     Object.assign(item, payload);
     await item.save({ session: session2 });
     return item.toObject();
@@ -1509,7 +1481,7 @@ var deleteMany = async (ids) => {
   if (changed.modifiedCount == 0) throw new Error("item not found");
   return changed;
 };
-var verify8 = async (code, TID) => {
+var verify6 = async (code, TID) => {
   const qrData = await qr_model_default.findOne({
     code,
     deletedAt: null,
@@ -1531,12 +1503,12 @@ var verify8 = async (code, TID) => {
 var QrService = {
   generate: QrGenerate,
   list: list3,
-  detail: detail8,
+  detail: detail7,
   details: details5,
   update: QrUpdate,
   delete: _delete2,
   deleteMany,
-  verify: verify8
+  verify: verify6
 };
 var qr_service_default = QrService;
 
@@ -1545,7 +1517,7 @@ exports.QrUpdate = QrUpdate;
 exports._delete = _delete2;
 exports.default = qr_service_default;
 exports.deleteMany = deleteMany;
-exports.detail = detail8;
+exports.detail = detail7;
 exports.details = details5;
 exports.list = list3;
-exports.verify = verify8;
+exports.verify = verify6;

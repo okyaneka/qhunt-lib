@@ -170,7 +170,7 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
