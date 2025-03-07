@@ -1,4 +1,5 @@
 export { default as ChallengeService } from "./challenge-service";
+export { default as FeatureService } from "./feature-service";
 export { default as LeaderboardService } from "./leaderboard-service";
 export { default as PhotoHuntService } from "./photohunt-service";
 export { default as QrService } from "./qr-service";

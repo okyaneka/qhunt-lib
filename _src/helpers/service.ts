@@ -1,10 +1,19 @@
-import { Model } from "mongoose";
+import { Model, RootFilterQuery } from "mongoose";
 
+/**
+ *
+ * @param model
+ * @param page
+ * @param limit
+ * @param filters
+ * @param sort
+ * @returns
+ */
 export const list = async <T>(
   model: Model<T>,
   page: number,
   limit: number,
-  filters: Record<string, any> = {},
+  filters: RootFilterQuery<T> = {},
   sort?: any
 ) => {
   const skip = (page - 1) * limit;

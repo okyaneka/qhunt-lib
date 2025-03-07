@@ -62,7 +62,12 @@ export class S3Helper {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names
+      .join(".")
+      .split("/")
+      .map((part) => slugify(part, { lower: true }))
+      .join("/");
+    const Key = `${finalName}-${unique}${ext}`;
 
     const config: PutObjectCommandInput = {
       Bucket: bucket,
