@@ -1,14 +1,6 @@
 import { Schema, models, model } from 'mongoose';
 
-// _src/models/user-stage-model/index.ts
-
-// _src/types/user-stage.ts
-var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
-  UserStageStatus2["OnGoing"] = "ongoing";
-  UserStageStatus2["Completed"] = "completed";
-  UserStageStatus2["End"] = "end";
-  return UserStageStatus2;
-})(UserStageStatus || {});
+// _src/models/feature-model/index.ts
 new Schema(
   {
     id: { type: String, required: true },
@@ -50,20 +42,11 @@ var QR_CONTENT_TYPES = {
 };
 var QR_STATUS = PUBLISHING_STATUS;
 var STAGE_STATUS = PUBLISHING_STATUS;
-var USER_PROVIDERS = {
-  Email: "email",
-  Google: "google",
-  TikTok: "tiktok"
-};
-var USER_ROLES = {
-  Admin: "admin",
-  Private: "private",
-  Public: "public"
-};
-var USER_PUBLIC_GENDER = {
-  Male: "male",
-  Female: "female",
-  Panda: "panda"
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
 };
 var QrContentSchema = new Schema(
   {
@@ -178,113 +161,28 @@ S3Schema.set("toObject", ToObject);
 S3Schema.set("toJSON", ToObject);
 models.S3 || model("S3", S3Schema);
 
-// _src/models/user-model/index.ts
-var ToObject2 = {
-  transform: (doc, ret) => {
-    const { _id, __v, password, ...rest } = ret;
-    return { id: _id, ...rest };
-  }
-};
-var UserForeignSchema = new Schema(
+// _src/models/feature-model/index.ts
+var FeatureSchema = new Schema(
   {
-    id: { type: String, required: true },
-    name: { type: String, default: "" },
-    email: { type: String, required: true },
-    photo: { type: String, default: null }
-  },
-  { _id: false }
-);
-var UserSchema = new Schema(
-  {
-    name: { type: String, default: "" },
-    role: {
-      type: String,
-      enum: Object.values(USER_ROLES),
-      default: USER_ROLES.Public
-    },
-    email: { type: String, required: true, unique: true },
-    photo: { type: S3ForeignSchema, default: null },
-    provider: {
-      type: [String],
-      enum: Object.values(USER_PROVIDERS),
-      default: []
-    },
-    password: { type: String, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  {
-    timestamps: true
-  }
-);
-UserSchema.set("toJSON", ToObject2);
-UserSchema.set("toObject", ToObject2);
-models.User || model("User", UserSchema);
-
-// _src/models/user-public-model/index.ts
-var UserPublicForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    code: { type: String, required: true },
-    name: { type: String }
-  },
-  { _id: false }
-);
-var UserPublicSchema = new Schema(
-  {
-    user: { type: UserForeignSchema, default: null },
-    code: { type: String, required: true },
-    name: { type: String, default: "" },
-    dob: { type: Date, default: null },
-    gender: {
-      type: String,
-      enum: Object.values(USER_PUBLIC_GENDER),
-      default: null
-    },
-    phone: { type: String, default: "" },
-    lastAccessedAt: { type: Date, default: Date.now() },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-UserPublicSchema.set("toJSON", ToObject);
-UserPublicSchema.set("toObject", ToObject);
-models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
-
-// _src/models/user-stage-model/index.ts
-var UserStageForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    stageId: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false }
-);
-var UserStageResultSchema = new Schema(
-  {
-    baseScore: { type: Number, required: true },
-    challengeBonus: { type: Number, required: true },
-    bonus: { type: Number, required: true },
-    totalScore: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var UserStageSchema = new Schema(
-  {
-    stage: { type: StageForeignSchema, required: true },
-    userPublic: { type: UserPublicForeignSchema, required: true },
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featuredImage: { type: S3ForeignSchema, default: null },
     status: {
       type: String,
-      enum: Object.values(UserStageStatus),
-      default: "ongoing" /* OnGoing */
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
     },
-    results: { type: UserStageResultSchema, default: null },
-    contents: { type: [String], default: [] }
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
-UserStageSchema.set("toJSON", ToObject);
-UserStageSchema.set("toObject", ToObject);
-var UserStageModel = models.UserStage || model("UserStage", UserStageSchema, "usersStage");
-var user_stage_model_default = UserStageModel;
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+var FeatureModel = models.Feature || model("Feature", FeatureSchema);
+var feature_model_default = FeatureModel;
 
-export { UserStageForeignSchema, UserStageResultSchema, user_stage_model_default as default };
+export { feature_model_default as default };

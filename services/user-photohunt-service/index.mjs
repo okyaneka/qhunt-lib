@@ -242,7 +242,7 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -573,15 +573,6 @@ var detail2 = async (id) => {
   return item.toObject();
 };
 
-// _src/services/trivia-service/index.ts
-var details = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
-    throw new Error("challenge.not_trivia_type_error");
-  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-
 // _src/services/user-stage-service/index.ts
 var initResults = () => ({
   baseScore: 0,
@@ -735,7 +726,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -882,6 +874,15 @@ var verify2 = async (value, session) => {
   );
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
+};
+
+// _src/services/trivia-service/index.ts
+var details = async (challengeId) => {
+  const challenge = await detail2(challengeId);
+  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
+    throw new Error("challenge.not_trivia_type_error");
+  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
+  return items.map((item) => item.toObject());
 };
 
 // _src/services/user-trivia-service/index.ts

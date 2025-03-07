@@ -1,14 +1,40 @@
-import { Schema, models, model, startSession } from 'mongoose';
-import 'dayjs';
-import 'bcryptjs';
-import 'jsonwebtoken';
-import * as client_s3_star from '@aws-sdk/client-s3';
-import { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import slugify from 'slugify';
-import * as ioredis_star from 'ioredis';
-import { Redis } from 'ioredis';
-import { randomUUID, createHash } from 'crypto';
-import '@zxing/browser';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var mongoose = require('mongoose');
+require('@zxing/browser');
+require('dayjs');
+require('bcryptjs');
+require('jsonwebtoken');
+var client_s3_star = require('@aws-sdk/client-s3');
+var slugify = require('slugify');
+var ioredis_star = require('ioredis');
+var crypto = require('crypto');
+
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
+
+function _interopNamespace(e) {
+  if (e && e.__esModule) return e;
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+
+var client_s3_star__namespace = /*#__PURE__*/_interopNamespace(client_s3_star);
+var slugify__default = /*#__PURE__*/_interopDefault(slugify);
+var ioredis_star__namespace = /*#__PURE__*/_interopNamespace(ioredis_star);
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -28,7 +54,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
 var transaction = async (operation, clientSession) => {
-  const session = clientSession ?? await startSession();
+  const session = clientSession ?? await mongoose.startSession();
   clientSession ?? session.startTransaction();
   return await operation(session).then(async (res) => {
     await session.commitTransaction();
@@ -42,6 +68,51 @@ var transaction = async (operation, clientSession) => {
 };
 var db = { transaction };
 var db_default = db;
+var IdNameSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true }
+  },
+  { _id: false, versionKey: false }
+);
+var PeriodSchema = new mongoose.Schema(
+  {
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true }
+  },
+  { _id: false }
+);
+var FeedbackSchema = new mongoose.Schema(
+  {
+    positive: { type: String, default: "" },
+    negative: { type: String, default: "" }
+  },
+  { _id: false }
+);
+var ToObject = {
+  transform: (doc, ret) => {
+    const { _id, deletedAt, __v, ...rest } = ret;
+    return { id: _id.toString(), ...rest };
+  }
+};
+
+// _src/helpers/service.ts
+var list = async (model14, page, limit, filters = {}, sort) => {
+  const skip = (page - 1) * limit;
+  const filter = {
+    ...filters,
+    deletedAt: null
+  };
+  const items = await model14.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const totalItems = await model14.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / limit);
+  return {
+    list: items.map((item) => item.toObject ? item.toObject() : item),
+    page,
+    totalItems,
+    totalPages
+  };
+};
 
 // _src/constants/index.ts
 var PUBLISHING_STATUS = {
@@ -84,34 +155,13 @@ var USER_PUBLIC_GENDER = {
   Female: "female",
   Panda: "panda"
 };
-var IdNameSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true }
-  },
-  { _id: false, versionKey: false }
-);
-var PeriodSchema = new Schema(
-  {
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true }
-  },
-  { _id: false }
-);
-var FeedbackSchema = new Schema(
-  {
-    positive: { type: String, default: "" },
-    negative: { type: String, default: "" }
-  },
-  { _id: false }
-);
-var ToObject = {
-  transform: (doc, ret) => {
-    const { _id, deletedAt, __v, ...rest } = ret;
-    return { id: _id.toString(), ...rest };
-  }
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
 };
-var QrContentSchema = new Schema(
+var QrContentSchema = new mongoose.Schema(
   {
     type: {
       type: String,
@@ -122,7 +172,7 @@ var QrContentSchema = new Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrLocationSchema = new Schema(
+var QrLocationSchema = new mongoose.Schema(
   {
     label: { type: String, default: "" },
     longitude: { type: Number, required: true },
@@ -130,7 +180,7 @@ var QrLocationSchema = new Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrForeignSchema = new Schema(
+var QrForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true, index: true },
@@ -138,7 +188,7 @@ var QrForeignSchema = new Schema(
   },
   { _id: false, versionKey: false }
 );
-var QrSchema = new Schema(
+var QrSchema = new mongoose.Schema(
   {
     code: { type: String, required: true, unique: true, index: true },
     status: {
@@ -157,11 +207,10 @@ var QrSchema = new Schema(
 );
 QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
-var QrModel = models.Qr || model("Qr", QrSchema);
-var qr_model_default = QrModel;
+mongoose.models.Qr || mongoose.model("Qr", QrSchema);
 
 // _src/models/challenge-model/index.ts
-var ChallengeSettingsSchema = new Schema(
+var ChallengeSettingsSchema = new mongoose.Schema(
   {
     type: {
       type: String,
@@ -174,7 +223,7 @@ var ChallengeSettingsSchema = new Schema(
   },
   { _id: false, versionKey: false }
 );
-var ChallengeSettingsForeignSchema = new Schema(
+var ChallengeSettingsForeignSchema = new mongoose.Schema(
   {
     type: {
       type: String,
@@ -185,7 +234,7 @@ var ChallengeSettingsForeignSchema = new Schema(
   },
   { _id: false }
 );
-var ChallengeForeignSchema = new Schema(
+var ChallengeForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -194,7 +243,7 @@ var ChallengeForeignSchema = new Schema(
   },
   { _id: false }
 );
-var ChallengeSchema = new Schema(
+var ChallengeSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     stage: { type: IdNameSchema, default: null },
@@ -214,9 +263,8 @@ var ChallengeSchema = new Schema(
 );
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
-var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
-var challenge_model_default = ChallengeModel;
-var StageSettingsSchema = new Schema(
+mongoose.models.Challenge || mongoose.model("Challenge", ChallengeSchema);
+var StageSettingsSchema = new mongoose.Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
@@ -224,13 +272,13 @@ var StageSettingsSchema = new Schema(
   },
   { _id: false }
 );
-var StageSettingsForeignSchema = new Schema(
+var StageSettingsForeignSchema = new mongoose.Schema(
   {
     periode: { type: PeriodSchema, required: true }
   },
   { _id: false }
 );
-var StageForeignSchema = new Schema(
+var StageForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -239,7 +287,7 @@ var StageForeignSchema = new Schema(
   },
   { _id: false }
 );
-var StageSchema = new Schema(
+var StageSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
@@ -257,13 +305,9 @@ var StageSchema = new Schema(
 );
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
-var StageModel = models.Stage || model("Stage", StageSchema);
+var StageModel = mongoose.models.Stage || mongoose.model("Stage", StageSchema);
 var stage_model_default = StageModel;
-var ChallengeDetails = async (ids) => {
-  const items = await challenge_model_default.find({ _id: { $in: ids } });
-  return items.map((item) => item.toObject());
-};
-var S3ForeignSchema = new Schema(
+var S3ForeignSchema = new mongoose.Schema(
   {
     fileName: { type: String, required: true },
     fileUrl: { type: String, required: true },
@@ -271,7 +315,7 @@ var S3ForeignSchema = new Schema(
   },
   { _id: false }
 );
-var S3Schema = new Schema(
+var S3Schema = new mongoose.Schema(
   {
     fileName: { type: String, required: true },
     fileUrl: { type: String, required: true },
@@ -283,7 +327,8 @@ var S3Schema = new Schema(
 );
 S3Schema.set("toObject", ToObject);
 S3Schema.set("toJSON", ToObject);
-models.S3 || model("S3", S3Schema);
+var S3Model = mongoose.models.S3 || mongoose.model("S3", S3Schema);
+var s3_model_default = S3Model;
 
 // _src/models/user-model/index.ts
 var ToObject2 = {
@@ -292,7 +337,7 @@ var ToObject2 = {
     return { id: _id, ...rest };
   }
 };
-var UserForeignSchema = new Schema(
+var UserForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     name: { type: String, default: "" },
@@ -301,7 +346,7 @@ var UserForeignSchema = new Schema(
   },
   { _id: false }
 );
-var UserSchema = new Schema(
+var UserSchema = new mongoose.Schema(
   {
     name: { type: String, default: "" },
     role: {
@@ -325,10 +370,11 @@ var UserSchema = new Schema(
 );
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
-models.User || model("User", UserSchema);
+var UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
+var user_model_default = UserModel;
 
 // _src/models/user-public-model/index.ts
-var UserPublicForeignSchema = new Schema(
+var UserPublicForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     code: { type: String, required: true },
@@ -336,7 +382,7 @@ var UserPublicForeignSchema = new Schema(
   },
   { _id: false }
 );
-var UserPublicSchema = new Schema(
+var UserPublicSchema = new mongoose.Schema(
   {
     user: { type: UserForeignSchema, default: null },
     code: { type: String, required: true },
@@ -355,7 +401,7 @@ var UserPublicSchema = new Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
+mongoose.models.UserPublic || mongoose.model("UserPublic", UserPublicSchema, "usersPublic");
 
 // _src/types/user-stage.ts
 var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
@@ -366,7 +412,7 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
 })(UserStageStatus || {});
 
 // _src/models/user-stage-model/index.ts
-var UserStageForeignSchema = new Schema(
+var UserStageForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     stageId: { type: String, required: true },
@@ -374,7 +420,7 @@ var UserStageForeignSchema = new Schema(
   },
   { _id: false }
 );
-var UserStageResultSchema = new Schema(
+var UserStageResultSchema = new mongoose.Schema(
   {
     baseScore: { type: Number, required: true },
     challengeBonus: { type: Number, required: true },
@@ -383,7 +429,7 @@ var UserStageResultSchema = new Schema(
   },
   { _id: false }
 );
-var UserStageSchema = new Schema(
+var UserStageSchema = new mongoose.Schema(
   {
     stage: { type: StageForeignSchema, required: true },
     userPublic: { type: UserPublicForeignSchema, required: true },
@@ -399,10 +445,10 @@ var UserStageSchema = new Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-models.UserStage || model("UserStage", UserStageSchema, "usersStage");
+mongoose.models.UserStage || mongoose.model("UserStage", UserStageSchema, "usersStage");
 
 // _src/models/user-challenge-model/index.ts
-var UserChallengeForeignSchema = new Schema(
+var UserChallengeForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     challengeId: { type: String, required: true },
@@ -410,7 +456,7 @@ var UserChallengeForeignSchema = new Schema(
   },
   { _id: false }
 );
-var UserChallengeResultSchema = new Schema(
+var UserChallengeResultSchema = new mongoose.Schema(
   {
     baseScore: { type: Number, required: true },
     bonus: { type: Number, required: true },
@@ -423,7 +469,7 @@ var UserChallengeResultSchema = new Schema(
   },
   { _id: false }
 );
-var UserChallengeSchema = new Schema(
+var UserChallengeSchema = new mongoose.Schema(
   {
     userStage: { type: UserStageForeignSchema, default: null },
     challenge: { type: ChallengeForeignSchema, required: true },
@@ -442,7 +488,7 @@ var UserChallengeSchema = new Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
+mongoose.models.UserChallenge || mongoose.model("UserChallenge", UserChallengeSchema, "usersChallenge");
 
 // _src/plugins/aws-s3/index.ts
 var aws_s3_exports = {};
@@ -451,7 +497,7 @@ __export(aws_s3_exports, {
   awsS3: () => awsS3,
   default: () => aws_s3_default
 });
-__reExport(aws_s3_exports, client_s3_star);
+__reExport(aws_s3_exports, client_s3_star__namespace);
 var prefix = "\x1B[38;5;165mS3:\x1B[0m";
 var S3Helper = class {
   status = 0;
@@ -463,13 +509,13 @@ var S3Helper = class {
   }
   init({ bucket, ...config }) {
     this.bucket = bucket;
-    this.client = new S3Client(config);
+    this.client = new client_s3_star.S3Client(config);
     this.initiate();
   }
   async initiate() {
     if (!(this.client && this.bucket)) return;
     this.status = 1;
-    this.client.send(new HeadBucketCommand({ Bucket: this.bucket })).then(() => {
+    this.client.send(new client_s3_star.HeadBucketCommand({ Bucket: this.bucket })).then(() => {
       console.log(prefix, "Aws S3 connected successfully!");
     }).catch((err) => {
       console.log(prefix, "\u274C Aws S3 Error:", err.message);
@@ -490,7 +536,7 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const finalName = names.join(".").split("/").map((part) => slugify(part, { lower: true })).join("/");
+    const finalName = names.join(".").split("/").map((part) => slugify__default.default(part, { lower: true })).join("/");
     const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
@@ -499,7 +545,7 @@ var S3Helper = class {
       ContentType: mimetype,
       ACL: "public-read"
     };
-    const command = new PutObjectCommand(config);
+    const command = new client_s3_star.PutObjectCommand(config);
     const region = await client.config.region();
     const res = await client.send(command);
     console.log(prefix, `success put file`);
@@ -516,7 +562,7 @@ var S3Helper = class {
       Bucket: bucket,
       Key: key
     };
-    const command = new DeleteObjectCommand(config);
+    const command = new client_s3_star.DeleteObjectCommand(config);
     const res = await client.send(command);
     console.log(prefix, `success delete file`);
     return res;
@@ -527,14 +573,14 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
-var PhotoHuntForeignSchema = new Schema(
+var PhotoHuntForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     hint: { type: String, required: true }
   },
   { _id: false }
 );
-var PhotoHuntSchema = new Schema(
+var PhotoHuntSchema = new mongoose.Schema(
   {
     hint: { type: String, default: "" },
     score: { type: Number, default: 0 },
@@ -551,8 +597,8 @@ var PhotoHuntSchema = new Schema(
 );
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
-models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var TriviaOptionSchema = new Schema(
+mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var TriviaOptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true },
     isCorrect: { type: Boolean, default: false },
@@ -560,13 +606,13 @@ var TriviaOptionSchema = new Schema(
   },
   { _id: false, versionKey: false }
 );
-var TriviaForeignOptionSchema = new Schema(
+var TriviaForeignOptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true }
   },
   { _id: false }
 );
-var TriviaForeignSchema = new Schema(
+var TriviaForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     question: { type: String, required: true },
@@ -575,7 +621,7 @@ var TriviaForeignSchema = new Schema(
   },
   { _id: false }
 );
-var TriviaSchema = new Schema(
+var TriviaSchema = new mongoose.Schema(
   {
     challenge: { type: IdNameSchema, default: null },
     question: { type: String, required: true },
@@ -588,8 +634,8 @@ var TriviaSchema = new Schema(
 );
 TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
-models.Trivia || model("Trivia", TriviaSchema);
-var UserPhotoHuntResultSchema = new Schema(
+mongoose.models.Trivia || mongoose.model("Trivia", TriviaSchema);
+var UserPhotoHuntResultSchema = new mongoose.Schema(
   {
     feedback: { type: String, default: null },
     foundAt: { type: Date, default: Date.now() },
@@ -597,7 +643,7 @@ var UserPhotoHuntResultSchema = new Schema(
   },
   { _id: false }
 );
-var UserPhotoHuntSchema = new Schema({
+var UserPhotoHuntSchema = new mongoose.Schema({
   photoHunt: { type: PhotoHuntForeignSchema, required: true },
   results: { type: UserPhotoHuntResultSchema, default: null },
   userChallenge: { type: UserChallengeForeignSchema, required: true },
@@ -605,14 +651,14 @@ var UserPhotoHuntSchema = new Schema({
 });
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
-models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
+mongoose.models.UserPhotoHunt || mongoose.model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
     return { id: _id.toString(), ...rest };
   }
 };
-var UserTriviaResultSchema = new Schema(
+var UserTriviaResultSchema = new mongoose.Schema(
   {
     answer: { type: String, default: null },
     feedback: { type: String, default: null },
@@ -622,7 +668,7 @@ var UserTriviaResultSchema = new Schema(
   },
   { _id: false }
 );
-var UserTriviaSchema = new Schema(
+var UserTriviaSchema = new mongoose.Schema(
   {
     userPublic: { type: UserPublicForeignSchema, required: true },
     userChallenge: { type: UserChallengeForeignSchema, required: true },
@@ -633,7 +679,31 @@ var UserTriviaSchema = new Schema(
 );
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
-models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+mongoose.models.UserTrivia || mongoose.model("UserTrivia", UserTriviaSchema, "usersTrivia");
+
+// _src/services/s3-service/index.ts
+var S3ServiceSet = async (payload, userId, session) => {
+  await user_model_default.findOne(
+    { _id: userId },
+    { _id: true },
+    { session }
+  );
+  const resS3 = await awsS3.put(payload);
+  if (!resS3) throw new Error("s3.failed_upload");
+  const [item] = await s3_model_default.create(
+    [
+      {
+        fileName: resS3.fileName,
+        fileUrl: resS3.fileUrl,
+        fileSize: payload.buffer.length,
+        fileType: payload.mimetype,
+        userId: null
+      }
+    ],
+    { session }
+  );
+  return item.toObject();
+};
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -642,7 +712,7 @@ __export(redis_exports, {
   default: () => redis_default,
   redis: () => redis
 });
-__reExport(redis_exports, ioredis_star);
+__reExport(redis_exports, ioredis_star__namespace);
 var prefix2 = "\x1B[38;5;196mREDIS:\x1B[0m";
 var RedisHelper = class {
   status = 0;
@@ -652,8 +722,8 @@ var RedisHelper = class {
   constructor() {
   }
   init(options) {
-    this.client = new Redis(options);
-    this.subscr = new Redis(options);
+    this.client = new ioredis_star.Redis(options);
+    this.subscr = new ioredis_star.Redis(options);
     this.initiate();
   }
   getClient() {
@@ -703,7 +773,7 @@ var RedisHelper = class {
     if (!this.subscr) return;
     await this.subscr.subscribe(channel);
     const handler = {
-      id: randomUUID(),
+      id: crypto.randomUUID(),
       channel,
       callback
     };
@@ -726,64 +796,8 @@ if (!globalInstance2.__REDIS_HELPER__)
   globalInstance2.__REDIS_HELPER__ = new RedisHelper();
 var redis = globalInstance2.__REDIS_HELPER__;
 var redis_default = RedisHelper;
-var QrGenerate = async (count, session) => {
-  const items = new Array(count).fill({}).map(() => {
-    const salt = Math.floor(Math.random() * Math.pow(16, 8)).toString(16).padStart(8, "0");
-    return {
-      code: createHash("sha256").update(`${Date.now()}${salt}`).digest("hex"),
-      status: QR_STATUS.Draft
-    };
-  });
-  return qr_model_default.insertMany(items, { session });
-};
 
 // _src/services/stage-service/index.ts
-var isUsed = async (ids, id) => {
-  const filter = {
-    _id: { $in: ids },
-    deletedAt: null,
-    stage: { $ne: null }
-  };
-  if (id) filter["stage.id"] = { $ne: id };
-  const used = (await challenge_model_default.find(filter)).map((item) => item.id);
-  if (used.length)
-    throw new Error(
-      `challenge${used.length > 1 ? "s" : ""} ${used.join(", ")} ${used.length > 1 ? "are" : "is"} used`
-    );
-};
-var list = async (params) => {
-  const { page = 1, limit = 10, search = "" } = params;
-  const skip = (page - 1) * limit;
-  const filter = {
-    deletedAt: null,
-    name: { $regex: search, $options: "i" }
-  };
-  const items = await stage_model_default.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
-  const totalItems = await stage_model_default.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / limit);
-  return {
-    list: items.map((item) => item.toObject()),
-    page,
-    totalItems,
-    totalPages
-  };
-};
-var create = async (payload) => {
-  await isUsed(payload.contents);
-  const contents = await challenge_model_default.find({
-    _id: { $in: payload.contents }
-  });
-  const stage = await stage_model_default.create({
-    ...payload,
-    contents: contents.map((item) => item.id)
-  });
-  const sync = contents.map((item) => {
-    item.stage = { id: stage.id, name: stage.name };
-    return item.save();
-  });
-  await Promise.all(sync);
-  return stage.toObject();
-};
 var detail = async (id, session) => {
   const item = await stage_model_default.findOne({ _id: id, deletedAt: null }, null, {
     session
@@ -791,145 +805,125 @@ var detail = async (id, session) => {
   if (!item) throw new Error("stage not found");
   return item.toObject();
 };
-var StageUpdate = async (id, payload) => {
-  return await transaction(async (session) => {
-    await isUsed(payload.contents, id);
-    const stage = await stage_model_default.findOne({ _id: id, deletedAt: null });
-    if (!stage) throw new Error("stage not found");
-    const contents = (await challenge_model_default.find({
-      _id: { $in: payload.contents },
-      deletedAt: null
-    })).map((item) => item.id);
-    await challenge_model_default.updateMany(
-      { "stage.id": stage.id },
-      { $set: { stage: null } },
+var FeatureSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+var FeatureModel = mongoose.models.Feature || mongoose.model("Feature", FeatureSchema);
+var feature_model_default = FeatureModel;
+
+// _src/services/feature-service/index.ts
+var FeatureList = async (params) => {
+  const { page = 1, limit = 10 } = params || {};
+  const filters = {};
+  if (params?.questId) filters["quest.id"] = params.questId;
+  if (params?.search)
+    filters["title"] = { $regex: params.search, $options: "i" };
+  if (params?.type) filters["type"] = params.type;
+  return list(feature_model_default, page, limit, filters);
+};
+var FeatureCreate = async (payload) => {
+  return db_default.transaction(async (session) => {
+    const { featuredImage, questId, ...data } = payload;
+    const s3FeaturedImg = featuredImage ? await S3ServiceSet(featuredImage, undefined, session).then(
+      ({ fileName, fileSize, fileUrl }) => {
+        return { fileName, fileSize, fileUrl };
+      }
+    ) : null;
+    const quest = questId ? await detail(questId, session).then((res) => ({
+      id: res.id,
+      name: res.name,
+      settings: { periode: res.settings.periode },
+      storyline: res.storyline
+    })) : null;
+    const [item] = await feature_model_default.create(
+      [{ ...data, quest, featuredImage: s3FeaturedImg }],
       { session }
     );
-    await challenge_model_default.updateMany(
-      { _id: { $in: contents } },
-      { $set: { stage: { id: stage.id, name: stage.name } } },
-      { session }
-    );
-    Object.assign(stage, { ...payload, contents });
-    await stage.save({ session });
-    return stage.toObject();
+    if (!item) throw new Error("feature.unexpected_error");
+    return item.toObject();
   });
 };
-var _delete = async (id) => {
-  const item = await stage_model_default.findOneAndUpdate(
-    { _id: id, deletedAt: null },
-    { $set: { deletedAt: Date.now() } }
-  );
-  if (!item) throw new Error("stage not found");
-  return item;
-};
-var verify = async (id) => {
-  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("stage not found");
-  if (item.status !== STAGE_STATUS.Publish)
-    throw new Error("stage not published yet");
+var FeatureDetail = async (id) => {
+  const item = await feature_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("feature.not_found");
   return item.toObject();
 };
-var StagePublish = async (id) => {
+var FeatureUpdate = async (id, payload) => {
   return db_default.transaction(async (session) => {
-    const stage = await stage_model_default.findOne(
+    const item = await feature_model_default.findOne({ _id: id, deletedAt: null });
+    if (!item) throw new Error("feature.not_found");
+    const { featuredImage, questId, ...data } = payload;
+    const s3FeaturedImg = featuredImage ? await S3ServiceSet(featuredImage, undefined, session).then(
+      ({ fileName, fileSize, fileUrl }) => {
+        return { fileName, fileSize, fileUrl };
+      }
+    ) : null;
+    const quest = questId ? await detail(questId, session).then((res) => ({
+      id: res.id,
+      name: res.name,
+      settings: { periode: res.settings.periode },
+      storyline: res.storyline
+    })) : null;
+    const update = { ...data, quest };
+    if (s3FeaturedImg) update.featuredImage = s3FeaturedImg;
+    if (!update.attachments) update.attachments = [];
+    const newItem = await feature_model_default.findOneAndUpdate(
       { _id: id, deletedAt: null },
-      { _id: true, contents: true, qr: true },
-      { session }
+      { $set: update },
+      { new: true }
     );
-    if (!stage) throw new Error("stage.not_found");
-    const challenges = await challenge_model_default.find(
-      { _id: { $in: stage.contents }, qr: null, deletedAt: null },
-      { _id: true },
-      { session }
-    );
-    const qrs = await QrGenerate(
-      challenges.length + (stage.qr ? 0 : 1),
-      session
-    );
-    if (!stage.qr) {
-      const qr = qrs.pop();
-      if (!qr) throw new Error("qr.not_enough");
-      const stageQr = {
-        id: qr.id,
-        code: qr.code,
-        location: qr.location
-      };
-      const qrContent = {
-        type: "stage",
-        refId: stage.id
-      };
-      await stage_model_default.updateOne(
-        { _id: stage.id },
-        { $set: { qr: stageQr, status: "publish" } },
-        { session }
-      );
-      await qr_model_default.updateOne(
-        { _id: qr.id },
-        { $set: { content: qrContent, status: "publish" } },
-        session
-      );
-    }
-    const { bulkChallenges, bulkQr } = challenges.reduce(
-      (acc, cur) => {
-        const qr = qrs.pop();
-        if (!qr) throw new Error("qr.not_enough");
-        const qrForeign = {
-          id: qr?.id,
-          code: qr?.code,
-          location: qr?.location
-        };
-        acc.bulkChallenges.push({
-          updateOne: {
-            filter: { _id: cur.id },
-            update: { $set: { qr: qrForeign, status: "publish" } }
-          }
-        });
-        acc.bulkQr.push({
-          updateOne: {
-            filter: { _id: qr.id },
-            update: {
-              $set: {
-                content: { type: "challenge", refId: cur.id },
-                status: "publish"
-              }
-            }
-          }
-        });
-        return acc;
-      },
-      { bulkChallenges: [], bulkQr: [] }
-    );
-    await challenge_model_default.bulkWrite(bulkChallenges, { session });
-    await qr_model_default.bulkWrite(bulkQr, { session });
-    const newStage = await stage_model_default.findById(stage.id, null, { session });
-    const newChallenges = await challenge_model_default.find(
-      { _id: { $in: newStage?.contents }, deletedAt: null },
-      null,
-      { session }
-    );
-    if (!newStage) throw new Error("stage.not_found");
-    return {
-      stage: newStage.toObject(),
-      challenges: newChallenges.map((item) => item.toObject())
-    };
+    if (!newItem) throw new Error("feature.not_found");
+    return newItem.toObject();
   });
 };
-var StageDetailFull = async (id) => {
-  const stage = await detail(id);
-  const challenges = await ChallengeDetails(stage.contents);
-  return { stage, challenges };
+var FeatureDelete = async (id) => {
+  const item = await feature_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("feature.not_found");
+  item.deletedAt = /* @__PURE__ */ new Date();
+  await item.save();
+  return {};
 };
-var StageService = {
-  list,
-  create,
-  detail,
-  update: StageUpdate,
-  delete: _delete,
-  verify,
-  publish: StagePublish,
-  detailFull: StageDetailFull
+var FeaturePublished = async (type, slug) => {
+  const item = await feature_model_default.findOne({
+    type,
+    slug,
+    status: FEATURE_STATUS.Publish,
+    deletedAt: null
+  });
+  if (!item) throw new Error("feature.not_found");
+  return item.toObject();
 };
-var stage_service_default = StageService;
+var FeatureService = {
+  list: FeatureList,
+  create: FeatureCreate,
+  detail: FeatureDetail,
+  update: FeatureUpdate,
+  delete: FeatureDelete,
+  published: FeaturePublished
+};
+var feature_service_default = FeatureService;
 
-export { StageDetailFull, StagePublish, StageUpdate, _delete, create, stage_service_default as default, detail, list, verify };
+exports.FeatureCreate = FeatureCreate;
+exports.FeatureDelete = FeatureDelete;
+exports.FeatureDetail = FeatureDetail;
+exports.FeatureList = FeatureList;
+exports.FeaturePublished = FeaturePublished;
+exports.FeatureUpdate = FeatureUpdate;
+exports.default = feature_service_default;

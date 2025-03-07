@@ -89,7 +89,7 @@ var S3Schema = new mongoose.Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -144,7 +144,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify__default.default(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify__default.default(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -640,7 +641,7 @@ var S3ServiceSet = async (payload, userId, session) => {
     { _id: true },
     { session }
   );
-  if (!userData) throw new Error("s3.user_empty");
+  if (userId && !userData) throw new Error("s3.user_empty");
   const resS3 = await awsS3.put(payload);
   if (!resS3) throw new Error("s3.failed_upload");
   const [item] = await s3_model_default.create(
@@ -650,7 +651,7 @@ var S3ServiceSet = async (payload, userId, session) => {
         fileUrl: resS3.fileUrl,
         fileSize: payload.buffer.length,
         fileType: payload.mimetype,
-        userId
+        userId: userId ?? null
       }
     ],
     { session }
@@ -658,6 +659,9 @@ var S3ServiceSet = async (payload, userId, session) => {
   return item.toObject();
 };
 var S3ServiceGet = async (path) => {
+  const res = await s3_model_default.findOne({ fileName: path });
+  if (!res) throw new Error("s3.file_not_found");
+  return res.toObject();
 };
 var S3ServiceDelete = async (key, session) => {
   const res = await awsS3.delete(key);

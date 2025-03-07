@@ -255,31 +255,6 @@ var StageSchema = new Schema(
 StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 models.Stage || model("Stage", StageSchema);
-var PhotoHuntForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var S3ForeignSchema = new Schema(
   {
     fileName: { type: String, required: true },
@@ -294,7 +269,7 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -507,7 +482,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -543,6 +519,31 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
+var PhotoHuntForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var TriviaOptionSchema = new Schema(
   {
     text: { type: String, required: true },
@@ -720,7 +721,7 @@ var redis = globalInstance2.__REDIS_HELPER__;
 var redis_default = RedisHelper;
 
 // _src/services/challenge-service/index.ts
-var detail = async (id) => {
+var detail3 = async (id) => {
   const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
   if (!item) throw new Error("challenge not found");
   return item.toObject();
@@ -767,13 +768,13 @@ var updateMany = async (challenge, payload, session) => {
     throw new Error("trivia.sync.update_error");
   return await trivia_model_default.find({ _id: { $in: ids } });
 };
-var detail3 = async (id) => {
+var detail2 = async (id) => {
   const item = await trivia_model_default.findOne({ _id: id });
   if (!item) throw new Error("trivia not found");
   return item;
 };
-var details2 = async (challengeId) => {
-  const challenge = await detail(challengeId);
+var details = async (challengeId) => {
+  const challenge = await detail3(challengeId);
   if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
     throw new Error("challenge.not_trivia_type_error");
   const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
@@ -787,7 +788,7 @@ var sync = async (challengeId, payload) => {
       { session }
     );
     if (payload.length === 0) return [];
-    const challenge = await detail(challengeId);
+    const challenge = await detail3(challengeId);
     if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
       throw new Error("challenge.not_trivia_type_error");
     const challengeForeign = { id: challenge.id, name: challenge.name };
@@ -818,9 +819,9 @@ var sync = async (challengeId, payload) => {
     return items;
   });
 };
-var verify5 = async (id) => {
+var verify4 = async (id) => {
 };
-var TriviaService = { detail: detail3, details: details2, sync, verify: verify5 };
+var TriviaService = { detail: detail2, details, sync, verify: verify4 };
 var trivia_service_default = TriviaService;
 
-export { trivia_service_default as default, detail3 as detail, details2 as details, sync, verify5 as verify };
+export { trivia_service_default as default, detail2 as detail, details, sync, verify4 as verify };

@@ -1,4 +1,5 @@
 import { Schema, models, model, startSession } from 'mongoose';
+import '@zxing/browser';
 import 'dayjs';
 import 'bcryptjs';
 import 'jsonwebtoken';
@@ -8,7 +9,6 @@ import slugify from 'slugify';
 import * as ioredis_star from 'ioredis';
 import { Redis } from 'ioredis';
 import { randomUUID } from 'crypto';
-import '@zxing/browser';
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -27,14 +27,21 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-
-// _src/types/user-stage.ts
-var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
-  UserStageStatus2["OnGoing"] = "ongoing";
-  UserStageStatus2["Completed"] = "completed";
-  UserStageStatus2["End"] = "end";
-  return UserStageStatus2;
-})(UserStageStatus || {});
+var transaction = async (operation, clientSession) => {
+  const session = clientSession ?? await startSession();
+  clientSession ?? session.startTransaction();
+  return await operation(session).then(async (res) => {
+    await session.commitTransaction();
+    return res;
+  }).catch(async (err) => {
+    await session.abortTransaction();
+    throw err;
+  }).finally(() => {
+    session.endSession();
+  });
+};
+var db = { transaction };
+var db_default = db;
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -61,6 +68,24 @@ var ToObject = {
     const { _id, deletedAt, __v, ...rest } = ret;
     return { id: _id.toString(), ...rest };
   }
+};
+
+// _src/helpers/service.ts
+var list = async (model14, page, limit, filters = {}, sort) => {
+  const skip = (page - 1) * limit;
+  const filter = {
+    ...filters,
+    deletedAt: null
+  };
+  const items = await model14.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const totalItems = await model14.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / limit);
+  return {
+    list: items.map((item) => item.toObject ? item.toObject() : item),
+    page,
+    totalItems,
+    totalPages
+  };
 };
 
 // _src/constants/index.ts
@@ -103,6 +128,12 @@ var USER_PUBLIC_GENDER = {
   Male: "male",
   Female: "female",
   Panda: "panda"
+};
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
 };
 var QrContentSchema = new Schema(
   {
@@ -152,7 +183,61 @@ QrSchema.set("toObject", ToObject);
 QrSchema.set("toJSON", ToObject);
 models.Qr || model("Qr", QrSchema);
 
-// _src/models/stage-model/index.ts
+// _src/models/challenge-model/index.ts
+var ChallengeSettingsSchema = new Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(CHALLENGE_TYPES),
+      required: true
+    },
+    duration: { type: Number },
+    clue: { type: String },
+    feedback: { type: FeedbackSchema }
+  },
+  { _id: false, versionKey: false }
+);
+var ChallengeSettingsForeignSchema = new Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(CHALLENGE_TYPES),
+      required: true
+    },
+    duration: { type: Number }
+  },
+  { _id: false }
+);
+var ChallengeForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    storyline: { type: [String], required: true },
+    order: { type: Number, default: null }
+  },
+  { _id: false }
+);
+var ChallengeSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    stage: { type: IdNameSchema, default: null },
+    storyline: { type: [String] },
+    status: {
+      type: String,
+      enum: Object.values(CHALLENGE_STATUS),
+      default: CHALLENGE_STATUS.Draft
+    },
+    order: { type: Number, default: null },
+    settings: { type: ChallengeSettingsSchema, default: null },
+    contents: { type: [String] },
+    qr: { type: QrForeignSchema, default: null },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+ChallengeSchema.set("toJSON", ToObject);
+ChallengeSchema.set("toObject", ToObject);
+models.Challenge || model("Challenge", ChallengeSchema);
 var StageSettingsSchema = new Schema(
   {
     canDoRandomChallenges: { type: Boolean, default: false },
@@ -216,7 +301,8 @@ var S3Schema = new Schema(
 );
 S3Schema.set("toObject", ToObject);
 S3Schema.set("toJSON", ToObject);
-models.S3 || model("S3", S3Schema);
+var S3Model = models.S3 || model("S3", S3Schema);
+var s3_model_default = S3Model;
 
 // _src/models/user-model/index.ts
 var ToObject2 = {
@@ -258,7 +344,8 @@ var UserSchema = new Schema(
 );
 UserSchema.set("toJSON", ToObject2);
 UserSchema.set("toObject", ToObject2);
-models.User || model("User", UserSchema);
+var UserModel = models.User || model("User", UserSchema);
+var user_model_default = UserModel;
 
 // _src/models/user-public-model/index.ts
 var UserPublicForeignSchema = new Schema(
@@ -288,8 +375,15 @@ var UserPublicSchema = new Schema(
 );
 UserPublicSchema.set("toJSON", ToObject);
 UserPublicSchema.set("toObject", ToObject);
-var UserPublicModel = models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
-var user_public_model_default = UserPublicModel;
+models.UserPublic || model("UserPublic", UserPublicSchema, "usersPublic");
+
+// _src/types/user-stage.ts
+var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
+  UserStageStatus2["OnGoing"] = "ongoing";
+  UserStageStatus2["Completed"] = "completed";
+  UserStageStatus2["End"] = "end";
+  return UserStageStatus2;
+})(UserStageStatus || {});
 
 // _src/models/user-stage-model/index.ts
 var UserStageForeignSchema = new Schema(
@@ -325,83 +419,9 @@ var UserStageSchema = new Schema(
 );
 UserStageSchema.set("toJSON", ToObject);
 UserStageSchema.set("toObject", ToObject);
-var UserStageModel = models.UserStage || model("UserStage", UserStageSchema, "usersStage");
-var user_stage_model_default = UserStageModel;
-var transaction = async (operation, clientSession) => {
-  const session = await startSession();
-  session.startTransaction();
-  return await operation(session).then(async (res) => {
-    await session.commitTransaction();
-    return res;
-  }).catch(async (err) => {
-    await session.abortTransaction();
-    throw err;
-  }).finally(() => {
-    session.endSession();
-  });
-};
-var ChallengeSettingsSchema = new Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(CHALLENGE_TYPES),
-      required: true
-    },
-    duration: { type: Number },
-    clue: { type: String },
-    feedback: { type: FeedbackSchema }
-  },
-  { _id: false, versionKey: false }
-);
-var ChallengeSettingsForeignSchema = new Schema(
-  {
-    type: {
-      type: String,
-      enum: Object.values(CHALLENGE_TYPES),
-      required: true
-    },
-    duration: { type: Number }
-  },
-  { _id: false }
-);
-var ChallengeForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    name: { type: String, required: true },
-    storyline: { type: [String], required: true },
-    order: { type: Number, default: null }
-  },
-  { _id: false }
-);
-var ChallengeSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    stage: { type: IdNameSchema, default: null },
-    storyline: { type: [String] },
-    status: {
-      type: String,
-      enum: Object.values(CHALLENGE_STATUS),
-      default: CHALLENGE_STATUS.Draft
-    },
-    order: { type: Number, default: null },
-    settings: { type: ChallengeSettingsSchema, default: null },
-    contents: { type: [String] },
-    qr: { type: QrForeignSchema, default: null },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-ChallengeSchema.set("toJSON", ToObject);
-ChallengeSchema.set("toObject", ToObject);
-var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
-var challenge_model_default = ChallengeModel;
+models.UserStage || model("UserStage", UserStageSchema, "usersStage");
 
-// _src/services/challenge-service/index.ts
-var detail2 = async (id) => {
-  const item = await challenge_model_default.findOne({ _id: id, deletedAt: null });
-  if (!item) throw new Error("challenge not found");
-  return item.toObject();
-};
+// _src/models/user-challenge-model/index.ts
 var UserChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -442,8 +462,7 @@ var UserChallengeSchema = new Schema(
 );
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
-var UserChallengeModel = models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
-var user_challenge_model_default = UserChallengeModel;
+models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
 
 // _src/plugins/aws-s3/index.ts
 var aws_s3_exports = {};
@@ -552,8 +571,7 @@ var PhotoHuntSchema = new Schema(
 );
 PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photohunt_model_default = PhotoHuntModel;
+models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var TriviaOptionSchema = new Schema(
   {
     text: { type: String, required: true },
@@ -590,8 +608,7 @@ var TriviaSchema = new Schema(
 );
 TriviaSchema.set("toObject", ToObject);
 TriviaSchema.set("toJSON", ToObject);
-var TriviaModel = models.Trivia || model("Trivia", TriviaSchema);
-var trivia_model_default = TriviaModel;
+models.Trivia || model("Trivia", TriviaSchema);
 var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
@@ -608,8 +625,7 @@ var UserPhotoHuntSchema = new Schema({
 });
 UserPhotoHuntSchema.set("toObject", ToObject);
 UserPhotoHuntSchema.set("toJSON", ToObject);
-var UserPhotoHuntModel = models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
-var user_photohunt_model_default = UserPhotoHuntModel;
+models.UserPhotoHunt || model("UserPhotoHunt", UserPhotoHuntSchema, "usersPhotoHunt");
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -637,8 +653,31 @@ var UserTriviaSchema = new Schema(
 );
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
-var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
-var user_trivia_model_default = UserTriviaModel;
+models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+
+// _src/services/s3-service/index.ts
+var S3ServiceSet = async (payload, userId, session) => {
+  await user_model_default.findOne(
+    { _id: userId },
+    { _id: true },
+    { session }
+  );
+  const resS3 = await awsS3.put(payload);
+  if (!resS3) throw new Error("s3.failed_upload");
+  const [item] = await s3_model_default.create(
+    [
+      {
+        fileName: resS3.fileName,
+        fileUrl: resS3.fileUrl,
+        fileSize: payload.buffer.length,
+        fileType: payload.mimetype,
+        userId: null
+      }
+    ],
+    { session }
+  );
+  return item.toObject();
+};
 
 // _src/plugins/redis/index.ts
 var redis_exports = {};
@@ -732,393 +771,127 @@ if (!globalInstance2.__REDIS_HELPER__)
 var redis = globalInstance2.__REDIS_HELPER__;
 var redis_default = RedisHelper;
 
-// _src/services/user-public-service/index.ts
-var verify = async (value, session) => {
-  if (!value) throw new Error("token is required");
-  const userPublic = await user_public_model_default.findOneAndUpdate(
-    {
-      $or: [{ "user.id": value }, { code: value }],
-      deletedAt: null
-    },
-    { lastAccessedAt: /* @__PURE__ */ new Date() },
-    { new: true, session }
-  );
-  if (!userPublic) throw new Error("invalid user");
-  return userPublic.toObject();
-};
-
-// _src/services/trivia-service/index.ts
-var details = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.Trivia)
-    throw new Error("challenge.not_trivia_type_error");
-  const items = await trivia_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-
-// _src/services/user-trivia-service/index.ts
-var setup = async (userPublic, userChallenge, session) => {
-  const trivias = await details(userChallenge.challengeId);
-  const payload = trivias.map((item) => {
-    const trivia = {
-      id: item.id,
-      allowMultiple: item.allowMultiple,
-      options: item.options.map(({ text }) => ({ text })),
-      question: item.question
-    };
-    return {
-      userPublic,
-      userChallenge,
-      trivia
-    };
-  });
-  return await user_trivia_model_default.insertMany(payload, { session });
-};
-var details2 = async (ids, TID, hasResult, session) => {
-  const filter = {};
-  if (hasResult !== undefined)
-    filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_trivia_model_default.find(
-    {
-      ...filter,
-      _id: { $in: ids },
-      "userPublic.code": TID
-    },
-    null,
-    { session }
-  );
-  return data.map((item) => item.toObject());
-};
-var submitEmpties = async (userChallengeId, TID, session) => {
-  const results = {
-    answer: null,
-    feedback: null,
-    isCorrect: false,
-    baseScore: 0,
-    bonus: 0,
-    totalScore: 0
-  };
-  return await user_trivia_model_default.updateMany(
-    {
-      "userChallenge.id": userChallengeId,
-      "userPublic.code": TID,
-      results: null
-    },
-    { $set: { results } },
-    { session }
-  );
-};
-var summary = async (userChallengeId, TID, session) => {
-  const [summary4] = await user_trivia_model_default.aggregate().match({
-    "userChallenge.id": userChallengeId,
-    "userPublic.code": TID
-  }).group({
-    _id: {
-      userChallenge: "$userChallenge.id",
-      userPublic: "$userPublic.code"
-    },
-    type: { $first: CHALLENGE_TYPES.Trivia },
-    userPublic: { $first: "$userPublic" },
-    userChallenge: { $first: "$userChallenge" },
-    totalItem: {
-      $sum: {
-        $cond: {
-          if: { $eq: ["$results.isCorrect", true] },
-          then: 1,
-          else: 0
-        }
-      }
-    },
-    totalBaseScore: { $sum: "$results.baseScore" },
-    totalBonus: { $sum: "$results.bonus" },
-    totalScore: { $sum: "$results.totalScore" }
-  }).session(session || null);
-  return summary4;
-};
-
-// _src/services/photohunt-service/index.ts
-var details3 = async (challengeId) => {
-  const challenge = await detail2(challengeId);
-  if (challenge.settings.type !== CHALLENGE_TYPES.PhotoHunt)
-    throw new Error("challenge.not_photohunt_type_error");
-  const items = await photohunt_model_default.find({ _id: { $in: challenge.contents } });
-  return items.map((item) => item.toObject());
-};
-
-// _src/services/user-photohunt-service/index.ts
-var setup2 = async (userPublic, userChallenge, session) => {
-  const items = await details3(userChallenge.challengeId);
-  const payload = items.map(({ id, hint }) => {
-    return {
-      userPublic,
-      userChallenge,
-      photoHunt: { id, hint }
-    };
-  });
-  return await user_photohunt_model_default.insertMany(payload, { session });
-};
-var details4 = async (ids, TID, hasResult, session) => {
-  const filter = {};
-  if (hasResult !== undefined)
-    filter.results = hasResult ? { $ne: null } : null;
-  const data = await user_photohunt_model_default.find(
-    {
-      ...filter,
-      _id: { $in: ids },
-      "userPublic.code": TID
-    },
-    null,
-    { session }
-  );
-  return data.map((item) => item.toObject());
-};
-var submitEmpties2 = async (userChallengeId, TID, session) => {
-  const results = {
-    feedback: null,
-    foundAt: null,
-    score: 0
-  };
-  return await user_photohunt_model_default.updateMany(
-    {
-      "userChallenge.id": userChallengeId,
-      "userPublic.code": TID,
-      results: null
-    },
-    { $set: { results } },
-    { session }
-  );
-};
-var summary2 = async (userChallengeId, TID, session) => {
-  const [summary4] = await user_photohunt_model_default.aggregate().match({
-    "userChallenge.id": userChallengeId,
-    "userPublic.code": TID
-  }).group({
-    _id: {
-      userChallenge: "$userChallenge.id",
-      userPublic: "$userPublic.code"
-    },
-    type: { $first: CHALLENGE_TYPES.PhotoHunt },
-    userPublic: { $first: "$userPublic" },
-    userChallenge: { $first: "$userChallenge" },
-    totalItem: {
-      $sum: {
-        $cond: {
-          if: { $ne: ["$results.foundAt", null] },
-          then: 1,
-          else: 0
-        }
-      }
-    },
-    totalBaseScore: { $sum: "$results.score" },
-    totalBonus: { $first: 0 },
-    totalScore: { $sum: "$results.score" }
-  }).session(session || null);
-  return summary4;
-};
-
-// _src/services/user-challenge-service/index.ts
-var services = {
-  [CHALLENGE_TYPES.Trivia]: {
-    setup,
-    details: details2,
-    submitEmpties,
-    summary
-  },
-  [CHALLENGE_TYPES.PhotoHunt]: {
-    setup: setup2,
-    details: details4,
-    submitEmpties: submitEmpties2,
-    summary: summary2
-  }
-};
-var init = async (stage, userStage, session) => {
-  const challenges = await challenge_model_default.find({
-    _id: { $in: stage.contents }
-  });
-  const userPublic = userStage.userPublic;
-  const payload = challenges.map((item) => {
-    const {
-      id,
-      name,
-      order,
-      storyline,
-      settings: { duration, type }
-    } = item;
-    return {
-      userStage: {
-        id: userStage.id,
-        stageId: userStage.stage.id,
-        name: userStage.stage.name
-      },
-      challenge: { id, name, order, storyline },
-      userPublic,
-      settings: { duration, type }
-    };
-  });
-  const contents = await user_challenge_model_default.insertMany(payload, { session });
-  await Promise.all(
-    contents.map(async (item) => {
-      const items = await services[item.settings.type].setup(
-        userPublic,
-        {
-          id: item.id,
-          challengeId: item.challenge.id,
-          name: item.challenge.name
-        },
-        session
-      );
-      item.contents = items.map((i) => i.id);
-      await item.save({ session });
-      return item.toObject();
-    })
-  );
-  return await user_challenge_model_default.find(
-    {
-      _id: { $in: contents.map((item) => item._id) }
-    },
-    { _id: true },
-    { session }
-  );
-};
-var summary3 = async (userStageId, TID, session) => {
-  return user_challenge_model_default.aggregate().match({
-    "userStage.id": userStageId,
-    "userPublic.code": TID
-  }).group({
-    _id: "$userPublic.code",
-    userPublic: { $first: "$userPublic" },
-    userStage: { $first: "$userStage" },
-    totalBaseScore: { $sum: "$results.baseScore" },
-    totalBonus: {
-      $sum: { $add: ["$results.bonus", "$results.correctBonus"] }
-    },
-    totalScore: { $sum: "$results.totalScore" }
-  }).session(session || null);
-};
-
 // _src/services/stage-service/index.ts
-var verify3 = async (id) => {
-  const item = await stage_model_default.findOne({ _id: id, deletedAt: null });
+var detail = async (id, session) => {
+  const item = await stage_model_default.findOne({ _id: id, deletedAt: null }, null, {
+    session
+  });
   if (!item) throw new Error("stage not found");
-  if (item.status !== STAGE_STATUS.Publish)
-    throw new Error("stage not published yet");
   return item.toObject();
 };
+var FeatureSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+var FeatureModel = models.Feature || model("Feature", FeatureSchema);
+var feature_model_default = FeatureModel;
 
-// _src/services/user-stage-service/index.ts
-var initResults = () => ({
-  baseScore: 0,
-  challengeBonus: 0,
-  bonus: 0,
-  totalScore: 0
-});
-var verify4 = async (stageId, TID) => {
-  return await user_stage_model_default.findOne({
-    "userPublic.code": TID,
-    "stage.id": stageId
-  });
+// _src/services/feature-service/index.ts
+var FeatureList = async (params) => {
+  const { page = 1, limit = 10 } = params || {};
+  const filters = {};
+  if (params?.questId) filters["quest.id"] = params.questId;
+  if (params?.search)
+    filters["title"] = { $regex: params.search, $options: "i" };
+  if (params?.type) filters["type"] = params.type;
+  return list(feature_model_default, page, limit, filters);
 };
-var setup4 = async (stageId, TID) => {
-  return transaction(async (session) => {
-    console.time("queryTime");
-    const exist = await verify4(stageId, TID);
-    if (exist) return exist;
-    const userPublicData = await verify(TID);
-    const stageData = await verify3(stageId);
-    const userPublic = {
-      code: userPublicData.code,
-      id: userPublicData.id,
-      name: userPublicData.name
-    };
-    const stage = {
-      id: stageData.id,
-      name: stageData.name,
-      settings: {
-        periode: stageData.settings.periode
-      },
-      storyline: stageData.storyline
-    };
-    const [userStageData] = await user_stage_model_default.create(
-      [{ userPublic, stage }],
+var FeatureCreate = async (payload) => {
+  return db_default.transaction(async (session) => {
+    const { featuredImage, questId, ...data } = payload;
+    const s3FeaturedImg = featuredImage ? await S3ServiceSet(featuredImage, undefined, session).then(
+      ({ fileName, fileSize, fileUrl }) => {
+        return { fileName, fileSize, fileUrl };
+      }
+    ) : null;
+    const quest = questId ? await detail(questId, session).then((res) => ({
+      id: res.id,
+      name: res.name,
+      settings: { periode: res.settings.periode },
+      storyline: res.storyline
+    })) : null;
+    const [item] = await feature_model_default.create(
+      [{ ...data, quest, featuredImage: s3FeaturedImg }],
       { session }
     );
-    const contents = await init(stageData, userStageData, session);
-    userStageData.contents = contents.map((item) => item._id.toString());
-    await userStageData.save({ session });
-    return userStageData.toObject();
-  }).finally(() => {
-    console.timeEnd("queryTime");
+    if (!item) throw new Error("feature.unexpected_error");
+    return item.toObject();
   });
 };
-var list = async (params, TID) => {
-  const skip = (params.page - 1) * params.limit;
-  const filter = {
-    deletedAt: null,
-    "stage.name": { $regex: params.search, $options: "i" },
-    "userPublic.code": TID
-  };
-  if (params.status) filter.status = params.status;
-  const items = await user_stage_model_default.find(filter).skip(skip).limit(params.limit).sort({ createdAt: -1 });
-  const totalItems = await user_stage_model_default.countDocuments(filter);
-  const totalPages = Math.ceil(totalItems / params.limit);
-  return {
-    list: items.map(
-      (item) => item.toObject({
-        transform: (doc, ret) => {
-          const { _id, __v, userPublic, ...rest } = ret;
-          return { id: _id, ...rest };
-        }
-      })
-    ),
-    page: params.page,
-    totalItems,
-    totalPages
-  };
-};
-var detail6 = async (id, TID) => {
-  const item = await user_stage_model_default.findOne({
-    _id: id,
-    deletedAt: null,
-    "userPublic.code": TID
-  });
-  if (!item) throw new Error("user stage not found");
-  return item.toObject({
-    transform: (doc, ret) => {
-      const { _id, __v, userPublic, ...rest } = ret;
-      return { id: _id, ...rest };
-    }
-  });
-};
-var submitState = async (id, TID, session) => {
-  const item = await user_stage_model_default.findOne(
-    {
-      _id: id,
-      "userPublic.code": TID
-    },
-    null,
-    { session }
-  );
-  if (!item) throw new Error("user stage not found");
-  const results = item?.results || initResults();
-  const [summary4] = await summary3(id, TID, session);
-  results.baseScore = summary4.totalBaseScore;
-  results.bonus = 0;
-  results.challengeBonus = summary4.totalBonus;
-  results.totalScore = summary4.totalScore;
-  item.results = results;
-  await item.save({ session });
+var FeatureDetail = async (id) => {
+  const item = await feature_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("feature.not_found");
   return item.toObject();
 };
-var userSync = async (TID, session) => {
-  const userPublicData = await verify(TID, session);
-  const userPublic = {
-    id: userPublicData.id,
-    code: userPublicData.code,
-    name: userPublicData.name
-  };
-  await user_stage_model_default.updateMany({ "userPublic.code": TID }, { userPublic });
+var FeatureUpdate = async (id, payload) => {
+  return db_default.transaction(async (session) => {
+    const item = await feature_model_default.findOne({ _id: id, deletedAt: null });
+    if (!item) throw new Error("feature.not_found");
+    const { featuredImage, questId, ...data } = payload;
+    const s3FeaturedImg = featuredImage ? await S3ServiceSet(featuredImage, undefined, session).then(
+      ({ fileName, fileSize, fileUrl }) => {
+        return { fileName, fileSize, fileUrl };
+      }
+    ) : null;
+    const quest = questId ? await detail(questId, session).then((res) => ({
+      id: res.id,
+      name: res.name,
+      settings: { periode: res.settings.periode },
+      storyline: res.storyline
+    })) : null;
+    const update = { ...data, quest };
+    if (s3FeaturedImg) update.featuredImage = s3FeaturedImg;
+    if (!update.attachments) update.attachments = [];
+    const newItem = await feature_model_default.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: update },
+      { new: true }
+    );
+    if (!newItem) throw new Error("feature.not_found");
+    return newItem.toObject();
+  });
 };
-var UserStageService = { list, detail: detail6, setup: setup4, verify: verify4, submitState };
-var user_stage_service_default = UserStageService;
+var FeatureDelete = async (id) => {
+  const item = await feature_model_default.findOne({ _id: id, deletedAt: null });
+  if (!item) throw new Error("feature.not_found");
+  item.deletedAt = /* @__PURE__ */ new Date();
+  await item.save();
+  return {};
+};
+var FeaturePublished = async (type, slug) => {
+  const item = await feature_model_default.findOne({
+    type,
+    slug,
+    status: FEATURE_STATUS.Publish,
+    deletedAt: null
+  });
+  if (!item) throw new Error("feature.not_found");
+  return item.toObject();
+};
+var FeatureService = {
+  list: FeatureList,
+  create: FeatureCreate,
+  detail: FeatureDetail,
+  update: FeatureUpdate,
+  delete: FeatureDelete,
+  published: FeaturePublished
+};
+var feature_service_default = FeatureService;
 
-export { user_stage_service_default as default, detail6 as detail, list, setup4 as setup, submitState, userSync, verify4 as verify };
+export { FeatureCreate, FeatureDelete, FeatureDetail, FeatureList, FeaturePublished, FeatureUpdate, feature_service_default as default };

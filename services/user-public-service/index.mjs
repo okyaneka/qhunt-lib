@@ -70,7 +70,7 @@ var S3Schema = new Schema(
     fileUrl: { type: String, required: true },
     fileSize: { type: Number, required: true },
     fileType: { type: String, required: true },
-    userId: { type: String, required: true }
+    userId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -380,68 +380,6 @@ var ChallengeSchema = new Schema(
 ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 models.Challenge || model("Challenge", ChallengeSchema);
-var PhotoHuntForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var TriviaOptionSchema = new Schema(
-  {
-    text: { type: String, required: true },
-    isCorrect: { type: Boolean, default: false },
-    point: { type: Number, default: 0 }
-  },
-  { _id: false, versionKey: false }
-);
-var TriviaForeignOptionSchema = new Schema(
-  {
-    text: { type: String, required: true }
-  },
-  { _id: false }
-);
-var TriviaForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    question: { type: String, required: true },
-    allowMultiple: { type: Boolean, required: true },
-    options: { type: [TriviaForeignOptionSchema], required: true }
-  },
-  { _id: false }
-);
-var TriviaSchema = new Schema(
-  {
-    challenge: { type: IdNameSchema, default: null },
-    question: { type: String, required: true },
-    feedback: { type: FeedbackSchema, default: {} },
-    allowMultiple: { type: Boolean, default: false },
-    options: { type: [TriviaOptionSchema], required: true },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-TriviaSchema.set("toObject", ToObject);
-TriviaSchema.set("toJSON", ToObject);
-models.Trivia || model("Trivia", TriviaSchema);
 var UserChallengeForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -483,6 +421,43 @@ var UserChallengeSchema = new Schema(
 UserChallengeSchema.set("toJSON", ToObject);
 UserChallengeSchema.set("toObject", ToObject);
 models.UserChallenge || model("UserChallenge", UserChallengeSchema, "usersChallenge");
+var TriviaOptionSchema = new Schema(
+  {
+    text: { type: String, required: true },
+    isCorrect: { type: Boolean, default: false },
+    point: { type: Number, default: 0 }
+  },
+  { _id: false, versionKey: false }
+);
+var TriviaForeignOptionSchema = new Schema(
+  {
+    text: { type: String, required: true }
+  },
+  { _id: false }
+);
+var TriviaForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    allowMultiple: { type: Boolean, required: true },
+    options: { type: [TriviaForeignOptionSchema], required: true }
+  },
+  { _id: false }
+);
+var TriviaSchema = new Schema(
+  {
+    challenge: { type: IdNameSchema, default: null },
+    question: { type: String, required: true },
+    feedback: { type: FeedbackSchema, default: {} },
+    allowMultiple: { type: Boolean, default: false },
+    options: { type: [TriviaOptionSchema], required: true },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+TriviaSchema.set("toObject", ToObject);
+TriviaSchema.set("toJSON", ToObject);
+models.Trivia || model("Trivia", TriviaSchema);
 var ToObject3 = {
   transform: (doc, ret) => {
     const { _id, __v, userPublic, ...rest } = ret;
@@ -511,6 +486,33 @@ var UserTriviaSchema = new Schema(
 UserTriviaSchema.set("toJSON", ToObject3);
 UserTriviaSchema.set("toObject", ToObject3);
 models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
+var PhotoHuntForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+
+// _src/models/user-photohunt-model/index.ts
 var UserPhotoHuntResultSchema = new Schema(
   {
     feedback: { type: String, default: null },
@@ -667,7 +669,8 @@ var S3Helper = class {
     const names = filename.split(".");
     const ext = names.length > 1 ? "." + names.pop() : "";
     const unique = Date.now().toString(36);
-    const Key = slugify(`${names.join(".")}-${unique}${ext}`);
+    const finalName = names.join(".").split("/").map((part) => slugify(part, { lower: true })).join("/");
+    const Key = `${finalName}-${unique}${ext}`;
     const config = {
       Bucket: bucket,
       Key,
@@ -705,7 +708,7 @@ var awsS3 = globalInstance2.__S3_HELPER__;
 var aws_s3_default = S3Helper;
 
 // _src/services/user-service/index.ts
-var detail6 = async (id, session) => {
+var detail5 = async (id, session) => {
   const user = await user_model_default.findOne({ _id: id, deletedAt: null }, null, {
     session
   });
@@ -735,7 +738,7 @@ var verify2 = async (value, session) => {
   if (!userPublic) throw new Error("invalid user");
   return userPublic.toObject();
 };
-var detail7 = async (TID, session) => {
+var detail6 = async (TID, session) => {
   const userPublic = await user_public_model_default.findOne(
     {
       code: TID,
@@ -750,7 +753,7 @@ var detail7 = async (TID, session) => {
     user: null
   };
   if (userPublic?.user?.id) {
-    const user = await detail6(userPublic.user.id, session);
+    const user = await detail5(userPublic.user.id, session);
     userPublicFull.user = user;
   }
   return userPublicFull;
@@ -772,7 +775,7 @@ var setup5 = async (userId) => {
   const user = await user_public_model_default.create(payload);
   return user.toObject();
 };
-var UserPublicService = { verify: verify2, detail: detail7, setup: setup5 };
+var UserPublicService = { verify: verify2, detail: detail6, setup: setup5 };
 var user_public_service_default = UserPublicService;
 
-export { user_public_service_default as default, detail7 as detail, setup5 as setup, verify2 as verify };
+export { user_public_service_default as default, detail6 as detail, setup5 as setup, verify2 as verify };
