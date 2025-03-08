@@ -165,9 +165,10 @@ models.S3 || model("S3", S3Schema);
 var FeatureSchema = new Schema(
   {
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, unique: true, index: true },
     content: { type: String, required: true },
     quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
     featuredImage: { type: S3ForeignSchema, default: null },
     status: {
       type: String,

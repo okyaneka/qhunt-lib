@@ -8,9 +8,10 @@ import { S3ForeignSchema } from "../s3-model";
 const FeatureSchema = new Schema<Feature>(
   {
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, unique: true, index: true },
     content: { type: String, required: true },
     quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
     featuredImage: { type: S3ForeignSchema, default: null },
     status: {
       type: String,
