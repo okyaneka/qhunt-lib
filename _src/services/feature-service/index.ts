@@ -7,10 +7,12 @@ import { S3Foreign } from "~/types/s3";
 import { S3ServiceSet } from "../s3-service";
 import FeatureModel from "~/models/feature-model";
 import { FEATURE_STATUS } from "~/constants";
+import slugify from "slugify";
 
 export const FeatureList = async (params?: Partial<FeatureListParams>) => {
   const { page = 1, limit = 10 } = params || {};
   const filters: RootFilterQuery<Feature> = {};
+  if (params?.status) filters["status"] = params.status;
   if (params?.questId) filters["quest.id"] = params.questId;
   if (params?.search)
     filters["title"] = { $regex: params.search, $options: "i" };
@@ -20,7 +22,7 @@ export const FeatureList = async (params?: Partial<FeatureListParams>) => {
 
 export const FeatureCreate = async (payload: FeaturePayload) => {
   return db.transaction(async (session) => {
-    const { featuredImage, questId, ...data } = payload;
+    const { featuredImage, questId, slug, ...data } = payload;
 
     const s3FeaturedImg = featuredImage
       ? await S3ServiceSet(featuredImage, undefined, session).then<S3Foreign>(
@@ -29,6 +31,10 @@ export const FeatureCreate = async (payload: FeaturePayload) => {
           }
         )
       : null;
+    const count = await FeatureModel.countDocuments(
+      { slug: { $regex: new RegExp(`^${slug}(-\\d+)?$`, "i") } },
+      { session }
+    );
 
     const quest: Feature["quest"] = questId
       ? await detail(questId, session).then((res) => ({
@@ -40,7 +46,14 @@ export const FeatureCreate = async (payload: FeaturePayload) => {
       : null;
 
     const [item] = await FeatureModel.create(
-      [{ ...data, quest, featuredImage: s3FeaturedImg }],
+      [
+        {
+          ...data,
+          quest,
+          slug: !count ? slug : slugify(`${slug}-${count}`),
+          featuredImage: s3FeaturedImg,
+        },
+      ],
       { session }
     );
 

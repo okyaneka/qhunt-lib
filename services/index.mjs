@@ -2306,9 +2306,10 @@ var challenge_service_default = ChallengeService;
 var FeatureSchema = new Schema(
   {
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, unique: true, index: true },
     content: { type: String, required: true },
     quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
     featuredImage: { type: S3ForeignSchema, default: null },
     status: {
       type: String,
@@ -2325,11 +2326,10 @@ FeatureSchema.set("toJSON", ToObject);
 FeatureSchema.set("toObject", ToObject);
 var FeatureModel = models.Feature || model("Feature", FeatureSchema);
 var feature_model_default = FeatureModel;
-
-// _src/services/feature-service/index.ts
 var FeatureList = async (params) => {
   const { page = 1, limit = 10 } = params || {};
   const filters = {};
+  if (params?.status) filters["status"] = params.status;
   if (params?.questId) filters["quest.id"] = params.questId;
   if (params?.search)
     filters["title"] = { $regex: params.search, $options: "i" };
@@ -2338,12 +2338,16 @@ var FeatureList = async (params) => {
 };
 var FeatureCreate = async (payload) => {
   return db_default.transaction(async (session) => {
-    const { featuredImage, questId, ...data } = payload;
+    const { featuredImage, questId, slug, ...data } = payload;
     const s3FeaturedImg = featuredImage ? await S3ServiceSet(featuredImage, undefined, session).then(
       ({ fileName, fileSize, fileUrl }) => {
         return { fileName, fileSize, fileUrl };
       }
     ) : null;
+    const count = await feature_model_default.countDocuments(
+      { slug: { $regex: new RegExp(`^${slug}(-\\d+)?$`, "i") } },
+      { session }
+    );
     const quest = questId ? await detail9(questId, session).then((res) => ({
       id: res.id,
       name: res.name,
@@ -2351,7 +2355,14 @@ var FeatureCreate = async (payload) => {
       storyline: res.storyline
     })) : null;
     const [item] = await feature_model_default.create(
-      [{ ...data, quest, featuredImage: s3FeaturedImg }],
+      [
+        {
+          ...data,
+          quest,
+          slug: !count ? slug : slugify(`${slug}-${count}`),
+          featuredImage: s3FeaturedImg
+        }
+      ],
       { session }
     );
     if (!item) throw new Error("feature.unexpected_error");
