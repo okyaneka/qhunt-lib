@@ -1,4 +1,5 @@
 export { default as ChallengeModel } from "./challenge-model";
+export { default as FeatureModel } from "./feature-model";
 export { default as PhotoHuntModel } from "./photohunt-model";
 export { default as QrModel } from "./qr-model";
 export { default as S3Model } from "./s3-model";

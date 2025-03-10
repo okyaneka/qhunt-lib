@@ -224,6 +224,7 @@ var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 var challenge_model_default = ChallengeModel;
 var StageSettingsSchema = new Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -232,7 +233,7 @@ var StageSettingsSchema = new Schema(
 );
 var StageSettingsForeignSchema = new Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );
@@ -652,6 +653,29 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
+var FeatureSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+var FeatureModel = models.Feature || model("Feature", FeatureSchema);
+var feature_model_default = FeatureModel;
 var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -1683,6 +1707,7 @@ var init = async (stage2, userStage, session) => {
         stageId: userStage.stage.id,
         name: userStage.stage.name
       },
+      status: stage2.settings.unlockAll ? USER_CHALLENGE_STATUS.Discovered : USER_CHALLENGE_STATUS.Undiscovered,
       challenge: { id, name, order, storyline },
       userPublic,
       settings: { duration, type }
@@ -2358,29 +2383,6 @@ var ChallengeService = {
   verify: verify6
 };
 var challenge_service_default = ChallengeService;
-var FeatureSchema = new Schema(
-  {
-    title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true, index: true },
-    content: { type: String, required: true },
-    quest: { type: StageForeignSchema, default: null },
-    featured: { type: Boolean, default: false },
-    featuredImage: { type: S3ForeignSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(FEATURE_STATUS),
-      default: FEATURE_STATUS.Draft
-    },
-    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
-    attachments: { type: [S3ForeignSchema], default: [] },
-    deletedAt: { type: Date, default: null }
-  },
-  { timestamps: true }
-);
-FeatureSchema.set("toJSON", ToObject);
-FeatureSchema.set("toObject", ToObject);
-var FeatureModel = models.Feature || model("Feature", FeatureSchema);
-var feature_model_default = FeatureModel;
 var FeatureList = async (params) => {
   const { page = 1, limit = 10 } = params || {};
   const filters = {};

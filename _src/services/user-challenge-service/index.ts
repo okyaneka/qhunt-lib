@@ -105,6 +105,9 @@ export const init = async (
         stageId: userStage.stage.id,
         name: userStage.stage.name,
       },
+      status: stage.settings.unlockAll
+        ? USER_CHALLENGE_STATUS.Discovered
+        : USER_CHALLENGE_STATUS.Undiscovered,
       challenge: { id, name, order, storyline },
       userPublic,
       settings: { duration, type },

@@ -11,6 +11,7 @@ export type StageStatus = ValueOf<typeof STAGE_STATUS>;
 
 export interface StageSettings {
   periode: Periode | null;
+  unlockAll: boolean;
   canDoRandomChallenges: boolean;
   canStartFromChallenges: boolean;
 }
