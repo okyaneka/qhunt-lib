@@ -871,7 +871,7 @@ var StagePublish = async (id) => {
       await qr_model_default.updateOne(
         { _id: qr.id },
         { $set: { content: qrContent, status: "publish" } },
-        session
+        { session }
       );
     }
     const { bulkChallenges, bulkQr } = challenges.reduce(
