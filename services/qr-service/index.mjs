@@ -84,6 +84,12 @@ var USER_PUBLIC_GENDER = {
   Female: "female",
   Panda: "panda"
 };
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
+};
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -218,6 +224,7 @@ var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 var challenge_model_default = ChallengeModel;
 var StageSettingsSchema = new Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -226,7 +233,7 @@ var StageSettingsSchema = new Schema(
 );
 var StageSettingsForeignSchema = new Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );
@@ -261,6 +268,51 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = models.Stage || model("Stage", StageSchema);
 var stage_model_default = StageModel;
+var S3ForeignSchema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    userId: { type: String, default: null }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+models.S3 || model("S3", S3Schema);
+
+// _src/models/feature-model/index.ts
+var FeatureSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+models.Feature || model("Feature", FeatureSchema);
 var PhotoHuntForeignSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -287,27 +339,6 @@ PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var photohunt_model_default = PhotoHuntModel;
-var S3ForeignSchema = new Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var S3Schema = new Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true },
-    fileType: { type: String, required: true },
-    userId: { type: String, default: null }
-  },
-  { timestamps: true }
-);
-S3Schema.set("toObject", ToObject);
-S3Schema.set("toJSON", ToObject);
-models.S3 || model("S3", S3Schema);
 var TriviaOptionSchema = new Schema(
   {
     text: { type: String, required: true },
@@ -749,12 +780,12 @@ var StageQrs = async (id) => {
   );
   const contents = await Promise.all(
     challenges.map(async (item) => {
-      const models13 = {
+      const models14 = {
         photohunt: photohunt_model_default,
         trivia: trivia_model_default
       };
-      const model13 = models13[item.settings.type];
-      return model13.find(
+      const model14 = models14[item.settings.type];
+      return model14.find(
         {
           _id: { $in: item.contents },
           qr: { $ne: null },
@@ -1335,6 +1366,7 @@ var init = async (stage, userStage, session) => {
         stageId: userStage.stage.id,
         name: userStage.stage.name
       },
+      status: stage.settings.unlockAll ? USER_CHALLENGE_STATUS.Discovered : USER_CHALLENGE_STATUS.Undiscovered,
       challenge: { id, name, order, storyline },
       userPublic,
       settings: { duration, type }

@@ -43,6 +43,12 @@ var USER_PUBLIC_GENDER = {
   Female: "female",
   Panda: "panda"
 };
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
+};
 var IdNameSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -175,56 +181,9 @@ ChallengeSchema.set("toJSON", ToObject);
 ChallengeSchema.set("toObject", ToObject);
 var ChallengeModel = models.Challenge || model("Challenge", ChallengeSchema);
 var challenge_model_default = ChallengeModel;
-var PhotoHuntForeignSchema = new Schema(
-  {
-    id: { type: String, required: true },
-    hint: { type: String, required: true }
-  },
-  { _id: false }
-);
-var PhotoHuntSchema = new Schema(
-  {
-    hint: { type: String, default: "" },
-    score: { type: Number, default: 0 },
-    feedback: { type: String, default: "" },
-    challenge: { type: IdNameSchema, default: null },
-    status: {
-      type: String,
-      enum: Object.values(PHOTO_HUNT_STATUS),
-      default: PHOTO_HUNT_STATUS.Draft
-    },
-    qr: { type: QrForeignSchema, default: null }
-  },
-  { timestamps: true }
-);
-PhotoHuntSchema.set("toObject", ToObject);
-PhotoHuntSchema.set("toJSON", ToObject);
-var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
-var photohunt_model_default = PhotoHuntModel;
-var S3ForeignSchema = new Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var S3Schema = new Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true },
-    fileType: { type: String, required: true },
-    userId: { type: String, default: null }
-  },
-  { timestamps: true }
-);
-S3Schema.set("toObject", ToObject);
-S3Schema.set("toJSON", ToObject);
-var S3Model = models.S3 || model("S3", S3Schema);
-var s3_model_default = S3Model;
 var StageSettingsSchema = new Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -233,7 +192,7 @@ var StageSettingsSchema = new Schema(
 );
 var StageSettingsForeignSchema = new Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );
@@ -268,6 +227,79 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = models.Stage || model("Stage", StageSchema);
 var stage_model_default = StageModel;
+var S3ForeignSchema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    userId: { type: String, default: null }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+var S3Model = models.S3 || model("S3", S3Schema);
+var s3_model_default = S3Model;
+
+// _src/models/feature-model/index.ts
+var FeatureSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+var FeatureModel = models.Feature || model("Feature", FeatureSchema);
+var feature_model_default = FeatureModel;
+var PhotoHuntForeignSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    hint: { type: String, required: true }
+  },
+  { _id: false }
+);
+var PhotoHuntSchema = new Schema(
+  {
+    hint: { type: String, default: "" },
+    score: { type: Number, default: 0 },
+    feedback: { type: String, default: "" },
+    challenge: { type: IdNameSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(PHOTO_HUNT_STATUS),
+      default: PHOTO_HUNT_STATUS.Draft
+    },
+    qr: { type: QrForeignSchema, default: null }
+  },
+  { timestamps: true }
+);
+PhotoHuntSchema.set("toObject", ToObject);
+PhotoHuntSchema.set("toJSON", ToObject);
+var PhotoHuntModel = models.PhotoHunt || model("PhotoHunt", PhotoHuntSchema, "photoHunts");
+var photohunt_model_default = PhotoHuntModel;
 var TriviaOptionSchema = new Schema(
   {
     text: { type: String, required: true },
@@ -515,4 +547,4 @@ UserTriviaSchema.set("toObject", ToObject3);
 var UserTriviaModel = models.UserTrivia || model("UserTrivia", UserTriviaSchema, "usersTrivia");
 var user_trivia_model_default = UserTriviaModel;
 
-export { challenge_model_default as ChallengeModel, photohunt_model_default as PhotoHuntModel, qr_model_default as QrModel, s3_model_default as S3Model, stage_model_default as StageModel, trivia_model_default as TriviaModel, user_challenge_model_default as UserChallengeModel, user_model_default as UserModel, user_photohunt_model_default as UserPhotoHuntModel, user_public_model_default as UserPublicModel, user_stage_model_default as UserStageModel, user_trivia_model_default as UserTriviaModel };
+export { challenge_model_default as ChallengeModel, feature_model_default as FeatureModel, photohunt_model_default as PhotoHuntModel, qr_model_default as QrModel, s3_model_default as S3Model, stage_model_default as StageModel, trivia_model_default as TriviaModel, user_challenge_model_default as UserChallengeModel, user_model_default as UserModel, user_photohunt_model_default as UserPhotoHuntModel, user_public_model_default as UserPublicModel, user_stage_model_default as UserStageModel, user_trivia_model_default as UserTriviaModel };

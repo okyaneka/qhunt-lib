@@ -111,6 +111,12 @@ var USER_PUBLIC_GENDER = {
   Female: "female",
   Panda: "panda"
 };
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
+};
 var IdNameSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -245,6 +251,7 @@ var ChallengeModel = mongoose.models.Challenge || mongoose.model("Challenge", Ch
 var challenge_model_default = ChallengeModel;
 var StageSettingsSchema = new mongoose.Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -253,7 +260,7 @@ var StageSettingsSchema = new mongoose.Schema(
 );
 var StageSettingsForeignSchema = new mongoose.Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );
@@ -511,6 +518,28 @@ if (!globalInstance.__S3_HELPER__)
   globalInstance.__S3_HELPER__ = new S3Helper();
 var awsS3 = globalInstance.__S3_HELPER__;
 var aws_s3_default = S3Helper;
+var FeatureSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+mongoose.models.Feature || mongoose.model("Feature", FeatureSchema);
 var PhotoHuntForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -763,14 +792,14 @@ var timeBonus = (seconds, totalSeconds, maxPoint = 1e3) => {
 };
 
 // _src/helpers/service.ts
-var list = async (model13, page, limit, filters = {}, sort) => {
+var list = async (model14, page, limit, filters = {}, sort) => {
   const skip = (page - 1) * limit;
   const filter = {
     ...filters,
     deletedAt: null
   };
-  const items = await model13.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
-  const totalItems = await model13.countDocuments(filter);
+  const items = await model14.find(filter).skip(skip).limit(limit).sort(sort ?? { createdAt: -1 });
+  const totalItems = await model14.countDocuments(filter);
   const totalPages = Math.ceil(totalItems / limit);
   return {
     list: items.map((item) => item.toObject ? item.toObject() : item),
@@ -1109,12 +1138,12 @@ var StageQrs = async (id) => {
   );
   const contents = await Promise.all(
     challenges.map(async (item) => {
-      const models13 = {
+      const models14 = {
         photohunt: photohunt_model_default,
         trivia: trivia_model_default
       };
-      const model13 = models13[item.settings.type];
-      return model13.find(
+      const model14 = models14[item.settings.type];
+      return model14.find(
         {
           _id: { $in: item.contents },
           qr: { $ne: null },
@@ -1409,6 +1438,7 @@ var init = async (stage, userStage, session) => {
         stageId: userStage.stage.id,
         name: userStage.stage.name
       },
+      status: stage.settings.unlockAll ? USER_CHALLENGE_STATUS.Discovered : USER_CHALLENGE_STATUS.Undiscovered,
       challenge: { id, name, order, storyline },
       userPublic,
       settings: { duration, type }

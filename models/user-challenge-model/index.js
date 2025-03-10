@@ -279,6 +279,7 @@ var UserStageStatus = /* @__PURE__ */ ((UserStageStatus2) => {
 })(UserStageStatus || {});
 var StageSettingsSchema = new mongoose.Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -287,7 +288,7 @@ var StageSettingsSchema = new mongoose.Schema(
 );
 var StageSettingsForeignSchema = new mongoose.Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );

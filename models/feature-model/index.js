@@ -101,6 +101,7 @@ mongoose.models.Qr || mongoose.model("Qr", QrSchema);
 // _src/models/stage-model/index.ts
 var StageSettingsSchema = new mongoose.Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -109,7 +110,7 @@ var StageSettingsSchema = new mongoose.Schema(
 );
 var StageSettingsForeignSchema = new mongoose.Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );

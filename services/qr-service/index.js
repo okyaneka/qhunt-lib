@@ -110,6 +110,12 @@ var USER_PUBLIC_GENDER = {
   Female: "female",
   Panda: "panda"
 };
+var FEATURE_STATUS = PUBLISHING_STATUS;
+var FEATURE_TYPES = {
+  Event: "event",
+  Patch: "patch",
+  Info: "info"
+};
 var IdNameSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -244,6 +250,7 @@ var ChallengeModel = mongoose.models.Challenge || mongoose.model("Challenge", Ch
 var challenge_model_default = ChallengeModel;
 var StageSettingsSchema = new mongoose.Schema(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null }
@@ -252,7 +259,7 @@ var StageSettingsSchema = new mongoose.Schema(
 );
 var StageSettingsForeignSchema = new mongoose.Schema(
   {
-    periode: { type: PeriodSchema, required: true }
+    periode: { type: PeriodSchema, default: null }
   },
   { _id: false }
 );
@@ -287,6 +294,51 @@ StageSchema.set("toObject", ToObject);
 StageSchema.set("toJSON", ToObject);
 var StageModel = mongoose.models.Stage || mongoose.model("Stage", StageSchema);
 var stage_model_default = StageModel;
+var S3ForeignSchema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true }
+  },
+  { _id: false }
+);
+var S3Schema = new mongoose.Schema(
+  {
+    fileName: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    fileSize: { type: Number, required: true },
+    fileType: { type: String, required: true },
+    userId: { type: String, default: null }
+  },
+  { timestamps: true }
+);
+S3Schema.set("toObject", ToObject);
+S3Schema.set("toJSON", ToObject);
+mongoose.models.S3 || mongoose.model("S3", S3Schema);
+
+// _src/models/feature-model/index.ts
+var FeatureSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    content: { type: String, required: true },
+    quest: { type: StageForeignSchema, default: null },
+    featured: { type: Boolean, default: false },
+    featuredImage: { type: S3ForeignSchema, default: null },
+    status: {
+      type: String,
+      enum: Object.values(FEATURE_STATUS),
+      default: FEATURE_STATUS.Draft
+    },
+    type: { type: String, enum: Object.values(FEATURE_TYPES), required: true },
+    attachments: { type: [S3ForeignSchema], default: [] },
+    deletedAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+FeatureSchema.set("toJSON", ToObject);
+FeatureSchema.set("toObject", ToObject);
+mongoose.models.Feature || mongoose.model("Feature", FeatureSchema);
 var PhotoHuntForeignSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -313,27 +365,6 @@ PhotoHuntSchema.set("toObject", ToObject);
 PhotoHuntSchema.set("toJSON", ToObject);
 var PhotoHuntModel = mongoose.models.PhotoHunt || mongoose.model("PhotoHunt", PhotoHuntSchema, "photoHunts");
 var photohunt_model_default = PhotoHuntModel;
-var S3ForeignSchema = new mongoose.Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true }
-  },
-  { _id: false }
-);
-var S3Schema = new mongoose.Schema(
-  {
-    fileName: { type: String, required: true },
-    fileUrl: { type: String, required: true },
-    fileSize: { type: Number, required: true },
-    fileType: { type: String, required: true },
-    userId: { type: String, default: null }
-  },
-  { timestamps: true }
-);
-S3Schema.set("toObject", ToObject);
-S3Schema.set("toJSON", ToObject);
-mongoose.models.S3 || mongoose.model("S3", S3Schema);
 var TriviaOptionSchema = new mongoose.Schema(
   {
     text: { type: String, required: true },
@@ -775,12 +806,12 @@ var StageQrs = async (id) => {
   );
   const contents = await Promise.all(
     challenges.map(async (item) => {
-      const models13 = {
+      const models14 = {
         photohunt: photohunt_model_default,
         trivia: trivia_model_default
       };
-      const model13 = models13[item.settings.type];
-      return model13.find(
+      const model14 = models14[item.settings.type];
+      return model14.find(
         {
           _id: { $in: item.contents },
           qr: { $ne: null },
@@ -1361,6 +1392,7 @@ var init = async (stage, userStage, session) => {
         stageId: userStage.stage.id,
         name: userStage.stage.name
       },
+      status: stage.settings.unlockAll ? USER_CHALLENGE_STATUS.Discovered : USER_CHALLENGE_STATUS.Undiscovered,
       challenge: { id, name, order, storyline },
       userPublic,
       settings: { duration, type }
