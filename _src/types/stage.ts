@@ -22,6 +22,8 @@ export interface StageListParams extends DefaultListParams {
 export interface StagePayload {
   name: string;
   storyline: string[];
+  prologue: string[];
+  epilogue: string[];
   status: StageStatus;
   contents: string[];
   settings: StageSettings;
@@ -37,6 +39,8 @@ export interface Stage extends Timestamps {
   id: string;
   name: string;
   storyline: string[];
+  prologue: string[];
+  epilogue: string[];
   status: StageStatus;
   contents: string[];
   settings: StageSettings;
