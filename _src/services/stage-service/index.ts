@@ -3,6 +3,7 @@ import ChallengeModel from "~/models/challenge-model";
 import StageModel from "~/models/stage-model";
 import {
   Challenge,
+  ChallengeType,
   Qr,
   QrContent,
   QrForeign,
@@ -10,9 +11,9 @@ import {
   StagePayload,
 } from "~/index";
 import { STAGE_STATUS } from "~/constants";
-import { AnyBulkWriteOperation, ClientSession } from "mongoose";
+import { AnyBulkWriteOperation, ClientSession, Model } from "mongoose";
 import { QrGenerate } from "../qr-service";
-import { QrModel } from "~/models";
+import { PhotoHuntModel, QrModel, TriviaModel } from "~/models";
 import { ChallengeDetails } from "../challenge-service";
 
 const isUsed = async (ids: string[], id?: string) => {
@@ -244,6 +245,66 @@ export const StageDetailFull = async (id: string) => {
   return { stage, challenges };
 };
 
+export const StageQrs = async (id: string) => {
+  const stage = await StageModel.findOne(
+    { _id: id, deletedAt: null },
+    { _id: true, name: true, qr: true, contents: true }
+  );
+
+  if (!stage) throw new Error("quest.not_found");
+
+  const challenges = await ChallengeModel.find(
+    { _id: { $in: stage.contents }, deletedAt: null },
+    { _id: true, qr: true, contents: true, settings: true, name: true }
+  );
+
+  const contents = await Promise.all(
+    challenges.map(async (item) => {
+      const models: Record<ChallengeType, Model<any>> = {
+        photohunt: PhotoHuntModel,
+        trivia: TriviaModel,
+      };
+
+      const model = models[item.settings.type];
+
+      return model.find(
+        {
+          _id: { $in: item.contents },
+          qr: { $ne: null },
+          deletedAt: null,
+        },
+        { _id: true, qr: true, hint: true }
+      );
+    })
+  );
+
+  const challnegeContents = challenges.map((item, i) => {
+    return {
+      challenge: {
+        id: item.id,
+        name: item.name,
+        type: item.settings.type,
+      },
+      contents: contents[i],
+    };
+  });
+
+  return {
+    stage: {
+      id: stage.id,
+      name: stage.name,
+      qr: stage.qr,
+    },
+    challenges: challenges.map(({ id, name, qr, settings: { type } }) => ({
+      id,
+      name,
+      qr,
+      type,
+    })),
+    challnegeContents,
+  };
+};
+
 const StageService = {
   list,
   create,
@@ -253,6 +314,7 @@ const StageService = {
   verify,
   publish: StagePublish,
   detailFull: StageDetailFull,
+  qrs: StageQrs,
 };
 
 export default StageService;
