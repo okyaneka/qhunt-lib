@@ -268,6 +268,8 @@ var StageSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
+    prologue: { type: [String], default: [] },
+    epilogue: { type: [String], default: [] },
     status: {
       type: String,
       enum: Object.values(STAGE_STATUS),

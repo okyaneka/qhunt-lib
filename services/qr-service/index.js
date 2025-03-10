@@ -269,6 +269,8 @@ var StageSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
+    prologue: { type: [String], default: [] },
+    epilogue: { type: [String], default: [] },
     status: {
       type: String,
       enum: Object.values(STAGE_STATUS),
@@ -761,6 +763,58 @@ var StageDetailFull = async (id) => {
   const challenges = await ChallengeDetails(stage.contents);
   return { stage, challenges };
 };
+var StageQrs = async (id) => {
+  const stage = await stage_model_default.findOne(
+    { _id: id, deletedAt: null },
+    { _id: true, name: true, qr: true, contents: true }
+  );
+  if (!stage) throw new Error("quest.not_found");
+  const challenges = await challenge_model_default.find(
+    { _id: { $in: stage.contents }, deletedAt: null },
+    { _id: true, qr: true, contents: true, settings: true, name: true }
+  );
+  const contents = await Promise.all(
+    challenges.map(async (item) => {
+      const models13 = {
+        photohunt: photohunt_model_default,
+        trivia: trivia_model_default
+      };
+      const model13 = models13[item.settings.type];
+      return model13.find(
+        {
+          _id: { $in: item.contents },
+          qr: { $ne: null },
+          deletedAt: null
+        },
+        { _id: true, qr: true, hint: true }
+      );
+    })
+  );
+  const challnegeContents = challenges.map((item, i) => {
+    return {
+      challenge: {
+        id: item.id,
+        name: item.name,
+        type: item.settings.type
+      },
+      contents: contents[i]
+    };
+  });
+  return {
+    stage: {
+      id: stage.id,
+      name: stage.name,
+      qr: stage.qr
+    },
+    challenges: challenges.map(({ id: id2, name, qr, settings: { type } }) => ({
+      id: id2,
+      name,
+      qr,
+      type
+    })),
+    challnegeContents
+  };
+};
 var StageService = {
   list,
   create,
@@ -769,7 +823,8 @@ var StageService = {
   delete: _delete,
   verify,
   publish: StagePublish,
-  detailFull: StageDetailFull
+  detailFull: StageDetailFull,
+  qrs: StageQrs
 };
 var stage_service_default = StageService;
 

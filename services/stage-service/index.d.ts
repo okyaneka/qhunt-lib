@@ -1,4 +1,4 @@
-import { Challenge, StageListParams, StagePayload } from "../../index";
+import { Challenge, ChallengeType, QrForeign, StageListParams, StagePayload } from "../../index";
 import { ClientSession } from "mongoose";
 export declare const list: (params: Partial<StageListParams>) => Promise<{
     list: (import("../../index").Stage & {
@@ -41,6 +41,27 @@ export declare const StageDetailFull: (id: string) => Promise<{
         _id: import("mongoose").Types.ObjectId;
     })[];
 }>;
+export declare const StageQrs: (id: string) => Promise<{
+    stage: {
+        id: any;
+        name: string;
+        qr: QrForeign | null;
+    };
+    challenges: {
+        id: any;
+        name: string;
+        qr: QrForeign | null;
+        type: ChallengeType;
+    }[];
+    challnegeContents: {
+        challenge: {
+            id: any;
+            name: string;
+            type: ChallengeType;
+        };
+        contents: any[];
+    }[];
+}>;
 declare const StageService: {
     list: (params: Partial<StageListParams>) => Promise<{
         list: (import("../../index").Stage & {
@@ -82,6 +103,27 @@ declare const StageService: {
         challenges: (Challenge & {
             _id: import("mongoose").Types.ObjectId;
         })[];
+    }>;
+    qrs: (id: string) => Promise<{
+        stage: {
+            id: any;
+            name: string;
+            qr: QrForeign | null;
+        };
+        challenges: {
+            id: any;
+            name: string;
+            qr: QrForeign | null;
+            type: ChallengeType;
+        }[];
+        challnegeContents: {
+            challenge: {
+                id: any;
+                name: string;
+                type: ChallengeType;
+            };
+            contents: any[];
+        }[];
     }>;
 };
 export default StageService;

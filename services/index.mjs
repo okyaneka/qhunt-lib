@@ -249,6 +249,8 @@ var StageSchema = new Schema(
   {
     name: { type: String, required: true },
     storyline: { type: [String], default: [] },
+    prologue: { type: [String], default: [] },
+    epilogue: { type: [String], default: [] },
     status: {
       type: String,
       enum: Object.values(STAGE_STATUS),
@@ -2176,6 +2178,58 @@ var StageDetailFull = async (id) => {
   const challenges = await ChallengeDetails(stage2.contents);
   return { stage: stage2, challenges };
 };
+var StageQrs = async (id) => {
+  const stage2 = await stage_model_default.findOne(
+    { _id: id, deletedAt: null },
+    { _id: true, name: true, qr: true, contents: true }
+  );
+  if (!stage2) throw new Error("quest.not_found");
+  const challenges = await challenge_model_default.find(
+    { _id: { $in: stage2.contents }, deletedAt: null },
+    { _id: true, qr: true, contents: true, settings: true, name: true }
+  );
+  const contents = await Promise.all(
+    challenges.map(async (item) => {
+      const models14 = {
+        photohunt: photohunt_model_default,
+        trivia: trivia_model_default
+      };
+      const model14 = models14[item.settings.type];
+      return model14.find(
+        {
+          _id: { $in: item.contents },
+          qr: { $ne: null },
+          deletedAt: null
+        },
+        { _id: true, qr: true, hint: true }
+      );
+    })
+  );
+  const challnegeContents = challenges.map((item, i) => {
+    return {
+      challenge: {
+        id: item.id,
+        name: item.name,
+        type: item.settings.type
+      },
+      contents: contents[i]
+    };
+  });
+  return {
+    stage: {
+      id: stage2.id,
+      name: stage2.name,
+      qr: stage2.qr
+    },
+    challenges: challenges.map(({ id: id2, name, qr, settings: { type } }) => ({
+      id: id2,
+      name,
+      qr,
+      type
+    })),
+    challnegeContents
+  };
+};
 var StageService = {
   list: list6,
   create: create2,
@@ -2184,7 +2238,8 @@ var StageService = {
   delete: _delete3,
   verify,
   publish: StagePublish,
-  detailFull: StageDetailFull
+  detailFull: StageDetailFull,
+  qrs: StageQrs
 };
 var stage_service_default = StageService;
 
