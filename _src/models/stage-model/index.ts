@@ -6,6 +6,7 @@ import { QrForeignSchema } from "../qr-model";
 
 const StageSettingsSchema = new Schema<Stage["settings"]>(
   {
+    unlockAll: { type: Boolean, default: false },
     canDoRandomChallenges: { type: Boolean, default: false },
     canStartFromChallenges: { type: Boolean, default: false },
     periode: { type: PeriodSchema, default: null },
@@ -15,7 +16,7 @@ const StageSettingsSchema = new Schema<Stage["settings"]>(
 
 export const StageSettingsForeignSchema = new Schema<StageSettingsForeign>(
   {
-    periode: { type: PeriodSchema, required: true },
+    periode: { type: PeriodSchema, default: null },
   },
   { _id: false }
 );
