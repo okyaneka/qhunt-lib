@@ -177,7 +177,7 @@ export const StagePublish = async (id: string) => {
       await QrModel.updateOne(
         { _id: qr.id },
         { $set: { content: qrContent, status: "publish" } },
-        session
+        { session }
       );
     }
 
